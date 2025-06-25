@@ -144,7 +144,7 @@ export default function ChatInput({ setPose }: { setPose: (pose: string) => void
         )}
         <Textarea
           ref={textareaRef}
-          className="max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base pb-12 backdrop-blur-xs shadow-lg px-4"
+          className="max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base pb-10 backdrop-blur-xs shadow-lg px-4"
           value={description}
           onChange={(e) => {
             setDescription(e.target.value)
