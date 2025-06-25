@@ -1,43 +1,54 @@
 import OpenAI from "openai"
 
 const systemPrompt = `
-This is a project to generate a pose for MMD model in babylon.js 3d scene based on a description. You will need to output the parameters for the morph targets in JSON format. Like if user gives a description "Smile and look happy", you will need to output the parameters (0 to 1 float value) for the morph targets in JSON format. Some of the morph targets are high-level that can be used to control the overall pose and some are low-level that can be used to control the details of the pose. While sometimes the model may not have those high-level morph targets, and you could also set the low-level morph targets to control the overall pose as backup. Like when user says "close eyes", you could also set the low-level morph targets like winks (ウィンク=1) besides the 目閉じ=1. And you can make the expression more exaggretated for better results.
+You are an expert at generating facial expressions for MMD (MikuMikuDance) models in 3D scenes. Your task is to convert any natural language description—including emotional, situational, or physical states—into precise morph target parameters (0.0–1.0) for realistic, expressive, and context-appropriate facial poses.
 
-The morph targets are:
-
+**Only use the following morph targets:**
 {
-  まばたき: 0, // Blink (almost fully open)
-  ウィンク: 0, // Wink
-  ウィンク右: 0, // Wink Right
-  ウィンク２: 0, // Wink 2
-  笑い: 0, // Laughing Eyes
-  怒り: 0, // Angry Eyes
-  困る: 0, // Troubled/Sad Eyes
-  驚き: 0, // Surprised Eyes
-  細め: 0, // Narrow Eyes
-  眉上: 0, // Eyebrow Up (adds energy)
-  眉下: 0, // Eyebrow Down
-  眉怒り: 0, // Angry Eyebrows
-  眉困る: 0, // Troubled Eyebrows
-  あ: 0, // Mouth "A"
-  い: 0, // Mouth "I"
-  う: 0, // Mouth "U"
-  え: 0, // Mouth "E"
-  お: 0, // Mouth "O"
-  にこり: 0, // Smile (main smile)
-  真面目: 0, // Serious
-  アホ: 0, // Goofy/Stupid
-  口角上げ: 0, // Mouth Corners Up (smile accent)
-  口角下げ: 0, // Mouth Corners Down
-  汗: 0, // Sweat
-  涙: 0, // Tears
-  びっくり: 0, // Surprised
-  ドヤ: 0, // Confident/Smug (a little)
-  照れ: 0, // Embarrassed
-  目閉じ: 0, // Eyes Closed
+  // Basic expressions
+  真面目, 困る, にこり, 怒り
+
+  // Eye expressions
+  まばたき, 笑い, ウィンク, ウィンク右, ウィンク２, ｳｨﾝｸ２右, なごみ, びっくり, "恐ろしい子！", はちゅ目, はぅ, ｷﾘｯ, 眼睑上, 眼角下, じと目, じと目1
+
+  // Mouth shapes
+  あ, い, う, え, お, お1
+
+  // Mouth expressions
+  口角上げ, 口角下げ, 口角下げ1, 口横缩げ, 口横広げ, にやり２, にやり２1
+
+  // Special effects
+  照れ
 }
 
-Output the JSON object only without any other text or wrapper and fill the values for the morph targets based on the description. 
+## Core Principles:
+1. **Context Awareness**: Carefully interpret the user's description, including emotional and situational context.
+2. **High-Level First, Fine-Tune Second**: For any expression, always use high-level morphs (真面目, 困る, にこり, 怒り) first to set the overall mood and facial structure (including eyebrows and eyelids). Then use low-level morphs (like じと目, まばたき, etc.) to fine-tune the details. Do not rely only on low-level morphs for any expression.
+3. **Layered Expression Building**: Combine high-level morphs with detailed eye and mouth morphs for complex, realistic expressions. Add subtle effects (まばたき, なごみ, 照れ) for depth.
+4. **Intensity Scaling**: Adjust morph values based on the described emotional/physical intensity:
+   - Mild: 0.2–0.4
+   - Moderate: 0.4–0.7
+   - Strong: 0.7–0.9
+   - Extreme: 0.9–1.0
+5. **Natural Asymmetry**: Use directional morphs (ウィンク右, etc.) for more natural, dynamic expressions.
+6. **Strict Eye Morph Constraint**: For じと目, はちゅ目, まばたき, びっくり:
+   - **Never set more than one of these above 0.0 at the same time.**
+   - If one is nonzero, all others must be exactly 0.
+   - Example: If じと目 is used, set まばたき, はちゅ目, びっくり to 0.
+7. **Blushing/Embarrassed/Sexy Effects**: When the description suggests embarrassment, shyness, blushing, or a sexy/intimate scenario, use the 照れ morph for a red face and set it to 1. Combine with other appropriate morphs for a natural look.
+
+## Response Format:
+Output ONLY a valid JSON object with morph target values (0.0 to 1.0). Do not include any explanatory text, markdown, or code blocks.
+
+## Examples:
+- "Tired" → { "困る": 0.4, "じと目": 0.6, "なごみ": 0.6, "口角下げ": 0.3, "まばたき": 0, "はちゅ目": 0, "びっくり": 0 }
+- "Embarrassed and shy" → { "照れ": 1, "困る": 0.3, "じと目": 0.5, "う": 0.3, "まばたき": 0, "はちゅ目": 0, "びっくり": 0 }
+- "Flirtatious wink" → { "にこり": 0.3, "ウィンク": 1.0, "にやり２": 0.7, "眼睑上": 0.5, "口角上げ": 0.6, "じと目": 0, "まばたき": 0, "はちゅ目": 0, "びっくり": 0 }
+- "Laughing loudly" → { "にこり": 0.9, "笑い": 0.8, "あ": 1.0, "口横広げ": 0.9 }
+- "Surprised" → { "びっくり": 0.9, "お": 0.7, "眼睑上": 0.6 }
+- "Crying" → { "困る": 0.7, "口角下げ": 0.6, "まばたき": 0.5 }
+- "Angry and shouting" → { "怒り": 0.9, "あ": 0.8, "ｷﾘｯ": 0.7 }
+- "Sexy, inviting look" → { "にこり": 0.3, "ウィンク": 0.7, "にやり２": 0.8, "照れ": 1, "眼睑上": 0.5 }
 `
 
 const userPrompt = `
@@ -65,10 +76,18 @@ export async function POST(request: Request) {
       ],
     })
 
-    console.log(response.choices[0].message.content)
+    let result
+    try {
+      result = JSON.parse(response.choices[0].message.content ?? "{}")
+    } catch {
+      return Response.json(
+        { error: "Invalid JSON generated by AI", raw: response.choices[0].message.content },
+        { status: 500 }
+      )
+    }
 
     return Response.json({
-      result: JSON.parse(response.choices[0].message.content ?? "{}"),
+      result,
     })
   } catch (error) {
     console.error("Error generating pose:", error)

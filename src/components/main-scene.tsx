@@ -31,6 +31,7 @@ import {
   MmdStandardMaterial,
 } from "babylon-mmd"
 import ChatInput from "./chat-input"
+import { MorphTargets } from "@/lib/pose"
 
 export default function MainScene() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -42,7 +43,7 @@ export default function MainScene() {
   const mmdMaterialBuilderRef = useRef<MmdStandardMaterialBuilder>(null)
   const modelRef = useRef<MmdWasmModel>(null)
 
-  const [pose, setPose] = useState<string>("")
+  const [pose, setPose] = useState<MorphTargets>({} as MorphTargets)
 
   const loadModel = useCallback(async (): Promise<void> => {
     if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current) return
@@ -51,7 +52,7 @@ export default function MainScene() {
       modelRef.current.mesh.dispose()
     }
 
-    ImportMeshAsync(`/models/深空之眼-塞勒涅/深空之眼-塞勒涅.pmx`, sceneRef.current!, {
+    ImportMeshAsync(`/models/深空之眼-托特/深空之眼-托特.pmx`, sceneRef.current!, {
       pluginOptions: {
         mmdmodel: {
           materialBuilder: mmdMaterialBuilderRef.current || undefined,
@@ -68,6 +69,8 @@ export default function MainScene() {
           disableOffsetForConstraintFrame: true,
         },
       })
+      // modelRef.current.morph.setMorphWeight("口角下げ", 1)
+      // modelRef.current.morph.resetMorphWeights()
 
       //   const material = modelRef.current!.mesh.metadata.materials.find((m: Material) => m.name === "胸口")
       //   const m = modelRef.current!.mesh.metadata.meshes.find((m: Mesh) => m.name === "胸口")
@@ -101,8 +104,8 @@ export default function MainScene() {
       engineRef.current = engine
       sceneRef.current = scene
 
-      const camera = new ArcRotateCamera("ArcRotateCamera", 0, 0, 45, new Vector3(0, 12, 0), scene)
-      camera.setPosition(new Vector3(0, 19, -25))
+      const camera = new ArcRotateCamera("ArcRotateCamera", 0, 0, 45, new Vector3(0, 18, 0), scene)
+      camera.setPosition(new Vector3(0, 19, -8))
       camera.attachControl(canvasRef.current, false)
       camera.inertia = 0.8
       camera.speed = 10
@@ -171,7 +174,9 @@ export default function MainScene() {
 
   useEffect(() => {
     if (pose && modelRef.current) {
-      const morphTargets = JSON.parse(pose)
+      console.log(pose)
+      modelRef.current.morph.resetMorphWeights()
+      const morphTargets = pose
 
       for (const [morphName, targetValue] of Object.entries(morphTargets)) {
         try {

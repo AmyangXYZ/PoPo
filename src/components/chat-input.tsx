@@ -9,10 +9,16 @@ import { Card, CardDescription, CardHeader } from "./ui/card"
 import { useState, useEffect, useRef, ChangeEvent } from "react"
 import Image from "next/image"
 import { Skeleton } from "./ui/skeleton"
+import { MorphTargets } from "@/lib/pose"
 
-const suggestedPoses: string[] = ["smile for me", "angry", "cry", "lmao"] as const
+const suggestedPoses: string[] = [
+  "give me a shy smile",
+  "look exhausted 24h no sleep",
+  "burst out laughing with mouth wide open",
+  "cold, boring, unimpressed stare"
+] as const
 
-export default function ChatInput({ setPose }: { setPose: (pose: string) => void }) {
+export default function ChatInput({ setPose }: { setPose: (pose: MorphTargets) => void }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [showSuggestions, setShowSuggestions] = useState(true)
   const [fileUrl, setFileUrl] = useState("")
@@ -38,8 +44,10 @@ export default function ChatInput({ setPose }: { setPose: (pose: string) => void
       body: JSON.stringify({ description }),
     })
     const poseData = await poseRes.json()
-    setPose(JSON.stringify(poseData.result))
-    console.log(poseData.result, fileUrl)
+    if (fileUrl.length > 0) {
+      console.log(fileUrl)
+    }
+    setPose(poseData.result)
     setWaitingPoseResult(false)
   }
 
@@ -109,15 +117,14 @@ export default function ChatInput({ setPose }: { setPose: (pose: string) => void
               >
                 <Card
                   key={i}
-                  className={`bg-transparent py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-xs shadow-lg ${
-                    i >= 2 ? "hidden md:block" : ""
-                  }`}
+                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-xs shadow-lg ${i >= 2 ? "hidden md:block" : ""
+                    }`}
                   onClick={() => {
                     setMMDPose(pose, "")
                   }}
                 >
                   <CardHeader className="py-2 gap-0">
-                    <CardDescription className="py-1">{pose}</CardDescription>
+                    <CardDescription className="py-1 text-zinc-800 ">{pose}</CardDescription>
                   </CardHeader>
                 </Card>
               </motion.div>
@@ -139,12 +146,12 @@ export default function ChatInput({ setPose }: { setPose: (pose: string) => void
         )}
         {waitingPoseResult && (
           <div className="w-full flex justify-start">
-            <span className="text-sm text-zinc-500">Generating pose...</span>
+            <span className="text-sm text-zinc-800">Generating pose...</span>
           </div>
         )}
         <Textarea
           ref={textareaRef}
-          className="max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base pb-10 backdrop-blur-xs shadow-lg px-4"
+          className="max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-white/50 text-zinc-800 pb-10 backdrop-blur-xs shadow-lg px-4"
           value={description}
           onChange={(e) => {
             setDescription(e.target.value)
