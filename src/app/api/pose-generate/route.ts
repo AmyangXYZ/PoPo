@@ -57,7 +57,12 @@ You are an expert at generating facial expressions and body poses for MMD (MikuM
 9. **Position Guidelines**:
    - センター: Controls overall body position (typically small adjustments)
    - 左足ＩＫ/右足ＩＫ: Controls foot positions for walking, standing, or sitting poses
-   - For squatting (蹲下), only lower センター Y position, no need to change other bones, but Y value should always larger than 0
+   - **Y positions should NEVER be negative** - all Y values must be >= 0
+   - **Lifting foot**: Set 左足ＩＫ or 右足ＩＫ to [0, 8, 0] (Y=8 lifts the foot up)
+   - **Kicking**: Set 右足ＩＫ to [0, 5, -10] (Y=5, Z=-10 for forward kick)
+   - **Squatting**: Lower センター Y position to [0, 2, 0] (Y=2 for squatting)
+   - **Walking pose**: Set foot positions like 左足ＩＫ: [0.2, 0, 0], 右足ＩＫ: [-0.2, 0, 0]
+   - **Standing**: Default positions with センター: [0, 12, 0] (Y=12 for standing height)
 
 10. **Arm Rotation Guidelines**:
     - Left and right arms have opposite coordinate systems (mirrored)
@@ -84,12 +89,15 @@ Output ONLY a valid JSON object with this structure:
 - "Crying" → { "face": { "困る": 0.7, "口角下げ": 0.6, "まばたき": 0.5 }, "body": { "上半身": [-0.2, 0, 0], "首": [-0.1, 0, 0], "頭": [-0.05, 0, 0] } }
 - "Angry and shouting" → { "face": { "怒り": 0.9, "あ": 0.8, "ｷﾘｯ": 0.7 }, "body": { "上半身": [-0.3, 0, 0], "首": [-0.2, 0, 0], "頭": [-0.1, 0, 0] } }
 - "Sexy, inviting look" → { "face": { "にこり": 0.3, "ウィンク": 0.7, "にやり２": 0.8, "照れ": 1, "眼睑上": 0.5 }, "body": { "上半身": [-0.1, 0, 0], "首": [-0.05, 0, 0], "頭": [0.1, 0.1, 0] } }
-- "Sitting pose" → { "face": { "真面目": 0.3 }, "body": { "下半身": [1.57, 0, 0], "左足": [1.57, 0, 0], "右足": [1.57, 0, 0], "左足ＩＫ": [0, -5, 0], "右足ＩＫ": [0, -5, 0] } }
 - "Waving hello" → { "face": { "にこり": 0.5 }, "body": { "右腕": [0, 0, -1.0], "右ひじ": [0, 0, -0.5], "右手首": [0, 0, -0.3] } }
 - "Looking left" → { "face": { "真面目": 0.3 }, "body": { "頭": [0, -0.5, 0], "首": [0, -0.3, 0] } }
 - "Looking right" → { "face": { "真面目": 0.3 }, "body": { "頭": [0, 0.5, 0], "首": [0, 0.3, 0] } }
 - "Bowing" → { "face": { "真面目": 0.3 }, "body": { "上半身": [-0.8, 0, 0], "首": [-0.1, 0, 0], "頭": [-0.1, 0, 0] } }
 - "Squatting" → { "face": { "真面目": 0.3 }, "body": { "センター": [0, 2, 0] } }
+- "Lifting left foot" → { "face": { "真面目": 0.3 }, "body": { "左足ＩＫ": [0, 8, 0] } }
+- "Lifting right foot" → { "face": { "真面目": 0.3 }, "body": { "右足ＩＫ": [0, 8, 0] } }
+- "Kicking forward" → { "face": { "真面目": 0.3 }, "body": { "右足ＩＫ": [0, 5, -10] } }
+- "Walking pose" → { "face": { "真面目": 0.3 }, "body": { "左足ＩＫ": [0.2, 0, 0], "右足ＩＫ": [-0.2, 0, 0] } }
 - "Raising both arms" → { "face": { "真面目": 0.3 }, "body": { "左腕": [0, 0, 1.0], "右腕": [0, 0, -1.0] } }
 - "Pointing forward with both arms" → { "face": { "真面目": 0.3 }, "body": { "左腕": [0, 1.0, 0], "右腕": [0, -1.0, 0] } }
 `

@@ -136,7 +136,7 @@ export default function MainScene() {
       }
 
 
-      // getBone("センター")!.position = new Vector3(0, 1, 0)
+      // getBone("右足ＩＫ")!.position = new Vector3(0, 5, -10)
 
       //   const material = modelRef.current!.mesh.metadata.materials.find((m: Material) => m.name === "胸口")
       //   const m = modelRef.current!.mesh.metadata.meshes.find((m: Mesh) => m.name === "胸口")
