@@ -39,6 +39,7 @@ export default function ChatInput({ setPose }: { setPose: (pose: MorphTargets) =
     setFileUrl("")
     resetHeight()
     setWaitingPoseResult(true)
+    setShowSuggestions(false)
     const poseRes = await fetch("/api/pose-generate", {
       method: "POST",
       body: JSON.stringify({ description }),
@@ -144,28 +145,31 @@ export default function ChatInput({ setPose }: { setPose: (pose: MorphTargets) =
             <Skeleton className="w-[180px] h-[120px] rounded-xl" />
           </div>
         )}
-        {waitingPoseResult && (
-          <div className="w-full flex justify-start">
-            <span className="text-sm text-zinc-800">Generating pose...</span>
-          </div>
-        )}
-        <Textarea
-          ref={textareaRef}
-          className="max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-white/50 text-zinc-800 pb-10 backdrop-blur-xs shadow-lg px-4"
-          value={description}
-          onChange={(e) => {
-            setDescription(e.target.value)
-            adjustHeight()
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && description.trim().length > 0) {
-              e.preventDefault()
-              setMMDPose(description, fileUrl)
-            }
-          }}
-          disabled={false}
-          placeholder={"Pose me as you would like to see me ..."}
-        />
+
+        <div className="relative w-full">
+          <Textarea
+            ref={textareaRef}
+            className="max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-white/50 text-zinc-800 pb-8 md:pb-10 backdrop-blur-xs shadow-lg px-4"
+            value={description}
+            onChange={(e) => {
+              setDescription(e.target.value)
+              adjustHeight()
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && description.trim().length > 0) {
+                e.preventDefault()
+                setMMDPose(description, fileUrl)
+              }
+            }}
+            disabled={false}
+            placeholder={"Pose me as you would like to see me ..."}
+          />
+          {waitingPoseResult && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-2xl z-10">
+              <div className="h-6 w-6 border-3 border-zinc-200 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          )}
+        </div>
         <div className="absolute bottom-0 p-1 w-fit flex flex-row justify-start">
           <Button size="icon" variant="ghost" disabled={false} onClick={() => fileInputRef.current?.click()}>
             <Paperclip className="size-4.5" />

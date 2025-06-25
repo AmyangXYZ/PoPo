@@ -3,6 +3,7 @@ import type { NextConfig } from "next"
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  devIndicators: false,
   webpack: (config) => {
     // Handle babylon-mmd WASM files
     config.module.rules.push({

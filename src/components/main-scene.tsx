@@ -191,7 +191,7 @@ export default function MainScene() {
   return (
     <div className="w-full h-full">
       <canvas ref={canvasRef} className="w-full h-full" />
-      <div className="fixed left-1/2 -translate-x-1/2 bottom-2 max-w-2xl mx-auto flex p-4 w-full">
+      <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full">
         <ChatInput setPose={setPose} />
       </div>
     </div>
