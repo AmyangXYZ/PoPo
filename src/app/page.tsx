@@ -1,5 +1,6 @@
-'use client'
-import dynamic from 'next/dynamic'
+"use client"
+
+import dynamic from "next/dynamic"
 
 const MainScene = dynamic(() => import("@/components/main-scene"), {
   ssr: false,
@@ -10,5 +11,5 @@ export default function Home() {
     <div className="w-full h-screen">
       <MainScene />
     </div>
-  );
+  )
 }
