@@ -171,48 +171,12 @@ export default function MainScene() {
 
   useEffect(() => {
     if (pose && modelRef.current) {
-      // Test morph targets with dummy values
-      const morphTargets = {
-        まばたき: 0.1, // Blink (almost fully open)
-        ウィンク: 0, // Wink
-        ウィンク右: 0, // Wink Right
-        ウィンク２: 0, // Wink 2
-        笑い: 0.2, // Laughing Eyes
-        怒り: 0, // Angry Eyes
-        困る: 0, // Troubled/Sad Eyes
-        驚き: 0, // Surprised Eyes
-        細め: 0.2, // Narrow Eyes
+      const morphTargets = JSON.parse(pose)
 
-        眉上: 0.4, // Eyebrow Up (adds energy)
-        眉下: 0, // Eyebrow Down
-        眉怒り: 0, // Angry Eyebrows
-        眉困る: 0, // Troubled Eyebrows
-
-        あ: 0.2, // Mouth "A"
-        い: 0.1, // Mouth "I"
-        う: 0, // Mouth "U"
-        え: 0, // Mouth "E"
-        お: 0, // Mouth "O"
-        にこり: 0, // Smile (main smile)
-        真面目: 0, // Serious
-        アホ: 0, // Goofy/Stupid
-        口角上げ: 0, // Mouth Corners Up (smile accent)
-        口角下げ: 1, // Mouth Corners Down
-
-        汗: 0, // Sweat
-        涙: 1, // Tears
-        びっくり: 0, // Surprised
-        ドヤ: 0, // Confident/Smug (a little)
-        照れ: 0, // Embarrassed
-        目閉じ: 0, // Eyes Closed
-      }
-
-      // Apply morph targets
       for (const [morphName, targetValue] of Object.entries(morphTargets)) {
         try {
-          modelRef.current.morph.setMorphWeight(morphName, targetValue)
+          modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
         } catch {
-          // Silently ignore if morph doesn't exist
           console.log(`Morph "${morphName}" not found`)
         }
       }
@@ -222,7 +186,7 @@ export default function MainScene() {
   return (
     <div className="w-full h-full">
       <canvas ref={canvasRef} className="w-full h-full" />
-      <div className="absolute left-1/2 -translate-x-1/2 bottom-2 max-w-2xl mx-auto flex p-4 w-full">
+      <div className="fixed left-1/2 -translate-x-1/2 bottom-2 max-w-2xl mx-auto flex p-4 w-full">
         <ChatInput setPose={setPose} />
       </div>
     </div>

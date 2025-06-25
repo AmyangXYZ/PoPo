@@ -18,6 +18,7 @@ export default function ChatInput({ setPose }: { setPose: (pose: string) => void
   const [fileUrl, setFileUrl] = useState("")
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [waitingPoseResult, setWaitingPoseResult] = useState(false)
 
   useEffect(() => {
     if (fileUrl.length > 0) {
@@ -27,13 +28,19 @@ export default function ChatInput({ setPose }: { setPose: (pose: string) => void
 
   const [description, setDescription] = useState("")
 
-  const setMMDPose = (description: string, fileUrl: string) => {
-    setPose(description)
-    console.log("setMMDPose", description, fileUrl)
+  const setMMDPose = async (description: string, fileUrl: string) => {
     setDescription("")
     setFileUrl("")
     resetHeight()
-    setShowSuggestions(false)
+    setWaitingPoseResult(true)
+    const poseRes = await fetch("/api/pose-generate", {
+      method: "POST",
+      body: JSON.stringify({ description }),
+    })
+    const poseData = await poseRes.json()
+    setPose(JSON.stringify(poseData.result))
+    console.log(poseData.result, fileUrl)
+    setWaitingPoseResult(false)
   }
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -128,6 +135,11 @@ export default function ChatInput({ setPose }: { setPose: (pose: string) => void
         {uploading && (
           <div className="w-full flex justify-start">
             <Skeleton className="w-[180px] h-[120px] rounded-xl" />
+          </div>
+        )}
+        {waitingPoseResult && (
+          <div className="w-full flex justify-start">
+            <span className="text-sm text-zinc-500">Generating pose...</span>
           </div>
         )}
         <Textarea

@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.835.0",
+    "@aws-sdk/s3-request-presigner": "^3.835.0",
     "@babylonjs/core": "^8.11.0",
     "@babylonjs/materials": "^8.11.0",
     "@radix-ui/react-slot": "^1.2.3",
@@ -18,6 +20,7 @@
     "framer-motion": "^12.19.1",
     "lucide-react": "^0.523.0",
     "next": "15.3.4",
+    "openai": "^5.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwind-merge": "^3.3.1"
