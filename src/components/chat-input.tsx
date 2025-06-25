@@ -9,16 +9,16 @@ import { Card, CardDescription, CardHeader } from "./ui/card"
 import { useState, useEffect, useRef, ChangeEvent } from "react"
 import Image from "next/image"
 import { Skeleton } from "./ui/skeleton"
-import { MorphTargets } from "@/lib/pose"
+import { Pose } from "@/lib/pose"
 
 const suggestedPoses: string[] = [
-  "give me a shy smile",
-  "look exhausted 24h no sleep",
-  "burst out laughing with mouth wide open",
-  "cold, boring, unimpressed stare"
+  "look right with a shy smile",
+  "angry face while lifting left foot",
+  "squatting down and cry loudly",
+  "point forward with shocked look",
 ] as const
 
-export default function ChatInput({ setPose }: { setPose: (pose: MorphTargets) => void }) {
+export default function ChatInput({ setPose }: { setPose: (pose: Pose) => void }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [showSuggestions, setShowSuggestions] = useState(true)
   const [fileUrl, setFileUrl] = useState("")
@@ -39,7 +39,7 @@ export default function ChatInput({ setPose }: { setPose: (pose: MorphTargets) =
     setFileUrl("")
     resetHeight()
     setWaitingPoseResult(true)
-    setShowSuggestions(false)
+    // setShowSuggestions(false)
     const poseRes = await fetch("/api/pose-generate", {
       method: "POST",
       body: JSON.stringify({ description }),
@@ -104,7 +104,7 @@ export default function ChatInput({ setPose }: { setPose: (pose: MorphTargets) =
   }
   return (
     <>
-      <div className="relative w-full flex flex-col gap-4">
+      <div className="relative w-full flex flex-col gap-3">
         {showSuggestions && !uploading && !fileUrl.length && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {suggestedPoses.map((pose, i) => (

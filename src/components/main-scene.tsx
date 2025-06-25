@@ -11,9 +11,11 @@ import {
   ImportMeshAsync,
   Material,
   Mesh,
+  Quaternion,
   RegisterSceneLoaderPlugin,
   Scene,
   ShadowGenerator,
+  Space,
   StandardMaterial,
   Vector3,
 } from "@babylonjs/core"
@@ -31,7 +33,22 @@ import {
   MmdStandardMaterial,
 } from "babylon-mmd"
 import ChatInput from "./chat-input"
-import { MorphTargets } from "@/lib/pose"
+import { KeyBones, Pose } from "@/lib/pose"
+import { IMmdRuntimeLinkedBone } from "babylon-mmd/esm/Runtime/IMmdRuntimeLinkedBone"
+
+interface TargetRotation {
+  quaternion: Quaternion
+  startTime: number
+  duration: number
+  startQuaternion: Quaternion
+}
+
+interface TargetPosition {
+  position: Vector3
+  startTime: number
+  duration: number
+  startPosition: Vector3
+}
 
 export default function MainScene() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -42,8 +59,48 @@ export default function MainScene() {
   const mmdRuntimeRef = useRef<MmdWasmRuntime>(null)
   const mmdMaterialBuilderRef = useRef<MmdStandardMaterialBuilder>(null)
   const modelRef = useRef<MmdWasmModel>(null)
+  const bonesRef = useRef<{ [key: string]: IMmdRuntimeLinkedBone }>({})
+  const targetRotationsRef = useRef<{ [key: string]: TargetRotation }>({})
+  const targetPositionsRef = useRef<{ [key: string]: TargetPosition }>({})
+  const [pose, setPose] = useState<Pose>({} as Pose)
 
-  const [pose, setPose] = useState<MorphTargets>({} as MorphTargets)
+  const getBone = (name: string): IMmdRuntimeLinkedBone | null => {
+    return bonesRef.current[name]
+  }
+
+  const rotateBone = useCallback((boneName: string, targetRotation: [number, number, number], duration: number = 1000) => {
+    const bone = getBone(boneName)
+    if (!bone) return
+
+    const [x, y, z] = targetRotation
+    const rotationRadians = new Vector3(x, y, z)
+    const targetQuaternion = Quaternion.RotationYawPitchRoll(
+      rotationRadians.y,
+      rotationRadians.x,
+      rotationRadians.z
+    )
+
+    targetRotationsRef.current[boneName] = {
+      quaternion: targetQuaternion,
+      startTime: performance.now(),
+      duration: duration,
+      startQuaternion: bone.rotationQuaternion || new Quaternion()
+    }
+  }, [])
+
+  const moveBone = useCallback((boneName: string, targetPosition: [number, number, number], duration: number = 1000) => {
+    const bone = getBone(boneName)
+    if (!bone) return
+
+    const targetVector = new Vector3(...targetPosition)
+
+    targetPositionsRef.current[boneName] = {
+      position: targetVector,
+      startTime: performance.now(),
+      duration: duration,
+      startPosition: bone.position.clone()
+    }
+  }, [])
 
   const loadModel = useCallback(async (): Promise<void> => {
     if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current) return
@@ -71,6 +128,15 @@ export default function MainScene() {
       })
       // modelRef.current.morph.setMorphWeight("口角下げ", 1)
       // modelRef.current.morph.resetMorphWeights()
+
+      for (const bone of modelRef.current!.skeleton.bones) {
+        if (KeyBones.includes(bone.name)) {
+          bonesRef.current[bone.name] = bone
+        }
+      }
+
+
+      // getBone("センター")!.position = new Vector3(0, 1, 0)
 
       //   const material = modelRef.current!.mesh.metadata.materials.find((m: Material) => m.name === "胸口")
       //   const m = modelRef.current!.mesh.metadata.meshes.find((m: Mesh) => m.name === "胸口")
@@ -104,8 +170,8 @@ export default function MainScene() {
       engineRef.current = engine
       sceneRef.current = scene
 
-      const camera = new ArcRotateCamera("ArcRotateCamera", 0, 0, 45, new Vector3(0, 18, 0), scene)
-      camera.setPosition(new Vector3(0, 19, -8))
+      const camera = new ArcRotateCamera("ArcRotateCamera", 0, 0, 45, new Vector3(0, 12, 0), scene)
+      camera.setPosition(new Vector3(0, 19, -25))
       camera.attachControl(canvasRef.current, false)
       camera.inertia = 0.8
       camera.speed = 10
@@ -156,6 +222,63 @@ export default function MainScene() {
 
       loadModel()
 
+      // Add bone rotation updates to the render loop
+      scene.onBeforeRenderObservable.add(() => {
+        if (!modelRef.current) return
+
+        const currentTime = performance.now()
+
+        // Update bone rotations
+        const rotationBoneNames = Object.keys(targetRotationsRef.current)
+        for (const boneName of rotationBoneNames) {
+          const targetRotation = targetRotationsRef.current[boneName]
+          const bone = getBone(boneName)
+          if (!bone) continue
+
+          const elapsed = currentTime - targetRotation.startTime
+          const progress = Math.min(elapsed / targetRotation.duration, 1.0)
+
+          if (progress >= 1.0) {
+            // Animation complete
+            bone.setRotationQuaternion(targetRotation.quaternion, Space.LOCAL)
+            delete targetRotationsRef.current[boneName]
+          } else {
+            // Still animating - use smooth interpolation
+            const interpolatedRotation = Quaternion.Slerp(
+              targetRotation.startQuaternion,
+              targetRotation.quaternion,
+              progress
+            )
+            bone.setRotationQuaternion(interpolatedRotation, Space.LOCAL)
+          }
+        }
+
+        // Update bone positions
+        const positionBoneNames = Object.keys(targetPositionsRef.current)
+        for (const boneName of positionBoneNames) {
+          const targetPosition = targetPositionsRef.current[boneName]
+          const bone = getBone(boneName)
+          if (!bone) continue
+
+          const elapsed = currentTime - targetPosition.startTime
+          const progress = Math.min(elapsed / targetPosition.duration, 1.0)
+
+          if (progress >= 1.0) {
+            // Animation complete
+            bone.position = targetPosition.position
+            delete targetPositionsRef.current[boneName]
+          } else {
+            // Still animating - use smooth interpolation
+            const interpolatedPosition = Vector3.Lerp(
+              targetPosition.startPosition,
+              targetPosition.position,
+              progress
+            )
+            bone.position = interpolatedPosition
+          }
+        }
+      })
+
       window.addEventListener("resize", resize)
 
       engine.runRenderLoop(() => {
@@ -173,20 +296,42 @@ export default function MainScene() {
   }, [loadModel])
 
   useEffect(() => {
-    if (pose && modelRef.current) {
+    if (modelRef.current && pose && pose.face && pose.body) {
       console.log(pose)
       modelRef.current.morph.resetMorphWeights()
-      const morphTargets = pose
 
-      for (const [morphName, targetValue] of Object.entries(morphTargets)) {
+      // Clear existing target rotations and positions
+      targetRotationsRef.current = {}
+      targetPositionsRef.current = {}
+
+      // Smoothly reset all bones to identity rotation
+      for (const bone of modelRef.current.skeleton.bones) {
+        if (KeyBones.includes(bone.name)) {
+          rotateBone(bone.name, [0, 0, 0], 300) // Quick reset over 300ms
+        }
+      }
+
+      for (const [morphName, targetValue] of Object.entries(pose.face)) {
         try {
           modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
         } catch {
           console.log(`Morph "${morphName}" not found`)
         }
       }
+
+      for (const [boneName, targetValue] of Object.entries(pose.body)) {
+        const bone = getBone(boneName)
+        if (!bone || !Array.isArray(targetValue) || targetValue.length !== 3 || !targetValue.every(v => typeof v === 'number')) {
+          continue
+        }
+        if (["センター", "左足ＩＫ", "右足ＩＫ"].includes(boneName)) {
+          moveBone(boneName, targetValue as [number, number, number], 1000)
+        } else {
+          rotateBone(boneName, targetValue as [number, number, number])
+        }
+      }
     }
-  }, [pose])
+  }, [pose, rotateBone, moveBone])
 
   return (
     <div className="w-full h-full">
