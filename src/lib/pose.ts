@@ -51,7 +51,7 @@ export interface MorphTargets {
 
 export interface BoneTargetValue {
   position?: [number, number, number]
-  rotation: [number, number, number]
+  rotation: [number, number, number, number]
 }
 
 export interface BoneTargets {
