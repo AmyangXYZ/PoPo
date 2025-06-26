@@ -49,58 +49,65 @@ export interface MorphTargets {
   照れ: number // Embarrassed
 }
 
+export interface BoneTargetValue {
+  position?: [number, number, number]
+  rotation: [number, number, number]
+}
+
 export interface BoneTargets {
   // position x,y,z
-  センター: [number, number, number]
-  左足ＩＫ: [number, number, number]
-  右足ＩＫ: [number, number, number]
-  // rotation x,y,z
-  首: [number, number, number]
-  頭: [number, number, number]
-  上半身: [number, number, number]
-  下半身: [number, number, number]
-  左足: [number, number, number]
-  右足: [number, number, number]
-  左ひざ: [number, number, number]
-  右ひざ: [number, number, number]
-  左足首: [number, number, number]
-  右足首: [number, number, number]
-  左腕: [number, number, number]
-  右腕: [number, number, number]
-  左ひじ: [number, number, number]
-  右ひじ: [number, number, number]
-  左目: [number, number, number]
-  右目: [number, number, number]
-  左手首: [number, number, number]
-  右手首: [number, number, number]
-  右親指１: [number, number, number]
-  右親指２: [number, number, number]
-  右人指１: [number, number, number]
-  右人指２: [number, number, number]
-  右人指３: [number, number, number]
-  右中指１: [number, number, number]
-  右中指２: [number, number, number]
-  右中指３: [number, number, number]
-  右薬指１: [number, number, number]
-  右薬指２: [number, number, number]
-  右薬指３: [number, number, number]
-  右小指１: [number, number, number]
-  右小指２: [number, number, number]
-  右小指３: [number, number, number]
-  左親指１: [number, number, number]
-  左親指２: [number, number, number]
-  左人指１: [number, number, number]
-  左人指２: [number, number, number]
-  左人指３: [number, number, number]
-  左中指１: [number, number, number]
-  左中指２: [number, number, number]
-  左中指３: [number, number, number]
-  左薬指１: [number, number, number]
-  左薬指２: [number, number, number]
-  左薬指３: [number, number, number]
-  左小指１: [number, number, number]
-  左小指２: [number, number, number]
-  左小指３: [number, number, number]
+  センター: BoneTargetValue
+  左足ＩＫ: BoneTargetValue
+  右足ＩＫ: BoneTargetValue
+  右つま先ＩＫ: BoneTargetValue
+  左つま先ＩＫ: BoneTargetValue
+  // rotation x,y,z,w (quaternion)
+  首: BoneTargetValue
+  頭: BoneTargetValue
+  上半身: BoneTargetValue
+  下半身: BoneTargetValue
+  左足: BoneTargetValue
+  右足: BoneTargetValue
+  左ひざ: BoneTargetValue
+  右ひざ: BoneTargetValue
+  左足首: BoneTargetValue
+  右足首: BoneTargetValue
+  左腕: BoneTargetValue
+  右腕: BoneTargetValue
+  左ひじ: BoneTargetValue
+  右ひじ: BoneTargetValue
+  左目: BoneTargetValue
+  右目: BoneTargetValue
+  左手首: BoneTargetValue
+  右手首: BoneTargetValue
+  右親指１: BoneTargetValue
+  右親指２: BoneTargetValue
+  右人指１: BoneTargetValue
+  右人指２: BoneTargetValue
+  右人指３: BoneTargetValue
+  右中指１: BoneTargetValue
+  右中指２: BoneTargetValue
+  右中指３: BoneTargetValue
+  右薬指１: BoneTargetValue
+  右薬指２: BoneTargetValue
+  右薬指３: BoneTargetValue
+  右小指１: BoneTargetValue
+  右小指２: BoneTargetValue
+  右小指３: BoneTargetValue
+  左親指１: BoneTargetValue
+  左親指２: BoneTargetValue
+  左人指１: BoneTargetValue
+  左人指２: BoneTargetValue
+  左人指３: BoneTargetValue
+  左中指１: BoneTargetValue
+  左中指２: BoneTargetValue
+  左中指３: BoneTargetValue
+  左薬指１: BoneTargetValue
+  左薬指２: BoneTargetValue
+  左薬指３: BoneTargetValue
+  左小指１: BoneTargetValue
+  左小指２: BoneTargetValue
+  左小指３: BoneTargetValue
 }
 
 export const KeyBones = [
@@ -121,6 +128,8 @@ export const KeyBones = [
   "右ひじ",
   "左足ＩＫ",
   "右足ＩＫ",
+  "右つま先ＩＫ",
+  "左つま先ＩＫ",
   "左目",
   "右目",
   "左手首",
