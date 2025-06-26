@@ -165,7 +165,7 @@ export default function MainScene() {
     if (!modelRef.current || !animationRef.current) return
 
     const pose: Pose = {
-      description: descriptionRef.current,
+      description: descriptionRef.current == "" ? "This is an unlabeled pose sample. It is provided solely to help the model learn the natural constraints and patterns of MMD bone rotations, positions, and facial morphs. No semantic description is associated with this pose." : descriptionRef.current,
       face: {} as Morphs,
       rotatableBones: {} as RotatableBones,
       movableBones: {} as MovableBones,
@@ -358,7 +358,7 @@ export default function MainScene() {
       const animation = new MmdWasmAnimation(vmd, mmdWasmInstanceRef.current!, sceneRef.current!)
       modelRef.current!.addAnimation(animation)
       modelRef.current!.setAnimation("vmd")
-      mmdRuntimeRef.current!.seekAnimation(5 * 30 + 5, true)
+      mmdRuntimeRef.current!.seekAnimation(24 * 30, true)
       animationRef.current = animation
 
       // getBone("右足ＩＫ")!.position = new Vector3(0, 5, -10)
