@@ -18,6 +18,7 @@ import {
   Space,
   StandardMaterial,
   Vector3,
+  Matrix,
 } from "@babylonjs/core"
 import { useRef, useEffect, useCallback, useState } from "react"
 import {
@@ -31,10 +32,15 @@ import {
   type IMmdWasmInstance,
   MmdStandardMaterialBuilder,
   MmdStandardMaterial,
+  MmdPlayerControl,
+  VmdLoader,
+  MmdWasmAnimation,
 } from "babylon-mmd"
 import ChatInput from "./chat-input"
-import { KeyBones, Pose } from "@/lib/pose"
+import { BoneTargets, KeyBones, MorphTargets, Pose } from "@/lib/pose"
 import { IMmdRuntimeLinkedBone } from "babylon-mmd/esm/Runtime/IMmdRuntimeLinkedBone"
+import { Button } from "./ui/button"
+import poseData from "./pose_data.json"
 
 interface TargetRotation {
   quaternion: Quaternion
@@ -68,39 +74,42 @@ export default function MainScene() {
     return bonesRef.current[name]
   }
 
-  const rotateBone = useCallback((boneName: string, targetRotation: [number, number, number], duration: number = 1000) => {
-    const bone = getBone(boneName)
-    if (!bone) return
+  const rotateBone = useCallback(
+    (boneName: string, targetRotation: [number, number, number], duration: number = 1000) => {
+      const bone = getBone(boneName)
+      if (!bone) return
 
-    const [x, y, z] = targetRotation
-    const rotationRadians = new Vector3(x, y, z)
-    const targetQuaternion = Quaternion.RotationYawPitchRoll(
-      rotationRadians.y,
-      rotationRadians.x,
-      rotationRadians.z
-    )
+      const [x, y, z] = targetRotation
+      // Create quaternion from Euler angles in the same order as toEulerAngles()
+      // toEulerAngles() returns [x, y, z] where x=pitch, y=yaw, z=roll
+      const targetQuaternion = Quaternion.RotationYawPitchRoll(y, x, z)
 
-    targetRotationsRef.current[boneName] = {
-      quaternion: targetQuaternion,
-      startTime: performance.now(),
-      duration: duration,
-      startQuaternion: bone.rotationQuaternion || new Quaternion()
-    }
-  }, [])
+      targetRotationsRef.current[boneName] = {
+        quaternion: targetQuaternion,
+        startTime: performance.now(),
+        duration: duration,
+        startQuaternion: bone.rotationQuaternion || new Quaternion(),
+      }
+    },
+    []
+  )
 
-  const moveBone = useCallback((boneName: string, targetPosition: [number, number, number], duration: number = 1000) => {
-    const bone = getBone(boneName)
-    if (!bone) return
+  const moveBone = useCallback(
+    (boneName: string, targetPosition: [number, number, number], duration: number = 1000) => {
+      const bone = getBone(boneName)
+      if (!bone) return
 
-    const targetVector = new Vector3(...targetPosition)
+      const targetVector = new Vector3(targetPosition[0], targetPosition[1], targetPosition[2])
 
-    targetPositionsRef.current[boneName] = {
-      position: targetVector,
-      startTime: performance.now(),
-      duration: duration,
-      startPosition: bone.position.clone()
-    }
-  }, [])
+      targetPositionsRef.current[boneName] = {
+        position: targetVector,
+        startTime: performance.now(),
+        duration: duration,
+        startPosition: bone.position.clone(),
+      }
+    },
+    []
+  )
 
   const loadModel = useCallback(async (): Promise<void> => {
     if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current) return
@@ -115,7 +124,7 @@ export default function MainScene() {
           materialBuilder: mmdMaterialBuilderRef.current || undefined,
         },
       },
-    }).then((result) => {
+    }).then(async (result) => {
       const mesh = result.meshes[0]
       for (const m of mesh.metadata.meshes) {
         m.receiveShadows = true
@@ -126,8 +135,6 @@ export default function MainScene() {
           disableOffsetForConstraintFrame: true,
         },
       })
-      // modelRef.current.morph.setMorphWeight("口角下げ", 1)
-      // modelRef.current.morph.resetMorphWeights()
 
       for (const bone of modelRef.current!.skeleton.bones) {
         if (KeyBones.includes(bone.name)) {
@@ -135,8 +142,38 @@ export default function MainScene() {
         }
       }
 
+      const vmd = await new VmdLoader(sceneRef.current!).loadAsync("vmd", "/animations/Miku.vmd")
+      const animation = new MmdWasmAnimation(vmd, mmdWasmInstanceRef.current!, sceneRef.current!)
+      modelRef.current!.addAnimation(animation)
+      // modelRef.current!.setAnimation("vmd")
+      // mmdRuntimeRef.current!.seekAnimation(5 * 30 + 5, true)
 
       // getBone("右足ＩＫ")!.position = new Vector3(0, 5, -10)
+
+      for (const [morphName, targetValue] of Object.entries(poseData.face)) {
+        try {
+          modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
+        } catch {
+          console.log(`Morph "${morphName}" not found`)
+        }
+      }
+
+      for (const [boneName, targetValue] of Object.entries(poseData.body)) {
+        const bone = getBone(boneName)
+        if (
+          !bone ||
+          !Array.isArray(targetValue) ||
+          targetValue.length !== 3 ||
+          !targetValue.every((v) => typeof v === "number")
+        ) {
+          continue
+        }
+        if (["センター", "左足ＩＫ", "右足ＩＫ"].includes(boneName)) {
+          moveBone(boneName, targetValue as [number, number, number], 300)
+        } else {
+          rotateBone(boneName, targetValue as [number, number, number], 300)
+        }
+      }
 
       //   const material = modelRef.current!.mesh.metadata.materials.find((m: Material) => m.name === "胸口")
       //   const m = modelRef.current!.mesh.metadata.meshes.find((m: Mesh) => m.name === "胸口")
@@ -145,6 +182,87 @@ export default function MainScene() {
       //     m.visibility = 0
       //   }
     })
+  }, [moveBone, rotateBone])
+
+  const exportPose = useCallback(() => {
+    if (!modelRef.current) return
+    const pose: Pose = {
+      face: {},
+      body: {},
+    } as Pose
+
+    const morphs = modelRef.current.morph.morphs
+    for (const morph of morphs) {
+      pose.face[morph.name as keyof MorphTargets] = modelRef.current.morph.getMorphWeight(morph.name)
+    }
+
+    for (const [boneName, bone] of Object.entries(bonesRef.current)) {
+      if (["センター", "左足ＩＫ", "右足ＩＫ"].includes(boneName)) {
+        const position = bone.position.clone()
+        pose.body[boneName as keyof BoneTargets] = [position.x, position.y, position.z]
+      } else {
+        // Get the runtime bone and extract local rotation from its world matrix and parent
+        const runtimeBone = modelRef.current.runtimeBones.find((b) => b.name === boneName)
+        if (runtimeBone) {
+          // Get this bone's world matrix
+          const worldMatrix = Matrix.FromArray(runtimeBone.worldMatrix, 0)
+
+          // Get parent world matrix (identity if no parent)
+          let parentWorldMatrix = Matrix.Identity()
+          if (runtimeBone.parentBone) {
+            parentWorldMatrix = Matrix.FromArray(runtimeBone.parentBone.worldMatrix, 0)
+          }
+
+          // Compute local matrix: local = inverse(parentWorld) * world
+          const invParentWorld = parentWorldMatrix.invert()
+          const localMatrix = invParentWorld.multiply(worldMatrix)
+
+          // Decompose local matrix to get local rotation
+          const localRotation = new Quaternion()
+          const localPosition = new Vector3()
+          const localScaling = new Vector3()
+          localMatrix.decompose(localScaling, localRotation, localPosition)
+
+          // Convert to Euler angles
+          const localEulerAngles = localRotation.toEulerAngles()
+
+          // Mirroring fix for right arm and right hand bones
+          const rightBones = [
+            "右腕",
+            "右ひじ",
+            "右手首",
+            "右親指１",
+            "右親指２",
+            "右人指１",
+            "右人指２",
+            "右人指３",
+            "右中指１",
+            "右中指２",
+            "右中指３",
+            "右薬指１",
+            "右薬指２",
+            "右薬指３",
+            "右小指１",
+            "右小指２",
+            "右小指３",
+            "右足",
+            "右ひざ",
+            "右足首",
+            "右足ＩＫ",
+          ]
+          if (rightBones.includes(boneName)) {
+            pose.body[boneName as keyof BoneTargets] = [localEulerAngles.x, -localEulerAngles.y, localEulerAngles.z]
+          } else {
+            pose.body[boneName as keyof BoneTargets] = [localEulerAngles.x, localEulerAngles.y, localEulerAngles.z]
+          }
+        } else {
+          // Fallback to bone's own rotation if runtime bone not found
+          const localEulerAngles = bone.rotationQuaternion.toEulerAngles()
+          pose.body[boneName as keyof BoneTargets] = [localEulerAngles.x, localEulerAngles.y, localEulerAngles.z]
+        }
+      }
+    }
+    console.log("Final pose:", pose)
   }, [])
 
   useEffect(() => {
@@ -196,6 +314,9 @@ export default function MainScene() {
       const mmdRuntime = new MmdWasmRuntime(mmdWasmInstanceRef.current, scene, new MmdWasmPhysics(scene))
       mmdRuntime.register(scene)
       mmdRuntimeRef.current = mmdRuntime
+
+      const mmdPlayerControl = new MmdPlayerControl(scene, mmdRuntime, undefined)
+      mmdPlayerControl.showPlayerControl()
 
       const ground = CreateDisc("stageGround", { radius: 20, tessellation: 64 }, scene)
       const groundMaterial = new StandardMaterial("groundMaterial", scene)
@@ -269,11 +390,7 @@ export default function MainScene() {
             delete targetPositionsRef.current[boneName]
           } else {
             // Still animating - use smooth interpolation
-            const interpolatedPosition = Vector3.Lerp(
-              targetPosition.startPosition,
-              targetPosition.position,
-              progress
-            )
+            const interpolatedPosition = Vector3.Lerp(targetPosition.startPosition, targetPosition.position, progress)
             bone.position = interpolatedPosition
           }
         }
@@ -321,7 +438,12 @@ export default function MainScene() {
 
       for (const [boneName, targetValue] of Object.entries(pose.body)) {
         const bone = getBone(boneName)
-        if (!bone || !Array.isArray(targetValue) || targetValue.length !== 3 || !targetValue.every(v => typeof v === 'number')) {
+        if (
+          !bone ||
+          !Array.isArray(targetValue) ||
+          targetValue.length !== 3 ||
+          !targetValue.every((v) => typeof v === "number")
+        ) {
           continue
         }
         if (["センター", "左足ＩＫ", "右足ＩＫ"].includes(boneName)) {
@@ -335,6 +457,15 @@ export default function MainScene() {
 
   return (
     <div className="w-full h-full">
+      <div className="fixed max-w-2xl mx-auto flex p-4 w-full">
+        <Button
+          onClick={() => {
+            exportPose()
+          }}
+        >
+          Export pose
+        </Button>
+      </div>
       <canvas ref={canvasRef} className="w-full h-full" />
       <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full">
         <ChatInput setPose={setPose} />
