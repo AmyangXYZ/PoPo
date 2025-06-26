@@ -37,9 +37,10 @@ import {
   MmdWasmAnimation,
 } from "babylon-mmd"
 import ChatInput from "./chat-input"
-import { BoneTargets, BoneTargetValue, KeyBones, MorphTargets, Pose } from "@/lib/pose"
+import { BonePosition, BoneRotationQuaternion, KeyBones, KeyMorphs, Morphs, MovableBones, Pose, RotatableBones } from "@/lib/pose"
 import { IMmdRuntimeLinkedBone } from "babylon-mmd/esm/Runtime/IMmdRuntimeLinkedBone"
 import { Button } from "./ui/button"
+import { Textarea } from "./ui/textarea"
 
 interface TargetRotation {
   quaternion: Quaternion
@@ -68,6 +69,8 @@ export default function MainScene() {
   const animationRef = useRef<MmdWasmAnimation>(null)
   const targetRotationsRef = useRef<{ [key: string]: TargetRotation }>({})
   const targetPositionsRef = useRef<{ [key: string]: TargetPosition }>({})
+  const [description, setDescription] = useState<string>("")
+  const descriptionRef = useRef<string>("")
   const [pose, setPose] = useState<Pose>({} as Pose)
 
   const getBone = (name: string): IMmdRuntimeLinkedBone | null => {
@@ -87,11 +90,11 @@ export default function MainScene() {
   }, [])
 
   const moveBone = useCallback(
-    (boneName: string, targetPosition: [number, number, number], duration: number = 1000) => {
+    (boneName: string, position: BonePosition, duration: number = 1000) => {
       const bone = getBone(boneName)
       if (!bone) return
 
-      const targetVector = new Vector3(targetPosition[0], targetPosition[1], targetPosition[2])
+      const targetVector = new Vector3(position.x, position.y, position.z)
 
       targetPositionsRef.current[boneName] = {
         position: targetVector,
@@ -102,6 +105,223 @@ export default function MainScene() {
     },
     []
   )
+
+
+  const importPose = useCallback(
+    (pose?: Pose) => {
+      if (!modelRef.current) return
+      modelRef.current.removeAnimation(0)
+      modelRef.current.morph.resetMorphWeights()
+
+      if (!pose) return
+
+      for (const [morphName, targetValue] of Object.entries(pose.face)) {
+        try {
+          modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
+        } catch {
+          console.log(`Morph "${morphName}" not found`)
+        }
+      }
+
+      for (const boneName of Object.keys(pose.movableBones)) {
+        const position = pose.movableBones[boneName as keyof MovableBones]
+        if (!position || typeof position !== "object") {
+          continue
+        }
+        moveBone(boneName, position, 1000)
+      }
+
+      for (const boneName of Object.keys(pose.rotatableBones)) {
+        const boneRotationQuaternion = pose.rotatableBones[boneName as keyof RotatableBones]
+        rotateBone(boneName, new Quaternion(boneRotationQuaternion.x, boneRotationQuaternion.y, boneRotationQuaternion.z, boneRotationQuaternion.w), 1000)
+
+      }
+    },
+    [moveBone, rotateBone]
+  )
+
+
+  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      try {
+        const poseData = JSON.parse(e.target?.result as string)
+        importPose(poseData)
+      } catch (error) {
+        console.error('Error parsing JSON file:', error)
+        alert('Invalid JSON file. Please select a valid pose file.')
+      }
+    }
+    reader.readAsText(file)
+
+    // Reset the input value so the same file can be selected again
+    event.target.value = ''
+  }, [importPose])
+
+  const exportPose = useCallback(() => {
+    if (!modelRef.current || !animationRef.current) return
+
+    const pose: Pose = {
+      description: descriptionRef.current,
+      face: {} as Morphs,
+      rotatableBones: {} as RotatableBones,
+      movableBones: {} as MovableBones,
+    } as Pose
+
+    const morphs = modelRef.current.morph.morphs
+    for (const morph of morphs) {
+      if (!KeyMorphs.includes(morph.name)) continue
+      pose.face[morph.name as keyof Morphs] = modelRef.current.morph.getMorphWeight(morph.name)
+    }
+
+    // Get current animation frame
+    const currentFrame = mmdRuntimeRef.current!.currentFrameTime
+
+    // Read rotation data directly from animation tracks for all KeyBones
+    for (const boneTrack of animationRef.current.boneTracks) {
+      const boneName = boneTrack.name
+
+      if (!KeyBones.includes(boneName)) continue
+
+      // Get rotation at current frame by interpolating the track data
+      const rotations = boneTrack.rotations
+      const frameNumbers = boneTrack.frameNumbers
+
+      if (rotations.length === 0) continue
+
+      // Find the frame data for current time
+      let rotation: BoneRotationQuaternion = { x: 0, y: 0, z: 0, w: 1 } // Default identity quaternion
+
+      // Simple approach: find closest frame or interpolate
+      if (frameNumbers.length === 1) {
+        // Single frame
+        const idx = 0
+        rotation = {
+          x: rotations[idx * 4 + 0], // x
+          y: rotations[idx * 4 + 1], // y
+          z: rotations[idx * 4 + 2], // z
+          w: rotations[idx * 4 + 3], // w
+        }
+      } else {
+        // Multiple frames - find surrounding frames and interpolate
+        let frameIndex = 0
+        for (let i = 0; i < frameNumbers.length - 1; i++) {
+          if (currentFrame >= frameNumbers[i] && currentFrame <= frameNumbers[i + 1]) {
+            frameIndex = i
+            break
+          } else if (currentFrame >= frameNumbers[frameNumbers.length - 1]) {
+            frameIndex = frameNumbers.length - 1
+            break
+          }
+        }
+
+        if (currentFrame <= frameNumbers[0]) {
+          // Before first frame
+          frameIndex = 0
+        } else if (currentFrame >= frameNumbers[frameNumbers.length - 1]) {
+          // After last frame
+          frameIndex = frameNumbers.length - 1
+        } else {
+          // Interpolate between frames
+          for (let i = 0; i < frameNumbers.length - 1; i++) {
+            if (currentFrame >= frameNumbers[i] && currentFrame < frameNumbers[i + 1]) {
+              const t = (currentFrame - frameNumbers[i]) / (frameNumbers[i + 1] - frameNumbers[i])
+
+              // Get quaternions for interpolation
+              const q1 = new Quaternion(
+                rotations[i * 4 + 0],
+                rotations[i * 4 + 1],
+                rotations[i * 4 + 2],
+                rotations[i * 4 + 3]
+              )
+              const q2 = new Quaternion(
+                rotations[(i + 1) * 4 + 0],
+                rotations[(i + 1) * 4 + 1],
+                rotations[(i + 1) * 4 + 2],
+                rotations[(i + 1) * 4 + 3]
+              )
+
+              // Spherical interpolation
+              const interpolated = Quaternion.Slerp(q1, q2, t)
+              rotation = {
+                x: interpolated.x,
+                y: interpolated.y,
+                z: interpolated.z,
+                w: interpolated.w,
+              }
+              break
+            }
+          }
+        }
+
+        // Fallback to specific frame
+        if (rotation.x === 0 && rotation.y === 0 && rotation.z === 0 && rotation.w === 1) {
+          rotation = {
+            x: rotations[frameIndex * 4 + 0],
+            y: rotations[frameIndex * 4 + 1],
+            z: rotations[frameIndex * 4 + 2],
+            w: rotations[frameIndex * 4 + 3],
+          }
+        }
+      }
+
+      // Store rotation for this bone
+      pose.rotatableBones[boneName as keyof RotatableBones] = rotation
+    }
+
+    // Then add position data from runtime bones for IK bones only
+
+    for (const boneTrack of animationRef.current.movableBoneTracks) {
+      const boneName = boneTrack.name
+      if (!KeyBones.includes(boneName)) continue
+
+      const runtimeBone = modelRef.current.runtimeBones.find((b) => b.name === boneName)
+      if (runtimeBone) {
+        // Get this bone's world matrix
+        const worldMatrix = Matrix.FromArray(runtimeBone.worldMatrix, 0)
+
+        // Get parent world matrix (identity if no parent)
+        let parentWorldMatrix = Matrix.Identity()
+        if (runtimeBone.parentBone) {
+          parentWorldMatrix = Matrix.FromArray(runtimeBone.parentBone.worldMatrix, 0)
+        }
+
+        // Compute local matrix: local = inverse(parentWorld) * world
+        const invParentWorld = parentWorldMatrix.invert()
+        const localMatrix = invParentWorld.multiply(worldMatrix)
+
+        // Decompose local matrix to get local position
+        const localRotation = new Quaternion()
+        const localPosition = new Vector3()
+        const localScaling = new Vector3()
+        localMatrix.decompose(localScaling, localRotation, localPosition)
+
+        const position: BonePosition = {
+          x: localPosition.x,
+          y: localPosition.y,
+          z: localPosition.z,
+        }
+
+        pose.movableBones[boneName as keyof MovableBones] = position
+      }
+    }
+
+    // Download pose as JSON file
+    const poseJson = JSON.stringify(pose, null, 2)
+    const blob = new Blob([poseJson], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `pose_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }, [])
+
 
   const loadModel = useCallback(async (): Promise<void> => {
     if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current) return
@@ -151,202 +371,6 @@ export default function MainScene() {
       //   }
     })
   }, [])
-
-  const importPose = useCallback(
-    (pose: Pose) => {
-      if (!modelRef.current) return
-      for (const [morphName, targetValue] of Object.entries(pose.face)) {
-        try {
-          modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
-        } catch {
-          console.log(`Morph "${morphName}" not found`)
-        }
-      }
-
-      // Process all bones without special sorting or adjustments
-      const boneNames = Object.keys(pose.body)
-
-      for (const boneName of boneNames) {
-        const targetValue = pose.body[boneName as keyof BoneTargets] as BoneTargetValue
-        if (!targetValue || typeof targetValue !== "object") {
-          continue
-        }
-
-        const boneTarget = targetValue as BoneTargetValue
-
-        // Apply position only for IK bones
-        if (boneTarget.position && Array.isArray(boneTarget.position) && boneTarget.position.length === 3) {
-          if (["センター", "左足ＩＫ", "右足ＩＫ", "右つま先ＩＫ", "左つま先ＩＫ"].includes(boneName)) {
-            moveBone(boneName, boneTarget.position as [number, number, number], 1000)
-          }
-        }
-
-        // Apply rotation for all bones
-        if (boneTarget.rotation && Array.isArray(boneTarget.rotation) && boneTarget.rotation.length === 4) {
-          const quaternion = new Quaternion(
-            boneTarget.rotation[0], // x
-            boneTarget.rotation[1], // y
-            boneTarget.rotation[2], // z
-            boneTarget.rotation[3] // w
-          )
-          rotateBone(boneName, quaternion, 1000)
-        }
-      }
-    },
-    [moveBone, rotateBone]
-  )
-
-  const exportPose = useCallback(() => {
-    if (!modelRef.current || !animationRef.current) return
-
-    const pose: Pose = {
-      face: {},
-      body: {},
-    } as Pose
-
-    const morphs = modelRef.current.morph.morphs
-    for (const morph of morphs) {
-      pose.face[morph.name as keyof MorphTargets] = modelRef.current.morph.getMorphWeight(morph.name)
-    }
-
-    // Get current animation frame
-    const currentFrame = mmdRuntimeRef.current!.currentFrameTime
-    console.log(`Exporting pose at frame ${currentFrame}`)
-
-    // Read rotation data directly from animation tracks for all KeyBones
-    for (const boneTrack of animationRef.current.boneTracks) {
-      const boneName = boneTrack.name
-
-      if (!KeyBones.includes(boneName)) continue
-
-      // Get rotation at current frame by interpolating the track data
-      const rotations = boneTrack.rotations
-      const frameNumbers = boneTrack.frameNumbers
-
-      if (rotations.length === 0) continue
-
-      // Find the frame data for current time
-      let rotation: [number, number, number, number] = [0, 0, 0, 1] // Default identity quaternion
-
-      // Simple approach: find closest frame or interpolate
-      if (frameNumbers.length === 1) {
-        // Single frame
-        const idx = 0
-        rotation = [
-          rotations[idx * 4 + 0], // x
-          rotations[idx * 4 + 1], // y
-          rotations[idx * 4 + 2], // z
-          rotations[idx * 4 + 3], // w
-        ]
-      } else {
-        // Multiple frames - find surrounding frames and interpolate
-        let frameIndex = 0
-        for (let i = 0; i < frameNumbers.length - 1; i++) {
-          if (currentFrame >= frameNumbers[i] && currentFrame <= frameNumbers[i + 1]) {
-            frameIndex = i
-            break
-          } else if (currentFrame >= frameNumbers[frameNumbers.length - 1]) {
-            frameIndex = frameNumbers.length - 1
-            break
-          }
-        }
-
-        if (currentFrame <= frameNumbers[0]) {
-          // Before first frame
-          frameIndex = 0
-        } else if (currentFrame >= frameNumbers[frameNumbers.length - 1]) {
-          // After last frame
-          frameIndex = frameNumbers.length - 1
-        } else {
-          // Interpolate between frames
-          for (let i = 0; i < frameNumbers.length - 1; i++) {
-            if (currentFrame >= frameNumbers[i] && currentFrame < frameNumbers[i + 1]) {
-              const t = (currentFrame - frameNumbers[i]) / (frameNumbers[i + 1] - frameNumbers[i])
-
-              // Get quaternions for interpolation
-              const q1 = new Quaternion(
-                rotations[i * 4 + 0],
-                rotations[i * 4 + 1],
-                rotations[i * 4 + 2],
-                rotations[i * 4 + 3]
-              )
-              const q2 = new Quaternion(
-                rotations[(i + 1) * 4 + 0],
-                rotations[(i + 1) * 4 + 1],
-                rotations[(i + 1) * 4 + 2],
-                rotations[(i + 1) * 4 + 3]
-              )
-
-              // Spherical interpolation
-              const interpolated = Quaternion.Slerp(q1, q2, t)
-              rotation = [interpolated.x, interpolated.y, interpolated.z, interpolated.w]
-              break
-            }
-          }
-        }
-
-        // Fallback to specific frame
-        if (rotation[0] === 0 && rotation[1] === 0 && rotation[2] === 0 && rotation[3] === 1) {
-          rotation = [
-            rotations[frameIndex * 4 + 0],
-            rotations[frameIndex * 4 + 1],
-            rotations[frameIndex * 4 + 2],
-            rotations[frameIndex * 4 + 3],
-          ]
-        }
-      }
-
-      // Store rotation for this bone
-      pose.body[boneName as keyof BoneTargets] = {
-        rotation: rotation,
-      }
-    }
-
-    // Then add position data from runtime bones for IK bones only
-    const ikBoneNames = ["センター", "左足ＩＫ", "右足ＩＫ", "右つま先ＩＫ", "左つま先ＩＫ"]
-    for (const boneName of ikBoneNames) {
-      if (!KeyBones.includes(boneName)) continue
-
-      const runtimeBone = modelRef.current.runtimeBones.find((b) => b.name === boneName)
-      if (runtimeBone) {
-        // Get this bone's world matrix
-        const worldMatrix = Matrix.FromArray(runtimeBone.worldMatrix, 0)
-
-        // Get parent world matrix (identity if no parent)
-        let parentWorldMatrix = Matrix.Identity()
-        if (runtimeBone.parentBone) {
-          parentWorldMatrix = Matrix.FromArray(runtimeBone.parentBone.worldMatrix, 0)
-        }
-
-        // Compute local matrix: local = inverse(parentWorld) * world
-        const invParentWorld = parentWorldMatrix.invert()
-        const localMatrix = invParentWorld.multiply(worldMatrix)
-
-        // Decompose local matrix to get local position
-        const localRotation = new Quaternion()
-        const localPosition = new Vector3()
-        const localScaling = new Vector3()
-        localMatrix.decompose(localScaling, localRotation, localPosition)
-
-        const position: [number, number, number] = [localPosition.x, localPosition.y, localPosition.z]
-
-        // Add position to existing bone target (which should have rotation from above)
-        if (pose.body[boneName as keyof BoneTargets]) {
-          ;(pose.body[boneName as keyof BoneTargets] as BoneTargetValue).position = position
-        } else {
-          // Fallback if no rotation was found in animation tracks
-          pose.body[boneName as keyof BoneTargets] = {
-            rotation: [0, 0, 0, 1], // Default rotation
-            position: position,
-          }
-        }
-      }
-    }
-
-    console.log("Final pose:", pose)
-    modelRef.current.removeAnimation(0)
-    importPose(pose)
-  }, [importPose])
 
   useEffect(() => {
     const resize = () => {
@@ -496,53 +520,24 @@ export default function MainScene() {
   }, [loadModel])
 
   useEffect(() => {
-    if (modelRef.current && pose && pose.face && pose.body) {
+    if (modelRef.current && pose && pose.face && pose.movableBones && pose.rotatableBones) {
       console.log(pose)
-      modelRef.current.morph.resetMorphWeights()
-
-      // Clear existing target rotations and positions
-      targetRotationsRef.current = {}
-      targetPositionsRef.current = {}
-
-      // Smoothly reset all bones to identity rotation
-      for (const bone of modelRef.current.skeleton.bones) {
-        if (KeyBones.includes(bone.name)) {
-          rotateBone(bone.name, new Quaternion(), 300) // Quick reset over 300ms
-        }
-      }
-
-      for (const [boneName, targetValue] of Object.entries(pose.body)) {
-        const bone = getBone(boneName)
-        if (!bone || !targetValue || typeof targetValue !== "object") {
-          continue
-        }
-
-        const boneTarget = targetValue as BoneTargetValue
-
-        // Apply position only for IK bones
-        if (boneTarget.position && Array.isArray(boneTarget.position) && boneTarget.position.length === 3) {
-          if (["センター", "左足ＩＫ", "右足ＩＫ", "右つま先ＩＫ", "左つま先ＩＫ"].includes(boneName)) {
-            moveBone(boneName, boneTarget.position as [number, number, number], 1000)
-          }
-        }
-
-        // Apply rotation for all bones
-        if (boneTarget.rotation && Array.isArray(boneTarget.rotation) && boneTarget.rotation.length === 4) {
-          const quaternion = new Quaternion(
-            boneTarget.rotation[0], // x
-            boneTarget.rotation[1], // y
-            boneTarget.rotation[2], // z
-            boneTarget.rotation[3] // w
-          )
-          rotateBone(boneName, quaternion, 1000)
-        }
-      }
+      importPose(pose)
     }
-  }, [pose, rotateBone, moveBone])
+  }, [pose, importPose])
+
+  useEffect(() => {
+    descriptionRef.current = description
+  }, [description])
 
   return (
     <div className="w-full h-full">
-      <div className="fixed max-w-2xl mx-auto flex p-4 w-full">
+      <div className="fixed max-w-2xl mx-auto flex p-4 w-full gap-2">
+        <Textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Pose description"
+        />
         <Button
           onClick={() => {
             exportPose()
@@ -550,6 +545,20 @@ export default function MainScene() {
         >
           Export pose
         </Button>
+        <div className="relative">
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleFileUpload}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            id="pose-upload"
+          />
+          <Button asChild>
+            <label htmlFor="pose-upload" className="cursor-pointer">
+              Import pose
+            </label>
+          </Button>
+        </div>
       </div>
       <canvas ref={canvasRef} className="w-full h-full" />
       <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full">

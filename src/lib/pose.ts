@@ -1,9 +1,11 @@
 export interface Pose {
-  face: MorphTargets
-  body: BoneTargets
+  description: string
+  face: Morphs
+  movableBones: MovableBones
+  rotatableBones: RotatableBones
 }
 
-export interface MorphTargets {
+export interface Morphs {
   // Basic expressions
   真面目: number // Serious/Neutral
   困る: number // Troubled/Worried
@@ -49,66 +51,112 @@ export interface MorphTargets {
   照れ: number // Embarrassed
 }
 
-export interface BoneTargetValue {
-  position?: [number, number, number]
-  rotation: [number, number, number, number]
+export type BonePosition = {
+  x: number
+  y: number
+  z: number
 }
 
-export interface BoneTargets {
-  // position x,y,z
-  センター: BoneTargetValue
-  左足ＩＫ: BoneTargetValue
-  右足ＩＫ: BoneTargetValue
-  右つま先ＩＫ: BoneTargetValue
-  左つま先ＩＫ: BoneTargetValue
-  // rotation x,y,z,w (quaternion)
-  首: BoneTargetValue
-  頭: BoneTargetValue
-  上半身: BoneTargetValue
-  下半身: BoneTargetValue
-  左足: BoneTargetValue
-  右足: BoneTargetValue
-  左ひざ: BoneTargetValue
-  右ひざ: BoneTargetValue
-  左足首: BoneTargetValue
-  右足首: BoneTargetValue
-  左腕: BoneTargetValue
-  右腕: BoneTargetValue
-  左ひじ: BoneTargetValue
-  右ひじ: BoneTargetValue
-  左目: BoneTargetValue
-  右目: BoneTargetValue
-  左手首: BoneTargetValue
-  右手首: BoneTargetValue
-  右親指１: BoneTargetValue
-  右親指２: BoneTargetValue
-  右人指１: BoneTargetValue
-  右人指２: BoneTargetValue
-  右人指３: BoneTargetValue
-  右中指１: BoneTargetValue
-  右中指２: BoneTargetValue
-  右中指３: BoneTargetValue
-  右薬指１: BoneTargetValue
-  右薬指２: BoneTargetValue
-  右薬指３: BoneTargetValue
-  右小指１: BoneTargetValue
-  右小指２: BoneTargetValue
-  右小指３: BoneTargetValue
-  左親指１: BoneTargetValue
-  左親指２: BoneTargetValue
-  左人指１: BoneTargetValue
-  左人指２: BoneTargetValue
-  左人指３: BoneTargetValue
-  左中指１: BoneTargetValue
-  左中指２: BoneTargetValue
-  左中指３: BoneTargetValue
-  左薬指１: BoneTargetValue
-  左薬指２: BoneTargetValue
-  左薬指３: BoneTargetValue
-  左小指１: BoneTargetValue
-  左小指２: BoneTargetValue
-  左小指３: BoneTargetValue
+export type BoneRotationQuaternion = {
+  x: number
+  y: number
+  z: number
+  w: number
 }
+
+export interface MovableBones {
+  センター: BonePosition
+  左足ＩＫ: BonePosition
+  右足ＩＫ: BonePosition
+  右つま先ＩＫ: BonePosition
+  左つま先ＩＫ: BonePosition
+}
+
+export interface RotatableBones {
+  首: BoneRotationQuaternion
+  頭: BoneRotationQuaternion
+  上半身: BoneRotationQuaternion
+  下半身: BoneRotationQuaternion
+  左足: BoneRotationQuaternion
+  右足: BoneRotationQuaternion
+  左ひざ: BoneRotationQuaternion
+  右ひざ: BoneRotationQuaternion
+  左足首: BoneRotationQuaternion
+  右足首: BoneRotationQuaternion
+  左腕: BoneRotationQuaternion
+  右腕: BoneRotationQuaternion
+  左ひじ: BoneRotationQuaternion
+  右ひじ: BoneRotationQuaternion
+  左目: BoneRotationQuaternion
+  右目: BoneRotationQuaternion
+  左手首: BoneRotationQuaternion
+  右手首: BoneRotationQuaternion
+  右親指１: BoneRotationQuaternion
+  右親指２: BoneRotationQuaternion
+  右人指１: BoneRotationQuaternion
+  右人指２: BoneRotationQuaternion
+  右人指３: BoneRotationQuaternion
+  右中指１: BoneRotationQuaternion
+  右中指２: BoneRotationQuaternion
+  右中指３: BoneRotationQuaternion
+  右薬指１: BoneRotationQuaternion
+  右薬指２: BoneRotationQuaternion
+  右薬指３: BoneRotationQuaternion
+  右小指１: BoneRotationQuaternion
+  右小指２: BoneRotationQuaternion
+  右小指３: BoneRotationQuaternion
+  左親指１: BoneRotationQuaternion
+  左親指２: BoneRotationQuaternion
+  左人指１: BoneRotationQuaternion
+  左人指２: BoneRotationQuaternion
+  左人指３: BoneRotationQuaternion
+  左中指１: BoneRotationQuaternion
+  左中指２: BoneRotationQuaternion
+  左中指３: BoneRotationQuaternion
+  左薬指１: BoneRotationQuaternion
+  左薬指２: BoneRotationQuaternion
+  左薬指３: BoneRotationQuaternion
+  左小指１: BoneRotationQuaternion
+  左小指２: BoneRotationQuaternion
+  左小指３: BoneRotationQuaternion
+}
+
+export const KeyMorphs = [
+  "真面目",
+  "困る",
+  "にこり",
+  "怒り",
+  "まばたき",
+  "笑い",
+  "ウィンク",
+  "ウィンク右",
+  "ウィンク２",
+  "ｳｨﾝｸ２右",
+  "なごみ",
+  "びっくり",
+  "恐ろしい子！",
+  "はちゅ目",
+  "はぅ",
+  "ｷﾘｯ",
+  "眼睑上",
+  "眼角下",
+  "じと目",
+  "じと目1",
+  "あ",
+  "い",
+  "う",
+  "え",
+  "お",
+  "お1",
+  "口角上げ",
+  "口角下げ",
+  "口角下げ1",
+  "口横缩げ",
+  "口横広げ",
+  "にやり２",
+  "にやり２1",
+  "照れ",
+]
 
 export const KeyBones = [
   "センター",

@@ -22,15 +22,15 @@ You are an expert at generating facial expressions and body poses for MMD (MikuM
 }
 
 **Bone Control:**
-- **Position bones** (x,y,z coordinates): 左足ＩＫ, 右足ＩＫ, センター
-- **Rotation bones** (x,y,z Euler angles in radians): 首, 頭, 上半身, 下半身, 左足, 右足, 左ひざ, 右ひざ, 左足首, 右足首, 左腕, 右腕, 左ひじ, 右ひじ, 左目, 右目, 左手首, 右手首, and all finger bones
+- **Position bones** (x,y,z coordinates): センター, 左足ＩＫ, 右足ＩＫ, 右つま先ＩＫ, 左つま先ＩＫ
+- **Rotation bones** (quaternion x,y,z,w): 首, 頭, 上半身, 下半身, 左足, 右足, 左ひざ, 右ひざ, 左足首, 右足首, 左腕, 右腕, 左ひじ, 右ひじ, 左目, 右目, 左手首, 右手首, and all finger bones (右親指１, 右親指２, 右人指１, 右人指２, 右人指３, 右中指１, 右中指２, 右中指３, 右薬指１, 右薬指２, 右薬指３, 右小指１, 右小指２, 右小指３, 左親指１, 左親指２, 左人指１, 左人指２, 左人指３, 左中指１, 左中指２, 左中指３, 左薬指１, 左薬指２, 左薬指３, 左小指１, 左小指２, 左小指３)
 
 **Babylon.js Coordinate System:**
 - X-axis: Left (-) to Right (+)
 - Y-axis: Down (-) to Up (+)
 - Z-axis: Forward (-) to Backward (+)
 
-**Rotation Axes:**
+**Rotation Axes (Quaternions):**
 - X-rotation: Forward/backward tilt (pitch)
 - Y-rotation: Left/right turn (yaw)
 - Z-rotation: Left/right tilt (roll)
@@ -49,10 +49,11 @@ You are an expert at generating facial expressions and body poses for MMD (MikuM
    - **Never set more than one of these above 0.0 at the same time.**
    - If one is nonzero, all others must be exactly 0.
 7. **Blushing/Embarrassed/Sexy Effects**: When the description suggests embarrassment, shyness, blushing, or a sexy/intimate scenario, use the 照れ morph for a red face and set it to 1.
-8. **Bone Rotation Guidelines**:
-   - Use small angles (0.1-0.5 radians) for subtle movements
-   - Use moderate angles (0.5-1.0 radians) for noticeable poses
-   - Use larger angles (1.0-2.0 radians) for dramatic poses
+8. **Quaternion Guidelines**:
+   - Use identity quaternion [0, 0, 0, 1] for neutral rotations
+   - Use small values (0.1-0.3) for subtle movements
+   - Use moderate values (0.3-0.7) for noticeable poses
+   - Use larger values (0.7-1.0) for dramatic poses
    - Consider natural joint limits and anatomical constraints
 9. **Position Guidelines**:
    - センター: Controls overall body position (typically small adjustments)
@@ -69,37 +70,127 @@ You are an expert at generating facial expressions and body poses for MMD (MikuM
     - **Right Arm**: Forward = negative Y, Up = negative Z
     - **Left Arm**: Forward = positive Y, Up = positive Z
     - For the same pose, use OPPOSITE rotation values for left and right arms
-    - Example: "Raising both arms" → 左腕: [1.0, 0, 0], 右腕: [1.0, 0, 0] (same values, but coordinate system handles the mirroring)
-    - Example: "Pointing forward with both arms" → 左腕: [0, 1.0, 0], 右腕: [0, -1.0, 0] (opposite Y values)
-    - Example: "Raising arms up" → 左腕: [0, 0, 1.0], 右腕: [0, 0, -1.0] (opposite Z values)
+    - Example: "Raising both arms" → 左腕: [1.0, 0, 0, 0], 右腕: [1.0, 0, 0, 0] (same values, but coordinate system handles the mirroring)
+    - Example: "Pointing forward with both arms" → 左腕: [0, 1.0, 0, 0], 右腕: [0, -1.0, 0, 0] (opposite Y values)
+    - Example: "Raising arms up" → 左腕: [0, 0, 1.0, 0], 右腕: [0, 0, -1.0, 0] (opposite Z values)
 
 ## Response Format:
-Output ONLY a valid JSON object with this structure:
+Output ONLY a valid JSON object with this exact structure:
 {
-  "face": { /* morph target values (0.0 to 1.0) */ },
-  "body": { /* bone rotations/positions */ }
+  "description": "pose description",
+  "face": {
+    "真面目": 0,
+    "困る": 0,
+    "にこり": 0,
+    "怒り": 0,
+    "まばたき": 0,
+    "笑い": 0,
+    "ウィンク": 0,
+    "ウィンク右": 0,
+    "ウィンク２": 0,
+    "ｳｨﾝｸ２右": 0,
+    "なごみ": 0,
+    "びっくり": 0,
+    "恐ろしい子！": 0,
+    "はちゅ目": 0,
+    "はぅ": 0,
+    "ｷﾘｯ": 0,
+    "眼睑上": 0,
+    "眼角下": 0,
+    "じと目": 0,
+    "じと目1": 0,
+    "あ": 0,
+    "い": 0,
+    "う": 0,
+    "え": 0,
+    "お": 0,
+    "お1": 0,
+    "口角上げ": 0,
+    "口角下げ": 0,
+    "口角下げ1": 0,
+    "口横缩げ": 0,
+    "口横広げ": 0,
+    "にやり２": 0,
+    "にやり２1": 0,
+    "照れ": 0
+  },
+  "rotatableBones": {
+    "首": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "頭": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "上半身": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "下半身": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左足": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右足": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左ひざ": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右ひざ": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左足首": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右足首": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左腕": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右腕": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左ひじ": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右ひじ": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左目": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右目": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左手首": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右手首": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右親指１": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右親指２": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右人指１": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右人指２": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右人指３": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右中指１": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右中指２": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右中指３": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右薬指１": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右薬指２": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右薬指３": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右小指１": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右小指２": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "右小指３": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左親指１": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左親指２": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左人指１": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左人指２": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左人指３": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左中指１": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左中指２": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左中指３": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左薬指１": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左薬指２": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左薬指３": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左小指１": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左小指２": { "x": 0, "y": 0, "z": 0, "w": 1 },
+    "左小指３": { "x": 0, "y": 0, "z": 0, "w": 1 }
+  },
+  "movableBones": {
+    "センター": { "x": 0, "y": 7.95, "z": -0.45 },
+    "左足ＩＫ": { "x": -0.5, "y": 0.795, "z": -1.2 },
+    "右足ＩＫ": { "x": 0.35, "y": 0.795, "z": 0 },
+    "右つま先ＩＫ": { "x": -0.65, "y": -1.59, "z": -1.82 },
+    "左つま先ＩＫ": { "x": 0, "y": -1.59, "z": -1.82 }
+  }
 }
 
 ## Examples:
-- "Tired, slouching" → { "face": { "困る": 0.4, "じと目": 0.6, "なごみ": 0.6, "口角下げ": 0.3, "まばたき": 0, "はちゅ目": 0, "びっくり": 0 }, "body": { "上半身": [-0.3, 0, 0], "首": [-0.2, 0, 0], "頭": [-0.1, 0, 0] } }
-- "Embarrassed and shy" → { "face": { "照れ": 1, "困る": 0.3, "じと目": 0.5, "う": 0.3, "まばたき": 0, "はちゅ目": 0, "びっくり": 0 }, "body": { "上半身": [-0.1, 0, 0], "首": [-0.05, 0, 0], "頭": [-0.05, 0, 0] } }
-- "Flirtatious wink" → { "face": { "にこり": 0.3, "ウィンク": 1.0, "にやり２": 0.7, "眼睑上": 0.5, "口角上げ": 0.6, "じと目": 0, "まばたき": 0, "はちゅ目": 0, "びっくり": 0 }, "body": { "頭": [0.1, 0.2, 0], "上半身": [-0.05, 0, 0] } }
-- "Laughing loudly" → { "face": { "にこり": 0.9, "笑い": 0.8, "あ": 1.0, "口横広げ": 0.9 }, "body": { "上半身": [-0.4, 0, 0], "首": [-0.3, 0, 0], "頭": [-0.2, 0, 0] } }
-- "Surprised" → { "face": { "びっくり": 0.9, "お": 0.7, "眼睑上": 0.6 }, "body": { "上半身": [-0.1, 0, 0], "首": [-0.05, 0, 0], "頭": [-0.05, 0, 0] } }
-- "Crying" → { "face": { "困る": 0.7, "口角下げ": 0.6, "まばたき": 0.5 }, "body": { "上半身": [-0.2, 0, 0], "首": [-0.1, 0, 0], "頭": [-0.05, 0, 0] } }
-- "Angry and shouting" → { "face": { "怒り": 0.9, "あ": 0.8, "ｷﾘｯ": 0.7 }, "body": { "上半身": [-0.3, 0, 0], "首": [-0.2, 0, 0], "頭": [-0.1, 0, 0] } }
-- "Sexy, inviting look" → { "face": { "にこり": 0.3, "ウィンク": 0.7, "にやり２": 0.8, "照れ": 1, "眼睑上": 0.5 }, "body": { "上半身": [-0.1, 0, 0], "首": [-0.05, 0, 0], "頭": [0.1, 0.1, 0] } }
-- "Waving hello" → { "face": { "にこり": 0.5 }, "body": { "右腕": [0, 0, -1.0], "右ひじ": [0, 0, -0.5], "右手首": [0, 0, -0.3] } }
-- "Looking left" → { "face": { "真面目": 0.3 }, "body": { "頭": [0, -0.5, 0], "首": [0, -0.3, 0] } }
-- "Looking right" → { "face": { "真面目": 0.3 }, "body": { "頭": [0, 0.5, 0], "首": [0, 0.3, 0] } }
-- "Bowing" → { "face": { "真面目": 0.3 }, "body": { "上半身": [-0.8, 0, 0], "首": [-0.1, 0, 0], "頭": [-0.1, 0, 0] } }
-- "Squatting" → { "face": { "真面目": 0.3 }, "body": { "センター": [0, 2, 0] } }
-- "Lifting left foot" → { "face": { "真面目": 0.3 }, "body": { "左足ＩＫ": [0, 8, 0] } }
-- "Lifting right foot" → { "face": { "真面目": 0.3 }, "body": { "右足ＩＫ": [0, 8, 0] } }
-- "Kicking forward" → { "face": { "真面目": 0.3 }, "body": { "右足ＩＫ": [0, 5, -10] } }
-- "Walking pose" → { "face": { "真面目": 0.3 }, "body": { "左足ＩＫ": [0.2, 0, 0], "右足ＩＫ": [-0.2, 0, 0] } }
-- "Raising both arms" → { "face": { "真面目": 0.3 }, "body": { "左腕": [0, 0, 1.0], "右腕": [0, 0, -1.0] } }
-- "Pointing forward with both arms" → { "face": { "真面目": 0.3 }, "body": { "左腕": [0, 1.0, 0], "右腕": [0, -1.0, 0] } }
+- "Tired, slouching" → { "description": "tired slouching pose", "face": { "困る": 0.4, "じと目": 0.6, "なごみ": 0.6, "口角下げ": 0.3, "まばたき": 0, "はちゅ目": 0, "びっくり": 0 }, "rotatableBones": { "上半身": { "x": -0.3, "y": 0, "z": 0, "w": 0.95 }, "首": { "x": -0.2, "y": 0, "z": 0, "w": 0.98 }, "頭": { "x": -0.1, "y": 0, "z": 0, "w": 0.995 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Embarrassed and shy" → { "description": "embarrassed and shy pose", "face": { "照れ": 1, "困る": 0.3, "じと目": 0.5, "う": 0.3, "まばたき": 0, "はちゅ目": 0, "びっくり": 0 }, "rotatableBones": { "上半身": { "x": -0.1, "y": 0, "z": 0, "w": 0.995 }, "首": { "x": -0.05, "y": 0, "z": 0, "w": 0.999 }, "頭": { "x": -0.05, "y": 0, "z": 0, "w": 0.999 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Flirtatious wink" → { "description": "flirtatious wink pose", "face": { "にこり": 0.3, "ウィンク": 1.0, "にやり２": 0.7, "眼睑上": 0.5, "口角上げ": 0.6, "じと目": 0, "まばたき": 0, "はちゅ目": 0, "びっくり": 0 }, "rotatableBones": { "頭": { "x": 0.1, "y": 0.2, "z": 0, "w": 0.97 }, "上半身": { "x": -0.05, "y": 0, "z": 0, "w": 0.999 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Laughing loudly" → { "description": "laughing loudly pose", "face": { "にこり": 0.9, "笑い": 0.8, "あ": 1.0, "口横広げ": 0.9 }, "rotatableBones": { "上半身": { "x": -0.4, "y": 0, "z": 0, "w": 0.92 }, "首": { "x": -0.3, "y": 0, "z": 0, "w": 0.95 }, "頭": { "x": -0.2, "y": 0, "z": 0, "w": 0.98 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Surprised" → { "description": "surprised pose", "face": { "びっくり": 0.9, "お": 0.7, "眼睑上": 0.6 }, "rotatableBones": { "上半身": { "x": -0.1, "y": 0, "z": 0, "w": 0.995 }, "首": { "x": -0.05, "y": 0, "z": 0, "w": 0.999 }, "頭": { "x": -0.05, "y": 0, "z": 0, "w": 0.999 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Crying" → { "description": "crying pose", "face": { "困る": 0.7, "口角下げ": 0.6, "まばたき": 0.5 }, "rotatableBones": { "上半身": { "x": -0.2, "y": 0, "z": 0, "w": 0.98 }, "首": { "x": -0.1, "y": 0, "z": 0, "w": 0.995 }, "頭": { "x": -0.05, "y": 0, "z": 0, "w": 0.999 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Angry and shouting" → { "description": "angry and shouting pose", "face": { "怒り": 0.9, "あ": 0.8, "ｷﾘｯ": 0.7 }, "rotatableBones": { "上半身": { "x": -0.3, "y": 0, "z": 0, "w": 0.95 }, "首": { "x": -0.2, "y": 0, "z": 0, "w": 0.98 }, "頭": { "x": -0.1, "y": 0, "z": 0, "w": 0.995 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Sexy, inviting look" → { "description": "sexy inviting look pose", "face": { "にこり": 0.3, "ウィンク": 0.7, "にやり２": 0.8, "照れ": 1, "眼睑上": 0.5 }, "rotatableBones": { "上半身": { "x": -0.1, "y": 0, "z": 0, "w": 0.995 }, "首": { "x": -0.05, "y": 0, "z": 0, "w": 0.999 }, "頭": { "x": 0.1, "y": 0.1, "z": 0, "w": 0.985 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Waving hello" → { "description": "waving hello pose", "face": { "にこり": 0.5 }, "rotatableBones": { "右腕": { "x": 0, "y": 0, "z": -1.0, "w": 0 }, "右ひじ": { "x": 0, "y": 0, "z": -0.5, "w": 0.87 }, "右手首": { "x": 0, "y": 0, "z": -0.3, "w": 0.95 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Looking left" → { "description": "looking left pose", "face": { "真面目": 0.3 }, "rotatableBones": { "頭": { "x": 0, "y": -0.5, "z": 0, "w": 0.87 }, "首": { "x": 0, "y": -0.3, "z": 0, "w": 0.95 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Looking right" → { "description": "looking right pose", "face": { "真面目": 0.3 }, "rotatableBones": { "頭": { "x": 0, "y": 0.5, "z": 0, "w": 0.87 }, "首": { "x": 0, "y": 0.3, "z": 0, "w": 0.95 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Bowing" → { "description": "bowing pose", "face": { "真面目": 0.3 }, "rotatableBones": { "上半身": { "x": -0.8, "y": 0, "z": 0, "w": 0.6 }, "首": { "x": -0.1, "y": 0, "z": 0, "w": 0.995 }, "頭": { "x": -0.1, "y": 0, "z": 0, "w": 0.995 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Squatting" → { "description": "squatting pose", "face": { "真面目": 0.3 }, "rotatableBones": { "上半身": { "x": 0, "y": 0, "z": 0, "w": 1 } }, "movableBones": { "センター": { "x": 0, "y": 2, "z": 0 } } }
+- "Lifting left foot" → { "description": "lifting left foot pose", "face": { "真面目": 0.3 }, "rotatableBones": { "上半身": { "x": 0, "y": 0, "z": 0, "w": 1 } }, "movableBones": { "左足ＩＫ": { "x": 0, "y": 8, "z": 0 } } }
+- "Lifting right foot" → { "description": "lifting right foot pose", "face": { "真面目": 0.3 }, "rotatableBones": { "上半身": { "x": 0, "y": 0, "z": 0, "w": 1 } }, "movableBones": { "右足ＩＫ": { "x": 0, "y": 8, "z": 0 } } }
+- "Kicking forward" → { "description": "kicking forward pose", "face": { "真面目": 0.3 }, "rotatableBones": { "上半身": { "x": 0, "y": 0, "z": 0, "w": 1 } }, "movableBones": { "右足ＩＫ": { "x": 0, "y": 5, "z": -10 } } }
+- "Walking pose" → { "description": "walking pose", "face": { "真面目": 0.3 }, "rotatableBones": { "上半身": { "x": 0, "y": 0, "z": 0, "w": 1 } }, "movableBones": { "左足ＩＫ": { "x": 0.2, "y": 0, "z": 0 }, "右足ＩＫ": { "x": -0.2, "y": 0, "z": 0 } } }
+- "Raising both arms" → { "description": "raising both arms pose", "face": { "真面目": 0.3 }, "rotatableBones": { "左腕": { "x": 0, "y": 0, "z": 1.0, "w": 0 }, "右腕": { "x": 0, "y": 0, "z": -1.0, "w": 0 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
+- "Pointing forward with both arms" → { "description": "pointing forward with both arms pose", "face": { "真面目": 0.3 }, "rotatableBones": { "左腕": { "x": 0, "y": 1.0, "z": 0, "w": 0 }, "右腕": { "x": 0, "y": -1.0, "z": 0, "w": 0 } }, "movableBones": { "センター": { "x": 0, "y": 7.95, "z": -0.45 } } }
 `
 
 const userPrompt = `
