@@ -33,13 +33,7 @@ import {
   MmdStandardMaterial,
 } from "babylon-mmd"
 import ChatInput from "./chat-input"
-import {
-  BonePosition,
-  KeyBones,
-  MovableBones,
-  Pose,
-  RotatableBones,
-} from "@/lib/pose"
+import { BonePosition, KeyBones, MovableBones, Pose, RotatableBones } from "@/lib/pose"
 import { IMmdRuntimeLinkedBone } from "babylon-mmd/esm/Runtime/IMmdRuntimeLinkedBone"
 
 interface TargetRotation {
@@ -205,7 +199,7 @@ export default function MainScene() {
 
       const scene = new Scene(engine)
 
-      scene.clearColor = new Color4(0.925, 0.12, 0.42, 1.0)
+      scene.clearColor = new Color4(0.96, 0.2, 0.5, 1.0)
       scene.ambientColor = new Color3(0.18, 0.12, 0.1)
 
       engineRef.current = engine
@@ -341,7 +335,6 @@ export default function MainScene() {
 
   return (
     <div className="w-full h-full">
-
       <canvas ref={canvasRef} className="w-full h-full" />
       <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full">
         <ChatInput setPose={setPose} />
