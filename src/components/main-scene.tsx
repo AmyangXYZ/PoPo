@@ -205,7 +205,7 @@ export default function MainScene() {
 
       const scene = new Scene(engine)
 
-      scene.clearColor = new Color4(0.925, 0.074, 0.384, 1.0)
+      scene.clearColor = new Color4(0.925, 0.12, 0.42, 1.0)
       scene.ambientColor = new Color3(0.18, 0.12, 0.1)
 
       engineRef.current = engine
