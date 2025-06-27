@@ -14,7 +14,7 @@ import { Pose } from "@/lib/pose"
 const suggestedPoses: string[] = [
   "look right with a shy smile",
   "angry face while lifting left foot",
-  "squatting down and cry loudly",
+  "squatting down and cry",
   "point forward with shocked look",
 ] as const
 
