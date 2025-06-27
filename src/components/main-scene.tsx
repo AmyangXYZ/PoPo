@@ -120,34 +120,38 @@ export default function MainScene() {
 
       if (!pose) return
 
-      for (const [morphName, targetValue] of Object.entries(pose.face)) {
-        try {
-          modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
-        } catch {
-          console.log(`Morph "${morphName}" not found`)
+      if (pose.face) {
+        for (const [morphName, targetValue] of Object.entries(pose.face)) {
+          try {
+            modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
+          } catch {
+            console.log(`Morph "${morphName}" not found`)
+          }
         }
       }
-
-      for (const boneName of Object.keys(pose.movableBones)) {
-        const position = pose.movableBones[boneName as keyof MovableBones]
-        if (!position || typeof position !== "object") {
-          continue
+      if (pose.movableBones) {
+        for (const boneName of Object.keys(pose.movableBones)) {
+          const position = pose.movableBones[boneName as keyof MovableBones]
+          if (!position || typeof position !== "object") {
+            continue
+          }
+          moveBone(boneName, position, 1000)
         }
-        moveBone(boneName, position, 1000)
       }
-
-      for (const boneName of Object.keys(pose.rotatableBones)) {
-        const boneRotationQuaternion = pose.rotatableBones[boneName as keyof RotatableBones]
-        rotateBone(
-          boneName,
-          new Quaternion(
-            boneRotationQuaternion[0],
-            boneRotationQuaternion[1],
-            boneRotationQuaternion[2],
-            boneRotationQuaternion[3]
-          ),
-          1000
-        )
+      if (pose.rotatableBones) {
+        for (const boneName of Object.keys(pose.rotatableBones)) {
+          const boneRotationQuaternion = pose.rotatableBones[boneName as keyof RotatableBones]
+          rotateBone(
+            boneName,
+            new Quaternion(
+              boneRotationQuaternion[0],
+              boneRotationQuaternion[1],
+              boneRotationQuaternion[2],
+              boneRotationQuaternion[3]
+            ),
+            1000
+          )
+        }
       }
     },
     [moveBone, rotateBone]
