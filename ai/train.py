@@ -63,47 +63,22 @@ def load_pose_data(data_dir="../pose_dataset"):
     return data
 
 
-def preprocess_data(data, tokenizer):
-    """Preprocess the data for encoder-decoder training"""
-    inputs = []
-    targets = []
+def tokenize_function(examples, tokenizer):
+    """Simple tokenization function for causal language modeling"""
+    print(f"DEBUG: Type of examples: {type(examples)}")
+    print(f"DEBUG: Examples keys: {examples.keys() if isinstance(examples, dict) else 'Not a dict'}")
+    if isinstance(examples, dict) and "text" in examples:
+        texts = examples["text"]
+        print(f"DEBUG: Type of texts: {type(texts)}")
+        print(f"DEBUG: Number of texts: {len(texts) if isinstance(texts, (list, tuple)) else 'Not a list'}")
 
-    for item in data:
-        text = item["text"]
-
-        # Split at "JSON: " to separate input and target
-        if "JSON: " in text:
-            description_part = text.split("JSON: ")[0].strip()  # "Description: ..."
-            json_part = text.split("JSON: ")[1].strip()        # The JSON data
-
-            inputs.append(description_part)
-            targets.append(json_part)
-        else:
-            print(f"⚠️ Skipping malformed data: {text[:100]}...")
-
-    print(f"📝 Preprocessed {len(inputs)} input-target pairs")
-
-    # Tokenize inputs and targets with consistent padding
-    model_inputs = tokenizer(
-        inputs,
-        max_length=2048,  # Increased back to handle full precision floats
-        padding="max_length",
+    return tokenizer(
+        examples["text"],
         truncation=True,
+        padding="max_length",
+        max_length=2048,
         return_tensors="pt"
     )
-
-    # Tokenize targets
-    with tokenizer.as_target_tokenizer():
-        labels = tokenizer(
-            targets,
-            max_length=2048,  # Same max_length for consistency
-            padding="max_length",
-            truncation=True,
-            return_tensors="pt"
-        )
-
-    model_inputs["labels"] = labels["input_ids"]
-    return model_inputs
 
 
 def main():
@@ -137,7 +112,7 @@ def main():
     # Tokenize dataset
     print("🔄 Tokenizing dataset...")
     tokenized_dataset = dataset.map(
-        lambda x: preprocess_data(x, tokenizer),
+        lambda x: tokenize_function(x, tokenizer),
         batched=True,
         remove_columns=dataset.column_names
     )
