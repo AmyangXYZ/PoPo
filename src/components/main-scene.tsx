@@ -36,7 +36,7 @@ import {
   VmdLoader,
   MmdWasmAnimation,
 } from "babylon-mmd"
-import ChatInput from "./chat-input"
+
 import {
   BonePosition,
   BoneRotationQuaternion,
@@ -534,7 +534,7 @@ export default function MainScene() {
       reader.onload = (e) => {
         try {
           const poseData = JSON.parse(e.target?.result as string)
-          importPose(poseData)
+          setPose(poseData)
         } catch (error) {
           console.error("Error parsing JSON file:", error)
           alert("Invalid JSON file. Please select a valid pose file.")
@@ -545,7 +545,7 @@ export default function MainScene() {
       // Reset the input value so the same file can be selected again
       event.target.value = ""
     },
-    [importPose]
+    [setPose]
   )
 
   return (
@@ -575,9 +575,6 @@ export default function MainScene() {
         </div>
       </div>
       <canvas ref={canvasRef} className="w-full h-full" />
-      <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full">
-        <ChatInput setPose={setPose} />
-      </div>
     </div>
   )
 }
