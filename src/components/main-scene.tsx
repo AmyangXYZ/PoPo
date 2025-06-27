@@ -33,7 +33,13 @@ import {
   MmdStandardMaterial,
 } from "babylon-mmd"
 import ChatInput from "./chat-input"
-import { KeyBones, Pose } from "@/lib/pose"
+import {
+  BonePosition,
+  KeyBones,
+  MovableBones,
+  Pose,
+  RotatableBones,
+} from "@/lib/pose"
 import { IMmdRuntimeLinkedBone } from "babylon-mmd/esm/Runtime/IMmdRuntimeLinkedBone"
 
 interface TargetRotation {
@@ -68,39 +74,76 @@ export default function MainScene() {
     return bonesRef.current[name]
   }
 
-  const rotateBone = useCallback((boneName: string, targetRotation: [number, number, number], duration: number = 1000) => {
+  const rotateBone = useCallback((boneName: string, targetQuaternion: Quaternion, duration: number = 1000) => {
     const bone = getBone(boneName)
     if (!bone) return
-
-    const [x, y, z] = targetRotation
-    const rotationRadians = new Vector3(x, y, z)
-    const targetQuaternion = Quaternion.RotationYawPitchRoll(
-      rotationRadians.y,
-      rotationRadians.x,
-      rotationRadians.z
-    )
 
     targetRotationsRef.current[boneName] = {
       quaternion: targetQuaternion,
       startTime: performance.now(),
       duration: duration,
-      startQuaternion: bone.rotationQuaternion || new Quaternion()
+      startQuaternion: bone.rotationQuaternion || new Quaternion(),
     }
   }, [])
 
-  const moveBone = useCallback((boneName: string, targetPosition: [number, number, number], duration: number = 1000) => {
+  const moveBone = useCallback((boneName: string, position: BonePosition, duration: number = 1000) => {
     const bone = getBone(boneName)
     if (!bone) return
 
-    const targetVector = new Vector3(...targetPosition)
+    const targetVector = new Vector3(position[0], position[1], position[2])
 
     targetPositionsRef.current[boneName] = {
       position: targetVector,
       startTime: performance.now(),
       duration: duration,
-      startPosition: bone.position.clone()
+      startPosition: bone.position.clone(),
     }
   }, [])
+
+  const importPose = useCallback(
+    (pose?: Pose) => {
+      if (!modelRef.current) return
+      modelRef.current.removeAnimation(0)
+      modelRef.current.morph.resetMorphWeights()
+
+      if (!pose) return
+
+      if (pose.face) {
+        for (const [morphName, targetValue] of Object.entries(pose.face)) {
+          try {
+            modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
+          } catch {
+            console.log(`Morph "${morphName}" not found`)
+          }
+        }
+      }
+      if (pose.movableBones) {
+        for (const boneName of Object.keys(pose.movableBones)) {
+          const position = pose.movableBones[boneName as keyof MovableBones]
+          if (!position || typeof position !== "object") {
+            continue
+          }
+          moveBone(boneName, position, 1000)
+        }
+      }
+      if (pose.rotatableBones) {
+        for (const boneName of Object.keys(pose.rotatableBones)) {
+          const boneRotationQuaternion = pose.rotatableBones[boneName as keyof RotatableBones]
+          rotateBone(
+            boneName,
+            new Quaternion(
+              boneRotationQuaternion[0],
+              boneRotationQuaternion[1],
+              boneRotationQuaternion[2],
+              boneRotationQuaternion[3]
+            ),
+            1000
+          )
+        }
+      }
+    },
+    [moveBone, rotateBone]
+  )
 
   const loadModel = useCallback(async (): Promise<void> => {
     if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current) return
@@ -115,7 +158,7 @@ export default function MainScene() {
           materialBuilder: mmdMaterialBuilderRef.current || undefined,
         },
       },
-    }).then((result) => {
+    }).then(async (result) => {
       const mesh = result.meshes[0]
       for (const m of mesh.metadata.meshes) {
         m.receiveShadows = true
@@ -126,15 +169,12 @@ export default function MainScene() {
           disableOffsetForConstraintFrame: true,
         },
       })
-      // modelRef.current.morph.setMorphWeight("口角下げ", 1)
-      // modelRef.current.morph.resetMorphWeights()
 
       for (const bone of modelRef.current!.skeleton.bones) {
         if (KeyBones.includes(bone.name)) {
           bonesRef.current[bone.name] = bone
         }
       }
-
 
       // getBone("右足ＩＫ")!.position = new Vector3(0, 5, -10)
 
@@ -269,11 +309,7 @@ export default function MainScene() {
             delete targetPositionsRef.current[boneName]
           } else {
             // Still animating - use smooth interpolation
-            const interpolatedPosition = Vector3.Lerp(
-              targetPosition.startPosition,
-              targetPosition.position,
-              progress
-            )
+            const interpolatedPosition = Vector3.Lerp(targetPosition.startPosition, targetPosition.position, progress)
             bone.position = interpolatedPosition
           }
         }
@@ -296,45 +332,15 @@ export default function MainScene() {
   }, [loadModel])
 
   useEffect(() => {
-    if (modelRef.current && pose && pose.face && pose.body) {
+    if (modelRef.current && pose) {
       console.log(pose)
-      modelRef.current.morph.resetMorphWeights()
-
-      // Clear existing target rotations and positions
-      targetRotationsRef.current = {}
-      targetPositionsRef.current = {}
-
-      // Smoothly reset all bones to identity rotation
-      for (const bone of modelRef.current.skeleton.bones) {
-        if (KeyBones.includes(bone.name)) {
-          rotateBone(bone.name, [0, 0, 0], 300) // Quick reset over 300ms
-        }
-      }
-
-      for (const [morphName, targetValue] of Object.entries(pose.face)) {
-        try {
-          modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
-        } catch {
-          console.log(`Morph "${morphName}" not found`)
-        }
-      }
-
-      for (const [boneName, targetValue] of Object.entries(pose.body)) {
-        const bone = getBone(boneName)
-        if (!bone || !Array.isArray(targetValue) || targetValue.length !== 3 || !targetValue.every(v => typeof v === 'number')) {
-          continue
-        }
-        if (["センター", "左足ＩＫ", "右足ＩＫ"].includes(boneName)) {
-          moveBone(boneName, targetValue as [number, number, number], 1000)
-        } else {
-          rotateBone(boneName, targetValue as [number, number, number])
-        }
-      }
+      importPose(pose)
     }
-  }, [pose, rotateBone, moveBone])
+  }, [pose, importPose])
 
   return (
     <div className="w-full h-full">
+
       <canvas ref={canvasRef} className="w-full h-full" />
       <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full">
         <ChatInput setPose={setPose} />

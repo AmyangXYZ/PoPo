@@ -1,9 +1,11 @@
 export interface Pose {
-  face: MorphTargets
-  body: BoneTargets
+  description: string
+  face: Morphs
+  movableBones: MovableBones
+  rotatableBones: RotatableBones
 }
 
-export interface MorphTargets {
+export interface Morphs {
   // Basic expressions
   真面目: number // Serious/Neutral
   困る: number // Troubled/Worried
@@ -49,59 +51,103 @@ export interface MorphTargets {
   照れ: number // Embarrassed
 }
 
-export interface BoneTargets {
-  // position x,y,z
-  センター: [number, number, number]
-  左足ＩＫ: [number, number, number]
-  右足ＩＫ: [number, number, number]
-  // rotation x,y,z
-  首: [number, number, number]
-  頭: [number, number, number]
-  上半身: [number, number, number]
-  下半身: [number, number, number]
-  左足: [number, number, number]
-  右足: [number, number, number]
-  左ひざ: [number, number, number]
-  右ひざ: [number, number, number]
-  左足首: [number, number, number]
-  右足首: [number, number, number]
-  左腕: [number, number, number]
-  右腕: [number, number, number]
-  左ひじ: [number, number, number]
-  右ひじ: [number, number, number]
-  左目: [number, number, number]
-  右目: [number, number, number]
-  左手首: [number, number, number]
-  右手首: [number, number, number]
-  右親指１: [number, number, number]
-  右親指２: [number, number, number]
-  右人指１: [number, number, number]
-  右人指２: [number, number, number]
-  右人指３: [number, number, number]
-  右中指１: [number, number, number]
-  右中指２: [number, number, number]
-  右中指３: [number, number, number]
-  右薬指１: [number, number, number]
-  右薬指２: [number, number, number]
-  右薬指３: [number, number, number]
-  右小指１: [number, number, number]
-  右小指２: [number, number, number]
-  右小指３: [number, number, number]
-  左親指１: [number, number, number]
-  左親指２: [number, number, number]
-  左人指１: [number, number, number]
-  左人指２: [number, number, number]
-  左人指３: [number, number, number]
-  左中指１: [number, number, number]
-  左中指２: [number, number, number]
-  左中指３: [number, number, number]
-  左薬指１: [number, number, number]
-  左薬指２: [number, number, number]
-  左薬指３: [number, number, number]
-  左小指１: [number, number, number]
-  左小指２: [number, number, number]
-  左小指３: [number, number, number]
+export type BonePosition = [number, number, number] // [x, y, z]
+
+export type BoneRotationQuaternion = [number, number, number, number] // [x, y, z, w]
+
+export interface MovableBones {
+  センター: BonePosition
+  左足ＩＫ: BonePosition
+  右足ＩＫ: BonePosition
+  右つま先ＩＫ: BonePosition
+  左つま先ＩＫ: BonePosition
 }
+
+export interface RotatableBones {
+  首: BoneRotationQuaternion
+  頭: BoneRotationQuaternion
+  上半身: BoneRotationQuaternion
+  下半身: BoneRotationQuaternion
+  左足: BoneRotationQuaternion
+  右足: BoneRotationQuaternion
+  左ひざ: BoneRotationQuaternion
+  右ひざ: BoneRotationQuaternion
+  左足首: BoneRotationQuaternion
+  右足首: BoneRotationQuaternion
+  左腕: BoneRotationQuaternion
+  右腕: BoneRotationQuaternion
+  左ひじ: BoneRotationQuaternion
+  右ひじ: BoneRotationQuaternion
+  左目: BoneRotationQuaternion
+  右目: BoneRotationQuaternion
+  左手首: BoneRotationQuaternion
+  右手首: BoneRotationQuaternion
+  右親指１: BoneRotationQuaternion
+  右親指２: BoneRotationQuaternion
+  右人指１: BoneRotationQuaternion
+  右人指２: BoneRotationQuaternion
+  右人指３: BoneRotationQuaternion
+  右中指１: BoneRotationQuaternion
+  右中指２: BoneRotationQuaternion
+  右中指３: BoneRotationQuaternion
+  右薬指１: BoneRotationQuaternion
+  右薬指２: BoneRotationQuaternion
+  右薬指３: BoneRotationQuaternion
+  右小指１: BoneRotationQuaternion
+  右小指２: BoneRotationQuaternion
+  右小指３: BoneRotationQuaternion
+  左親指１: BoneRotationQuaternion
+  左親指２: BoneRotationQuaternion
+  左人指１: BoneRotationQuaternion
+  左人指２: BoneRotationQuaternion
+  左人指３: BoneRotationQuaternion
+  左中指１: BoneRotationQuaternion
+  左中指２: BoneRotationQuaternion
+  左中指３: BoneRotationQuaternion
+  左薬指１: BoneRotationQuaternion
+  左薬指２: BoneRotationQuaternion
+  左薬指３: BoneRotationQuaternion
+  左小指１: BoneRotationQuaternion
+  左小指２: BoneRotationQuaternion
+  左小指３: BoneRotationQuaternion
+}
+
+export const KeyMorphs = [
+  "真面目",
+  "困る",
+  "にこり",
+  "怒り",
+  "まばたき",
+  "笑い",
+  "ウィンク",
+  "ウィンク右",
+  "ウィンク２",
+  "ｳｨﾝｸ２右",
+  "なごみ",
+  "びっくり",
+  "恐ろしい子！",
+  "はちゅ目",
+  "はぅ",
+  "ｷﾘｯ",
+  "眼睑上",
+  "眼角下",
+  "じと目",
+  "じと目1",
+  "あ",
+  "い",
+  "う",
+  "え",
+  "お",
+  "お1",
+  "口角上げ",
+  "口角下げ",
+  "口角下げ1",
+  "口横缩げ",
+  "口横広げ",
+  "にやり２",
+  "にやり２1",
+  "照れ",
+]
 
 export const KeyBones = [
   "センター",
@@ -121,6 +167,8 @@ export const KeyBones = [
   "右ひじ",
   "左足ＩＫ",
   "右足ＩＫ",
+  "右つま先ＩＫ",
+  "左つま先ＩＫ",
   "左目",
   "右目",
   "左手首",
