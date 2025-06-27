@@ -51,18 +51,9 @@ export interface Morphs {
   照れ: number // Embarrassed
 }
 
-export type BonePosition = {
-  x: number
-  y: number
-  z: number
-}
+export type BonePosition = [number, number, number] // [x, y, z]
 
-export type BoneRotationQuaternion = {
-  x: number
-  y: number
-  z: number
-  w: number
-}
+export type BoneRotationQuaternion = [number, number, number, number] // [x, y, z, w]
 
 export interface MovableBones {
   センター: BonePosition

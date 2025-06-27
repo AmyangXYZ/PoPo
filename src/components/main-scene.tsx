@@ -37,7 +37,16 @@ import {
   MmdWasmAnimation,
 } from "babylon-mmd"
 import ChatInput from "./chat-input"
-import { BonePosition, BoneRotationQuaternion, KeyBones, KeyMorphs, Morphs, MovableBones, Pose, RotatableBones } from "@/lib/pose"
+import {
+  BonePosition,
+  BoneRotationQuaternion,
+  KeyBones,
+  KeyMorphs,
+  Morphs,
+  MovableBones,
+  Pose,
+  RotatableBones,
+} from "@/lib/pose"
 import { IMmdRuntimeLinkedBone } from "babylon-mmd/esm/Runtime/IMmdRuntimeLinkedBone"
 import { Button } from "./ui/button"
 import { Textarea } from "./ui/textarea"
@@ -89,23 +98,19 @@ export default function MainScene() {
     }
   }, [])
 
-  const moveBone = useCallback(
-    (boneName: string, position: BonePosition, duration: number = 1000) => {
-      const bone = getBone(boneName)
-      if (!bone) return
+  const moveBone = useCallback((boneName: string, position: BonePosition, duration: number = 1000) => {
+    const bone = getBone(boneName)
+    if (!bone) return
 
-      const targetVector = new Vector3(position.x, position.y, position.z)
+    const targetVector = new Vector3(position[0], position[1], position[2])
 
-      targetPositionsRef.current[boneName] = {
-        position: targetVector,
-        startTime: performance.now(),
-        duration: duration,
-        startPosition: bone.position.clone(),
-      }
-    },
-    []
-  )
-
+    targetPositionsRef.current[boneName] = {
+      position: targetVector,
+      startTime: performance.now(),
+      duration: duration,
+      startPosition: bone.position.clone(),
+    }
+  }, [])
 
   const importPose = useCallback(
     (pose?: Pose) => {
@@ -133,39 +138,29 @@ export default function MainScene() {
 
       for (const boneName of Object.keys(pose.rotatableBones)) {
         const boneRotationQuaternion = pose.rotatableBones[boneName as keyof RotatableBones]
-        rotateBone(boneName, new Quaternion(boneRotationQuaternion.x, boneRotationQuaternion.y, boneRotationQuaternion.z, boneRotationQuaternion.w), 1000)
-
+        rotateBone(
+          boneName,
+          new Quaternion(
+            boneRotationQuaternion[0],
+            boneRotationQuaternion[1],
+            boneRotationQuaternion[2],
+            boneRotationQuaternion[3]
+          ),
+          1000
+        )
       }
     },
     [moveBone, rotateBone]
   )
 
-
-  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      try {
-        const poseData = JSON.parse(e.target?.result as string)
-        importPose(poseData)
-      } catch (error) {
-        console.error('Error parsing JSON file:', error)
-        alert('Invalid JSON file. Please select a valid pose file.')
-      }
-    }
-    reader.readAsText(file)
-
-    // Reset the input value so the same file can be selected again
-    event.target.value = ''
-  }, [importPose])
-
   const exportPose = useCallback(() => {
     if (!modelRef.current || !animationRef.current) return
 
     const pose: Pose = {
-      description: descriptionRef.current == "" ? "This is an unlabeled pose sample. It is provided solely to help the model learn the natural constraints and patterns of MMD bone rotations, positions, and facial morphs. No semantic description is associated with this pose." : descriptionRef.current,
+      description:
+        descriptionRef.current == ""
+          ? "This is an unlabeled pose sample. It is provided solely to help the model learn the natural constraints and patterns of MMD bone rotations, positions, and facial morphs. No semantic description is associated with this pose."
+          : descriptionRef.current,
       face: {} as Morphs,
       rotatableBones: {} as RotatableBones,
       movableBones: {} as MovableBones,
@@ -174,7 +169,10 @@ export default function MainScene() {
     const morphs = modelRef.current.morph.morphs
     for (const morph of morphs) {
       if (!KeyMorphs.includes(morph.name)) continue
-      pose.face[morph.name as keyof Morphs] = modelRef.current.morph.getMorphWeight(morph.name)
+      const weight = modelRef.current.morph.getMorphWeight(morph.name)
+      if (weight !== 0) {
+        pose.face[morph.name as keyof Morphs] = weight
+      }
     }
 
     // Get current animation frame
@@ -193,18 +191,18 @@ export default function MainScene() {
       if (rotations.length === 0) continue
 
       // Find the frame data for current time
-      let rotation: BoneRotationQuaternion = { x: 0, y: 0, z: 0, w: 1 } // Default identity quaternion
+      let rotation: BoneRotationQuaternion = [0, 0, 0, 1] // Default identity quaternion
 
       // Simple approach: find closest frame or interpolate
       if (frameNumbers.length === 1) {
         // Single frame
         const idx = 0
-        rotation = {
-          x: rotations[idx * 4 + 0], // x
-          y: rotations[idx * 4 + 1], // y
-          z: rotations[idx * 4 + 2], // z
-          w: rotations[idx * 4 + 3], // w
-        }
+        rotation = [
+          rotations[idx * 4 + 0], // x
+          rotations[idx * 4 + 1], // y
+          rotations[idx * 4 + 2], // z
+          rotations[idx * 4 + 3], // w
+        ]
       } else {
         // Multiple frames - find surrounding frames and interpolate
         let frameIndex = 0
@@ -246,30 +244,27 @@ export default function MainScene() {
 
               // Spherical interpolation
               const interpolated = Quaternion.Slerp(q1, q2, t)
-              rotation = {
-                x: interpolated.x,
-                y: interpolated.y,
-                z: interpolated.z,
-                w: interpolated.w,
-              }
+              rotation = [interpolated.x, interpolated.y, interpolated.z, interpolated.w]
               break
             }
           }
         }
 
         // Fallback to specific frame
-        if (rotation.x === 0 && rotation.y === 0 && rotation.z === 0 && rotation.w === 1) {
-          rotation = {
-            x: rotations[frameIndex * 4 + 0],
-            y: rotations[frameIndex * 4 + 1],
-            z: rotations[frameIndex * 4 + 2],
-            w: rotations[frameIndex * 4 + 3],
-          }
+        if (rotation[0] === 0 && rotation[1] === 0 && rotation[2] === 0 && rotation[3] === 1) {
+          rotation = [
+            rotations[frameIndex * 4 + 0],
+            rotations[frameIndex * 4 + 1],
+            rotations[frameIndex * 4 + 2],
+            rotations[frameIndex * 4 + 3],
+          ]
         }
       }
 
       // Store rotation for this bone
-      pose.rotatableBones[boneName as keyof RotatableBones] = rotation
+      if (!(rotation[0] === 0 && rotation[1] === 0 && rotation[2] === 0 && rotation[3] === 1)) {
+        pose.rotatableBones[boneName as keyof RotatableBones] = rotation
+      }
     }
 
     // Then add position data from runtime bones for IK bones only
@@ -299,29 +294,25 @@ export default function MainScene() {
         const localScaling = new Vector3()
         localMatrix.decompose(localScaling, localRotation, localPosition)
 
-        const position: BonePosition = {
-          x: localPosition.x,
-          y: localPosition.y,
-          z: localPosition.z,
+        const position: BonePosition = [localPosition.x, localPosition.y, localPosition.z]
+        if (!(position[0] === 0 && position[1] === 0 && position[2] === 0)) {
+          pose.movableBones[boneName as keyof MovableBones] = position
         }
-
-        pose.movableBones[boneName as keyof MovableBones] = position
       }
     }
 
     // Download pose as JSON file
     const poseJson = JSON.stringify(pose, null, 2)
-    const blob = new Blob([poseJson], { type: 'application/json' })
+    const blob = new Blob([poseJson], { type: "application/json" })
     const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
+    const a = document.createElement("a")
     a.href = url
-    a.download = `pose_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.json`
+    a.download = `pose_${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }, [])
-
 
   const loadModel = useCallback(async (): Promise<void> => {
     if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current) return
@@ -530,14 +521,33 @@ export default function MainScene() {
     descriptionRef.current = description
   }, [description])
 
+  const handleFileUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const poseData = JSON.parse(e.target?.result as string)
+          importPose(poseData)
+        } catch (error) {
+          console.error("Error parsing JSON file:", error)
+          alert("Invalid JSON file. Please select a valid pose file.")
+        }
+      }
+      reader.readAsText(file)
+
+      // Reset the input value so the same file can be selected again
+      event.target.value = ""
+    },
+    [importPose]
+  )
+
   return (
     <div className="w-full h-full">
       <div className="fixed max-w-2xl mx-auto flex p-4 w-full gap-2">
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Pose description"
-        />
+        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Pose description" />
         <Button
           onClick={() => {
             exportPose()
