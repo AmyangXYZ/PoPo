@@ -61,3 +61,51 @@ Same proven 3D engine, new AI-driven input method.
 ## 📄 License
 
 GPL-3.0 License - see LICENSE for details.
+
+# MMD Pose & Expression Text-to-Pose (gpt-4.1-mini)
+
+## Purpose
+
+This project is for generating MMD (MikuMikuDance) pose and facial expression JSON data directly from natural language descriptions, using a fine-tuned **gpt-4.1-mini** (GPT-4o-mini) model.
+
+## Data Format
+
+Each example consists of a natural language pose/scene description and the corresponding MMD JSON output. The format is:
+
+```json
+{
+  "messages": [
+    { "role": "system", "content": "You generate MMD pose and expression JSON from descriptions." },
+    {
+      "role": "user",
+      "content": "Standing with both arms extended forward, palms open and fingers spread, as if gently pushing something away. The body leans slightly forward, left foot ahead of the right, with a confident yet gentle expression. The head is tilted slightly down, eyes focused ahead, lips softly pursed."
+    },
+    { "role": "assistant", "content": "{ ...JSON pose data... }" }
+  ]
+}
+```
+
+- **System prompt:** Short and high-level.
+- **User message:** Natural language pose/scene description.
+- **Assistant message:** The expected MMD pose/morph JSON output.
+
+## Best Practices for Data
+
+- Use the model's left/right perspective (not the viewer's) in all descriptions.
+- Explicitly mention finger positions and facial expressions for clarity.
+- Omit zero/default values in output JSON to save tokens.
+- Use diverse, high-quality examples covering a wide range of poses, gestures, and expressions.
+
+## Example Use Case
+
+- **Input:** "Standing with right arm raised high, left arm extended to the side, right hand forming a peace sign, eyes open and smiling."
+- **Output:** JSON with all relevant MMD bone rotations, positions, and morph values for the described pose and expression.
+
+## Files
+
+- `pose_training_data.jsonl` — Example data for fine-tuning
+- `convert_to_openai_format.py` — Script to convert pose JSONs to OpenAI format
+
+---
+
+This project assumes familiarity with OpenAI fine-tuning workflows. For more, see OpenAI's [fine-tuning documentation](https://platform.openai.com/docs/guides/fine-tuning).
