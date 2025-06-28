@@ -20,6 +20,7 @@ import {
   Vector3,
 } from "@babylonjs/core"
 import { useRef, useEffect, useCallback, useState } from "react"
+import Image from "next/image"
 import {
   MmdWasmModel,
   PmxLoader,
@@ -35,6 +36,8 @@ import {
 import ChatInput from "./chat-input"
 import { BonePosition, KeyBones, MovableBones, Pose, RotatableBones } from "@/lib/pose"
 import { IMmdRuntimeLinkedBone } from "babylon-mmd/esm/Runtime/IMmdRuntimeLinkedBone"
+import { Button } from "./ui/button"
+import Link from "next/link"
 
 interface TargetRotation {
   quaternion: Quaternion
@@ -199,7 +202,7 @@ export default function MainScene() {
 
       const scene = new Scene(engine)
 
-      scene.clearColor = new Color4(0.96, 0.2, 0.5, 1.0)
+      scene.clearColor = new Color4(0.96, 0.38, 0.54, 1.0)
       scene.ambientColor = new Color3(0.18, 0.12, 0.1)
 
       engineRef.current = engine
@@ -335,8 +338,15 @@ export default function MainScene() {
 
   return (
     <div className="w-full h-full">
-      <canvas ref={canvasRef} className="w-full h-full" />
-      <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full">
+      <div className="fixed flex justify-end top-2 mx-auto flex px-4 w-full z-1000">
+        <Button size="icon" asChild className="bg-white text-black size-7 rounded-full hover:bg-gray-200">
+          <Link href="https://github.com/AmyangXYZ/PoPo" target="_blank">
+            <Image src="/github-mark.svg" alt="GitHub" width={18} height={18} />
+          </Link>
+        </Button>
+      </div>
+      <canvas ref={canvasRef} className="w-full h-full z-1" />
+      <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-1000">
         <ChatInput setPose={setPose} />
       </div>
     </div>
