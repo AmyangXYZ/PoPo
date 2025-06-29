@@ -4,6 +4,9 @@ import type { NextConfig } from "next"
 const nextConfig: NextConfig = {
   reactStrictMode: false,
   devIndicators: false,
+  images: {
+    domains: ["assets.popo.love"],
+  },
   webpack: (config) => {
     // Handle babylon-mmd WASM files
     config.module.rules.push({
