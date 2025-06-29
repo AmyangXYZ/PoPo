@@ -338,7 +338,7 @@ export default function MainScene() {
 
   return (
     <div className="w-full h-full">
-      <div className="fixed flex justify-end top-2 mx-auto flex px-4 w-full z-1000">
+      <div className="fixed flex justify-start top-2 mx-auto flex px-4 w-full z-1000">
         <Button size="icon" asChild className="bg-white text-black size-7 rounded-full hover:bg-gray-200">
           <Link href="https://github.com/AmyangXYZ/PoPo" target="_blank">
             <Image src="/github-mark.svg" alt="GitHub" width={18} height={18} />

@@ -34,20 +34,17 @@ export default function ChatInput({ setPose }: { setPose: (pose: Pose) => void }
 
   const [description, setDescription] = useState("")
 
-  const setMMDPose = async (description: string, fileUrl: string) => {
-    setDescription("")
-    setFileUrl("")
+  const generatePose = async (description: string, fileUrl: string) => {
     resetHeight()
     setWaitingPoseResult(true)
-    // setShowSuggestions(false)
+    setShowSuggestions(false)
     const poseRes = await fetch("/api/pose-generate", {
       method: "POST",
-      body: JSON.stringify({ description }),
+      body: JSON.stringify({ description, fileUrl }),
     })
     const poseData = await poseRes.json()
-    if (fileUrl.length > 0) {
-      console.log(fileUrl)
-    }
+    setDescription("")
+    setFileUrl("")
     setPose(poseData.result)
     setWaitingPoseResult(false)
   }
@@ -118,10 +115,11 @@ export default function ChatInput({ setPose }: { setPose: (pose: Pose) => void }
               >
                 <Card
                   key={i}
-                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-xs shadow-lg ${i >= 2 ? "hidden md:block" : ""
-                    }`}
+                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-xs shadow-lg ${
+                    i >= 2 ? "hidden md:block" : ""
+                  }`}
                   onClick={() => {
-                    setMMDPose(pose, "")
+                    generatePose(pose, "")
                   }}
                 >
                   <CardHeader className="py-2 gap-0">
@@ -158,7 +156,7 @@ export default function ChatInput({ setPose }: { setPose: (pose: Pose) => void }
             onKeyDown={(e) => {
               if (e.key === "Enter" && description.trim().length > 0) {
                 e.preventDefault()
-                setMMDPose(description, fileUrl)
+                generatePose(description, fileUrl)
               }
             }}
             disabled={false}
@@ -173,7 +171,14 @@ export default function ChatInput({ setPose }: { setPose: (pose: Pose) => void }
         <div className="absolute bottom-0 p-1 w-fit flex flex-row justify-start">
           <Button size="icon" variant="ghost" disabled={false} onClick={() => fileInputRef.current?.click()}>
             <Paperclip className="size-4.5" />
-            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} disabled={uploading} />
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileChange}
+              disabled={uploading}
+            />
           </Button>
         </div>
         <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
@@ -181,7 +186,7 @@ export default function ChatInput({ setPose }: { setPose: (pose: Pose) => void }
             size="icon"
             className="rounded-full h-fit w-fit p-1"
             disabled={description.length === 0}
-            onClick={() => setMMDPose(description, fileUrl)}
+            onClick={() => generatePose(description, fileUrl)}
           >
             <ArrowUp className="size-5" />
           </Button>

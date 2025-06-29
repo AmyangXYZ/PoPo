@@ -1,7 +1,23 @@
 import OpenAI from "openai"
+import { ChatCompletionMessageParam } from "openai/resources/chat/completions"
 
 const systemPrompt = `
 You are an expert at generating facial expressions and body poses for MMD (MikuMikuDance) models in 3D scenes. Your task is to convert any natural language description—including emotional, situational, or physical states—into precise morph target parameters (0.0–1.0) and bone rotations/positions for realistic, expressive, and context-appropriate poses.
+
+**When an image is provided:**
+- Analyze the image to understand the pose, facial expression, and body language
+- Extract key visual elements: facial expressions, body posture, arm positions, leg positions, head direction, and overall mood
+- Combine the image analysis with any text description provided
+- If the text description conflicts with the image, prioritize the image but consider the text as additional context
+- Pay special attention to:
+  - Facial expressions (smile, frown, surprise, etc.)
+  - Eye direction and state (open, closed, looking direction)
+  - Mouth shape and expression
+  - Arm positions and gestures
+  - Leg positions and stance
+  - Head tilt and direction
+  - Overall body posture (standing, sitting, leaning, etc.)
+  - Emotional mood conveyed by the pose
 
 **Morph Targets (0.0–1.0):**
 {
@@ -36,34 +52,35 @@ You are an expert at generating facial expressions and body poses for MMD (MikuM
 - Z-rotation: Left/right tilt (roll)
 
 ## Core Principles:
-1. **Context Awareness**: Carefully interpret the user's description, including emotional and situational context.
-2. **High-Level First, Fine-Tune Second**: For any expression, always use high-level morphs (真面目, 困る, にこり, 怒り) first to set the overall mood and facial structure. Then use low-level morphs to fine-tune the details.
-3. **Layered Expression Building**: Combine high-level morphs with detailed eye and mouth morphs for complex, realistic expressions.
-4. **Intensity Scaling**: Adjust morph values based on the described emotional/physical intensity:
+1. **Context Awareness**: Carefully interpret the user's description and image content, including emotional and situational context.
+2. **Image-First Analysis**: When an image is provided, analyze it thoroughly before applying any text-based modifications.
+3. **High-Level First, Fine-Tune Second**: For any expression, always use high-level morphs (真面目, 困る, にこり, 怒り) first to set the overall mood and facial structure. Then use low-level morphs to fine-tune the details.
+4. **Layered Expression Building**: Combine high-level morphs with detailed eye and mouth morphs for complex, realistic expressions.
+5. **Intensity Scaling**: Adjust morph values based on the described emotional/physical intensity:
    - Mild: 0.2–0.4
    - Moderate: 0.4–0.7
    - Strong: 0.7–0.9
    - Extreme: 0.9–1.0
-5. **Natural Asymmetry**: Use directional morphs (ウィンク右, etc.) for more natural, dynamic expressions.
-6. **Strict Eye Morph Constraint**: For じと目, はちゅ目, まばたき, びっくり:
+6. **Natural Asymmetry**: Use directional morphs (ウィンク右, etc.) for more natural, dynamic expressions.
+7. **Strict Eye Morph Constraint**: For じと目, はちゅ目, まばたき, びっくり:
    - **Never set more than one of these above 0.0 at the same time.**
    - If one is nonzero, all others must be exactly 0.
-7. **Blushing/Embarrassed/Sexy Effects**: When the description suggests embarrassment, shyness, blushing, or a sexy/intimate scenario, use the 照れ morph for a red face and set it to 1.
-8. **Sexy/Seductive Expressions**: For sexy, seductive, inviting, or flirtatious descriptions, use the SEXY_INVITING template which combines winking, smirking, blushing, and subtle body positioning.
-9. **Bone Rotation Guidelines**:
-   - Use small quaternion values (0.1-0.5) for subtle movements
-   - Use moderate quaternion values (0.5-1.0) for noticeable poses
-   - Use larger quaternion values (1.0-2.0) for dramatic poses
-   - Consider natural joint limits and anatomical constraints
-10. **Position Guidelines**:
-   - センター: Controls overall body position (typically small adjustments)
-   - 左足ＩＫ/右足ＩＫ: Controls foot positions for walking, standing, or sitting poses
-   - **Y positions should NEVER be negative** - all Y values must be >= 0
-   - **Default standing**: センター: [0, 8, 0] - DO NOT change unless squatting or dramatic movement
-   - **Lifting foot**: Set 左足ＩＫ or 右足ＩＫ to [0, 8, 0] (Y=8 lifts the foot up)
-   - **Squatting**: Lower センター Y position to [0, 2, 0] (Y=2 for squatting)
-   - **Walking pose**: Set foot positions like 左足ＩＫ: [0.2, 0, 0], 右足ＩＫ: [-0.2, 0, 0]
-11. **Arm Rotation Guidelines**:
+8. **Blushing/Embarrassed/Sexy Effects**: When the description suggests embarrassment, shyness, blushing, or a sexy/intimate scenario, use the 照れ morph for a red face and set it to 1.
+9. **Sexy/Seductive Expressions**: For sexy, seductive, inviting, or flirtatious descriptions, use the SEXY_INVITING template which combines winking, smirking, blushing, and subtle body positioning.
+10. **Bone Rotation Guidelines**:
+    - Use small quaternion values (0.1-0.5) for subtle movements
+    - Use moderate quaternion values (0.5-1.0) for noticeable poses
+    - Use larger quaternion values (1.0-2.0) for dramatic poses
+    - Consider natural joint limits and anatomical constraints
+11. **Position Guidelines**:
+    - センター: Controls overall body position (typically small adjustments)
+    - 左足ＩＫ/右足ＩＫ: Controls foot positions for walking, standing, or sitting poses
+    - **Y positions should NEVER be negative** - all Y values must be >= 0
+    - **Default standing**: センター: [0, 8, 0] - DO NOT change unless squatting or dramatic movement
+    - **Lifting foot**: Set 左足ＩＫ or 右足ＩＫ to [0, 8, 0] (Y=8 lifts the foot up)
+    - **Squatting**: Lower センター Y position to [0, 2, 0] (Y=2 for squatting)
+    - **Walking pose**: Set foot positions like 左足ＩＫ: [0.2, 0, 0], 右足ＩＫ: [-0.2, 0, 0]
+12. **Arm Rotation Guidelines**:
     - Left and right arms have opposite coordinate systems (mirrored)
     - **Right Arm**: Forward = negative Y, Up = negative Z
     - **Left Arm**: Forward = positive Y, Up = positive Z
@@ -72,8 +89,8 @@ You are an expert at generating facial expressions and body poses for MMD (MikuM
     - Example: "Arms extended forward" → 左腕: [0.38, 0.20, 0.15, 0.89], 右腕: [0.35, -0.38, -0.03, 0.86]
     - Example: "Raising arms up" → 左腕: [0.3, 0, 0.4, 0.86], 右腕: [0.3, 0, -0.4, 0.86]
     - Example: "Arms to sides" → 左腕: [0.2, 0.3, 0, 0.93], 右腕: [0.2, -0.3, 0, 0.93]
-12. **Token Optimization**: Omit any morph targets or bone rotations that are 0 or at default values to save tokens.
-13. **Expression-Only Rule**: For pure facial expressions (sad, happy, angry, surprised, etc.) that don't involve body movement, ONLY modify the "face" section. Do not add "rotatableBones" or "movableBones" unless the description specifically mentions body posture or movement.
+13. **Token Optimization**: Omit any morph targets or bone rotations that are 0 or at default values to save tokens.
+14. **Expression-Only Rule**: For pure facial expressions (sad, happy, angry, surprised, etc.) that don't involve body movement, ONLY modify the "face" section. Do not add "rotatableBones" or "movableBones" unless the description specifically mentions body posture or movement.
 
 **Template System - Reusable Bone Configurations:**
 
@@ -180,19 +197,46 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { description } = await request.json()
+    const { description, fileUrl } = await request.json()
 
     const provider = new OpenAI({
       apiKey: process.env.AI_API_KEY,
       baseURL: process.env.AI_API_BASE_URL,
     })
 
+    const messages: ChatCompletionMessageParam[] = [{ role: "system", content: systemPrompt }]
+
+    // If fileUrl is provided, add the image to the message
+    if (fileUrl && /^(https?:\/\/|\/)/.test(fileUrl) && fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+      messages.push({
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `Analyze this image and generate a pose that matches it. Additional description: ${
+              description || "No additional description provided."
+            }`,
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: fileUrl,
+              detail: "auto",
+            },
+          },
+        ],
+      })
+    } else {
+      // Text-only prompt
+      messages.push({
+        role: "user",
+        content: userPrompt.replace("{description}", description),
+      })
+    }
+
     const response = await provider.chat.completions.create({
       model: process.env.AI_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt.replace("{description}", description) },
-      ],
+      messages,
     })
 
     let result
