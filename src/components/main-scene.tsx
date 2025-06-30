@@ -10,6 +10,7 @@ import {
   HemisphericLight,
   ImportMeshAsync,
   Material,
+  Matrix,
   Mesh,
   Quaternion,
   RegisterSceneLoaderPlugin,
@@ -77,108 +78,40 @@ export default function MainScene() {
   const bonesRef = useRef<{ [key: string]: IMmdRuntimeLinkedBone }>({})
   const targetRotationsRef = useRef<{ [key: string]: TargetRotation }>({})
   const targetPositionsRef = useRef<{ [key: string]: TargetPosition }>({})
-  const [pose, setPose] = useState<Pose>({
+  const [poseManual, setPoseManual] = useState<Pose>({
     description: "",
-    face: {
-      真面目: 0,
-      困る: 0,
-      にこり: 0,
-      怒り: 0,
-      まばたき: 0,
-      笑い: 0,
-      ウィンク: 0,
-      ウィンク右: 0,
-      ウィンク２: 0,
-      ｳｨﾝｸ２右: 0,
-      なごみ: 0,
-      びっくり: 0,
-      "恐ろしい子！": 0,
-      はちゅ目: 0,
-      はぅ: 0,
-      ｷﾘｯ: 0,
-      眼睑上: 0,
-      眼角下: 0,
-      じと目: 0,
-      じと目1: 0,
-      あ: 0,
-      い: 0,
-      う: 0,
-      え: 0,
-      お: 0,
-      お1: 0,
-      口角上げ: 0,
-      口角下げ: 0,
-      口角下げ1: 0,
-      口横缩げ: 0,
-      口横広げ: 0,
-      にやり２: 0,
-      にやり２1: 0,
-      照れ: 0,
-    },
-    movableBones: {
-      センター: [0, 0, 0],
-      左足ＩＫ: [0, 0, 0],
-      右足ＩＫ: [0, 0, 0],
-      右つま先ＩＫ: [0, 0, 0],
-      左つま先ＩＫ: [0, 0, 0],
-    },
-    rotatableBones: {
-      首: [0, 0, 0, 1],
-      頭: [0, 0, 0, 1],
-      上半身: [0, 0, 0, 1],
-      下半身: [0, 0, 0, 1],
-      左足: [0, 0, 0, 1],
-      右足: [0, 0, 0, 1],
-      左ひざ: [0, 0, 0, 1],
-      右ひざ: [0, 0, 0, 1],
-      左足首: [0, 0, 0, 1],
-      右足首: [0, 0, 0, 1],
-      左腕: [0, 0, 0, 1],
-      右腕: [0, 0, 0, 1],
-      左ひじ: [0, 0, 0, 1],
-      右ひじ: [0, 0, 0, 1],
-      左目: [0, 0, 0, 1],
-      右目: [0, 0, 0, 1],
-      左手首: [0, 0, 0, 1],
-      右手首: [0, 0, 0, 1],
-      右親指１: [0, 0, 0, 1],
-      右親指２: [0, 0, 0, 1],
-      右人指１: [0, 0, 0, 1],
-      右人指２: [0, 0, 0, 1],
-      右人指３: [0, 0, 0, 1],
-      右中指１: [0, 0, 0, 1],
-      右中指２: [0, 0, 0, 1],
-      右中指３: [0, 0, 0, 1],
-      右薬指１: [0, 0, 0, 1],
-      右薬指２: [0, 0, 0, 1],
-      右薬指３: [0, 0, 0, 1],
-      右小指１: [0, 0, 0, 1],
-      右小指２: [0, 0, 0, 1],
-      右小指３: [0, 0, 0, 1],
-      左親指１: [0, 0, 0, 1],
-      左親指２: [0, 0, 0, 1],
-      左人指１: [0, 0, 0, 1],
-      左人指２: [0, 0, 0, 1],
-      左人指３: [0, 0, 0, 1],
-      左中指１: [0, 0, 0, 1],
-      左中指２: [0, 0, 0, 1],
-      左中指３: [0, 0, 0, 1],
-      左薬指１: [0, 0, 0, 1],
-      左薬指２: [0, 0, 0, 1],
-      左薬指３: [0, 0, 0, 1],
-      左小指１: [0, 0, 0, 1],
-      左小指２: [0, 0, 0, 1],
-      左小指３: [0, 0, 0, 1],
-    },
-  })
+    face: {} as Morphs,
+    movableBones: {} as MovableBones,
+    rotatableBones: {} as RotatableBones,
+  } as Pose)
+  const [poseAI, setPoseAI] = useState<Pose>({
+    description: "",
+    face: {} as Morphs,
+    movableBones: {} as MovableBones,
+    rotatableBones: {} as RotatableBones,
+  } as Pose)
 
-  const [openControlPanel, setOpenControlPanel] = useState(true)
+  const [openCustomizePanel, setOpenCustomizePanel] = useState(false)
 
   const getBone = (name: string): IMmdRuntimeLinkedBone | null => {
     return bonesRef.current[name]
   }
 
-  const rotateBone = useCallback((boneName: string, targetQuaternion: Quaternion, duration: number = 1000) => {
+  const rotateBone = useCallback((boneName: string, targetQuaternion: Quaternion) => {
+    const bone = getBone(boneName)
+    if (!bone) return
+
+    bone.setRotationQuaternion(targetQuaternion, Space.LOCAL)
+  }, [])
+
+  const moveBone = useCallback((boneName: string, position: BonePosition) => {
+    const bone = getBone(boneName)
+    if (!bone) return
+    bone.position = new Vector3(position[0], position[1], position[2])
+
+  }, [])
+
+  const rotateBoneSmooth = useCallback((boneName: string, targetQuaternion: Quaternion, duration: number = 1000) => {
     const bone = getBone(boneName)
     if (!bone) return
 
@@ -190,7 +123,7 @@ export default function MainScene() {
     }
   }, [])
 
-  const moveBone = useCallback((boneName: string, position: BonePosition, duration: number = 1000) => {
+  const moveBoneSmooth = useCallback((boneName: string, position: BonePosition, duration: number = 1000) => {
     const bone = getBone(boneName)
     if (!bone) return
     bone.position = new Vector3(position[0], position[1], position[2])
@@ -204,21 +137,15 @@ export default function MainScene() {
     }
   }, [])
 
-  const importPose = useCallback(
-    (pose?: Pose) => {
-      if (!modelRef.current) return
-      modelRef.current.removeAnimation(0)
-      modelRef.current.morph.resetMorphWeights()
 
-      if (!pose) return
+
+  const importPoseManual = useCallback(
+    (pose?: Pose) => {
+      if (!modelRef.current || !pose) return
 
       if (pose.face) {
         for (const [morphName, targetValue] of Object.entries(pose.face)) {
-          try {
-            modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
-          } catch {
-            console.log(`Morph "${morphName}" not found`)
-          }
+          modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
         }
       }
       if (pose.movableBones) {
@@ -227,7 +154,7 @@ export default function MainScene() {
           if (!position || typeof position !== "object") {
             continue
           }
-          moveBone(boneName, position, 1000)
+          moveBone(boneName, position)
         }
       }
       if (pose.rotatableBones) {
@@ -240,13 +167,49 @@ export default function MainScene() {
               boneRotationQuaternion[1],
               boneRotationQuaternion[2],
               boneRotationQuaternion[3]
+            )
+          )
+        }
+      }
+    },
+    [moveBone, rotateBone]
+  )
+
+  const importPoseAI = useCallback(
+    (pose?: Pose) => {
+      if (!modelRef.current || !pose) return
+
+      if (pose.face) {
+        for (const [morphName, targetValue] of Object.entries(pose.face)) {
+          modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
+        }
+      }
+      if (pose.movableBones) {
+        for (const boneName of Object.keys(pose.movableBones)) {
+          const position = pose.movableBones[boneName as keyof MovableBones]
+          if (!position || typeof position !== "object") {
+            continue
+          }
+          moveBoneSmooth(boneName, position, 1000)
+        }
+      }
+      if (pose.rotatableBones) {
+        for (const boneName of Object.keys(pose.rotatableBones)) {
+          const boneRotationQuaternion = pose.rotatableBones[boneName as keyof RotatableBones]
+          rotateBoneSmooth(
+            boneName,
+            new Quaternion(
+              boneRotationQuaternion[0],
+              boneRotationQuaternion[1],
+              boneRotationQuaternion[2],
+              boneRotationQuaternion[3]
             ),
             1000
           )
         }
       }
     },
-    [moveBone, rotateBone]
+    [moveBoneSmooth, rotateBoneSmooth]
   )
 
   const loadModel = useCallback(async (): Promise<void> => {
@@ -280,32 +243,61 @@ export default function MainScene() {
         }
       }
 
-      const defaultFace = {} as Morphs
-      const defaultMovableBones = {} as MovableBones
-      const defaultRotatableBones = {} as RotatableBones
-      for (const morph of Object.keys(MorphsTranslations)) {
-        defaultFace[morph as keyof Morphs] = 0
-      }
-      for (const bone of Object.keys(MovableBonesTranslations)) {
-        const bonePosition = bonesRef.current[bone].position.clone()
-        defaultMovableBones[bone as keyof MovableBones] = [bonePosition.x, bonePosition.y, bonePosition.z]
-      }
-      for (const bone of Object.keys(RotatableBonesTranslations)) {
-        const boneRotationQuaternion = bonesRef.current[bone].rotationQuaternion.clone()
-        defaultRotatableBones[bone as keyof RotatableBones] = [
-          boneRotationQuaternion.x,
-          boneRotationQuaternion.y,
-          boneRotationQuaternion.z,
-          boneRotationQuaternion.w,
-        ]
-      }
-      const defaultPose = {
-        description: "",
-        face: defaultFace,
-        movableBones: defaultMovableBones,
-        rotatableBones: defaultRotatableBones,
-      }
-      setPose(defaultPose)
+      setTimeout(() => {
+        const defaultFace = {} as Morphs
+        const defaultMovableBones = {} as MovableBones
+        const defaultRotatableBones = {} as RotatableBones
+        for (const morph of Object.keys(MorphsTranslations)) {
+          defaultFace[morph as keyof Morphs] = 0
+        }
+        for (const bone of Object.keys(MovableBonesTranslations)) {
+          const runtimeBone = modelRef.current!.runtimeBones.find((b) => b.name === bone)
+          if (runtimeBone) {
+            // Get this bone's world matrix
+            const worldMatrix = Matrix.FromArray(runtimeBone.worldMatrix, 0)
+
+            // Get parent world matrix (identity if no parent)
+            let parentWorldMatrix = Matrix.Identity()
+            if (runtimeBone.parentBone) {
+              parentWorldMatrix = Matrix.FromArray(runtimeBone.parentBone.worldMatrix, 0)
+            }
+
+            // Compute local matrix: local = inverse(parentWorld) * world
+            const invParentWorld = parentWorldMatrix.invert()
+            const localMatrix = invParentWorld.multiply(worldMatrix)
+
+            // Decompose local matrix to get local position
+            const localRotation = new Quaternion()
+            const localPosition = new Vector3()
+            const localScaling = new Vector3()
+            localMatrix.decompose(localScaling, localRotation, localPosition)
+
+            const position: BonePosition = [localPosition.x, localPosition.y, localPosition.z]
+            if (!(position[0] === 0 && position[1] === 0 && position[2] === 0)) {
+              defaultMovableBones[bone as keyof MovableBones] = position
+            }
+          }
+        }
+
+        for (const bone of Object.keys(RotatableBonesTranslations)) {
+          const boneRotationQuaternion = bonesRef.current[bone].rotationQuaternion.clone()
+          defaultRotatableBones[bone as keyof RotatableBones] = [
+            boneRotationQuaternion.x,
+            boneRotationQuaternion.y,
+            boneRotationQuaternion.z,
+            boneRotationQuaternion.w,
+          ]
+        }
+        const defaultPose = {
+          description: "",
+          face: defaultFace,
+          movableBones: defaultMovableBones,
+          rotatableBones: defaultRotatableBones,
+        }
+        defaultPose.description = "default pose"
+
+        setPoseManual(defaultPose)
+      }, 1000)
       //   const material = modelRef.current!.mesh.metadata.materials.find((m: Material) => m.name === "胸口")
       //   const m = modelRef.current!.mesh.metadata.meshes.find((m: Mesh) => m.name === "胸口")
       //   if (material && m) {
@@ -461,34 +453,41 @@ export default function MainScene() {
   }, [loadModel])
 
   useEffect(() => {
-    if (modelRef.current && pose) {
-      importPose(pose)
+    if (modelRef.current && poseManual) {
+      importPoseManual(poseManual)
     }
-  }, [pose, importPose])
+  }, [poseManual, importPoseManual])
+
+  useEffect(() => {
+    if (modelRef.current && poseAI) {
+      console.log(poseAI)
+      importPoseAI(poseAI)
+    }
+  }, [poseAI, importPoseAI])
 
   return (
     <div className="w-full h-full">
       <canvas ref={canvasRef} className="w-full h-full z-1" />
 
       <div className="absolute flex justify-between top-2 mx-auto flex px-4 w-full z-20">
-        <Button size="icon" asChild className="bg-white text-black size-7 rounded-full hover:bg-gray-200">
+        <Button size="icon" asChild className="bg-white text-black size-7 rounded-full hover:bg-gray-200 hidden md:block">
           <Link href="https://github.com/AmyangXYZ/PoPo" target="_blank">
             <Image src="/github-mark.svg" alt="GitHub" width={18} height={18} />
           </Link>
         </Button>
-        {!openControlPanel && (
+        {!openCustomizePanel && (
           <Button
             size="icon"
             className="bg-white text-black size-7 rounded-full hover:bg-gray-200"
-            onClick={() => setOpenControlPanel(true)}
+            onClick={() => setOpenCustomizePanel(true)}
           >
             <HandMetal />
           </Button>
         )}
       </div>
-      <CustomizePanel open={openControlPanel} setOpen={setOpenControlPanel} pose={pose} setPose={setPose} />
+      <CustomizePanel open={openCustomizePanel} setOpen={setOpenCustomizePanel} pose={poseManual} setPose={setPoseManual} resetPose={() => loadModel()} />
       <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-xl mx-auto flex p-4 w-full z-10">
-        <ChatInput setPose={setPose} />
+        {!openCustomizePanel && <ChatInput setPose={setPoseAI} />}
       </div>
     </div>
   )

@@ -70,8 +70,6 @@ export interface RotatableBones {
   下半身: BoneRotationQuaternion
   左足: BoneRotationQuaternion
   右足: BoneRotationQuaternion
-  左ひざ: BoneRotationQuaternion
-  右ひざ: BoneRotationQuaternion
   左足首: BoneRotationQuaternion
   右足首: BoneRotationQuaternion
   左腕: BoneRotationQuaternion
@@ -157,8 +155,6 @@ export const KeyBones = [
   "下半身",
   "左足",
   "右足",
-  "左ひざ",
-  "右ひざ",
   "左足首",
   "右足首",
   "左腕",
@@ -264,8 +260,6 @@ export const RotatableBonesTranslations = {
   下半身: "Lower Body",
   左足: "Left Leg",
   右足: "Right Leg",
-  左ひざ: "Left Knee",
-  右ひざ: "Right Knee",
   左足首: "Left Ankle",
   右足首: "Right Ankle",
   左腕: "Left Arm",
