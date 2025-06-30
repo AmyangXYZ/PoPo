@@ -469,19 +469,21 @@ export default function MainScene() {
       <canvas ref={canvasRef} className="w-full h-full z-1" />
 
       <div className="absolute flex justify-between top-2 mx-auto flex px-4 w-full z-20">
-        <Button size="icon" asChild className="bg-white text-black size-7 rounded-full hover:bg-gray-200 hidden md:block">
+        <Button size="icon" asChild className="bg-white text-black size-7 rounded-full hover:bg-gray-200">
           <Link href="https://github.com/AmyangXYZ/PoPo" target="_blank">
             <Image src="/github-mark.svg" alt="GitHub" width={18} height={18} />
           </Link>
         </Button>
         {!openCustomizePanel && (
-          <Button
-            size="icon"
-            className="bg-white text-black size-7 rounded-full hover:bg-gray-200"
-            onClick={() => setOpenCustomizePanel(true)}
-          >
-            <HandMetal />
-          </Button>
+          <div className="hidden md:block">
+            <Button
+              size="icon"
+              className="bg-white text-black size-7 rounded-full hover:bg-gray-200"
+              onClick={() => setOpenCustomizePanel(true)}
+            >
+              <HandMetal />
+            </Button>
+          </div>
         )}
       </div>
       <CustomizePanel open={openCustomizePanel} setOpen={setOpenCustomizePanel} pose={poseManual} setPose={setPoseManual} resetPose={() => loadModel()} />
