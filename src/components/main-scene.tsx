@@ -126,7 +126,6 @@ export default function MainScene() {
   const moveBoneSmooth = useCallback((boneName: string, position: BonePosition, duration: number = 1000) => {
     const bone = getBone(boneName)
     if (!bone) return
-    bone.position = new Vector3(position[0], position[1], position[2])
     const targetVector = new Vector3(position[0], position[1], position[2])
 
     targetPositionsRef.current[boneName] = {
@@ -487,7 +486,7 @@ export default function MainScene() {
       </div>
       <CustomizePanel open={openCustomizePanel} setOpen={setOpenCustomizePanel} pose={poseManual} setPose={setPoseManual} resetPose={() => loadModel()} />
       <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-xl mx-auto flex p-4 w-full z-10">
-        {!openCustomizePanel && <ChatInput setPose={setPoseAI} />}
+        <ChatInput setPose={setPoseAI} />
       </div>
     </div>
   )
