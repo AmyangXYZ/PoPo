@@ -127,7 +127,7 @@ export default function CustomizePanel({
         <AccordionItem value="item-1">
           <AccordionTrigger>Face</AccordionTrigger>
           <AccordionContent>
-            <ScrollArea className="h-180">
+            <ScrollArea className="h-100 overflow-hidden">
               {Object.keys(RotatableBonesTranslations).filter((bone) => bone === "左目" || bone === "右目").map((bone) => (
                 <div key={bone} className="pb-2 pr-6">
                   <div className="text-xs mb-2">
@@ -179,38 +179,40 @@ export default function CustomizePanel({
         <AccordionItem value="item-2">
           <AccordionTrigger>Movable Bones</AccordionTrigger>
           <AccordionContent>
-            {Object.keys(MovableBonesTranslations).map((bone) => (
-              <div key={bone} className="pb-3 pr-6">
-                <div className="text-xs mb-2">
-                  <p className="font-medium">{bone}</p>
-                  <p className="font-medium text-muted-foreground">
-                    {MovableBonesTranslations[bone as keyof typeof MovableBonesTranslations] || bone}
-                  </p>
-                </div>
-                {(["X", "Y", "Z"] as const).map((axis, index) => (
-                  <div key={axis} className="flex items-center gap-2 mb-1">
-                    <p className="text-xs w-4 text-muted-foreground">{axis}</p>
-                    <Slider
-                      min={-20}
-                      max={20}
-                      step={0.01}
-                      value={[pose.movableBones[bone as keyof typeof pose.movableBones]?.[index] || 0]}
-                      onValueChange={(value: number[]) => updateBonePosition(bone, index, value[0])}
-                    />
-                    <p className="text-xs w-12 text-right">
-                      {pose.movableBones[bone as keyof typeof pose.movableBones]?.[index].toFixed(2)}
+            <ScrollArea className="h-100 overflow-hidden">
+              {Object.keys(MovableBonesTranslations).map((bone) => (
+                <div key={bone} className="pb-3 pr-6">
+                  <div className="text-xs mb-2">
+                    <p className="font-medium">{bone}</p>
+                    <p className="font-medium text-muted-foreground">
+                      {MovableBonesTranslations[bone as keyof typeof MovableBonesTranslations] || bone}
                     </p>
                   </div>
-                ))}
-              </div>
-            ))}
+                  {(["X", "Y", "Z"] as const).map((axis, index) => (
+                    <div key={axis} className="flex items-center gap-2 mb-1">
+                      <p className="text-xs w-4 text-muted-foreground">{axis}</p>
+                      <Slider
+                        min={axis === "Y" ? 0 : -10}
+                        max={20}
+                        step={0.01}
+                        value={[pose.movableBones[bone as keyof typeof pose.movableBones]?.[index] || 0]}
+                        onValueChange={(value: number[]) => updateBonePosition(bone, index, value[0])}
+                      />
+                      <p className="text-xs w-12 text-right">
+                        {pose.movableBones[bone as keyof typeof pose.movableBones]?.[index].toFixed(2)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </ScrollArea>
           </AccordionContent>
         </AccordionItem>
 
         <AccordionItem value="item-3">
           <AccordionTrigger>Rotatable Bones</AccordionTrigger>
           <AccordionContent>
-            <ScrollArea className="h-200 overflow-hidden">
+            <ScrollArea className="h-100 overflow-hidden">
               <Accordion type="single" className="px-4 flex-1 overflow-hidden" collapsible>
                 <AccordionItem value="item-1" className="my-0">
                   <AccordionTrigger>Body</AccordionTrigger>
@@ -270,7 +272,9 @@ export default function CustomizePanel({
                         ))}
                       </div>
                     ))}
+
                   </AccordionContent>
+
                 </AccordionItem>
                 <AccordionItem value="item-3">
                   <AccordionTrigger>Arms</AccordionTrigger>

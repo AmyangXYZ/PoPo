@@ -297,7 +297,7 @@ export default function MainScene() {
         defaultPose.description = "default pose"
 
         setPoseManual(defaultPose)
-      }, 1000)
+      }, 200)
       //   const material = modelRef.current!.mesh.metadata.materials.find((m: Material) => m.name === "胸口")
       //   const m = modelRef.current!.mesh.metadata.meshes.find((m: Mesh) => m.name === "胸口")
       //   if (material && m) {
