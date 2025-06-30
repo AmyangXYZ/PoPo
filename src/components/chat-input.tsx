@@ -20,7 +20,7 @@ const suggestedPoses: string[] = [
 
 export default function ChatInput({ setPose }: { setPose: (pose: Pose) => void }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const [showSuggestions, setShowSuggestions] = useState(true)
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const [fileUrl, setFileUrl] = useState("")
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
