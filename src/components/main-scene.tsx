@@ -457,7 +457,6 @@ export default function MainScene() {
 
   useEffect(() => {
     if (modelRef.current && poseAI) {
-      console.log(poseAI)
       importPoseAI(poseAI)
     }
   }, [poseAI, importPoseAI])
@@ -489,9 +488,10 @@ export default function MainScene() {
         setOpen={setOpenCustomizePanel}
         pose={poseManual}
         setPose={setPoseManual}
+        setPoseSmooth={setPoseAI}
         resetPose={() => loadModel()}
       />
-      <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-xl mx-auto flex p-4 w-full z-10">
+      <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10">
         <ChatInput setPose={setPoseAI} />
       </div>
     </div>

@@ -10,10 +10,10 @@ import {
 } from "@/lib/pose"
 import { Button } from "./ui/button"
 import { Accordion, AccordionContent, AccordionTrigger, AccordionItem } from "./ui/accordion"
-import { RefreshCw, X } from "lucide-react"
+import { Import, RefreshCw, X } from "lucide-react"
 import { Slider } from "./ui/slider"
 import { ScrollArea } from "./ui/scroll-area"
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useState, useCallback } from "react"
 import { Input } from "./ui/input"
 
 export default function CustomizePanel({
@@ -21,20 +21,17 @@ export default function CustomizePanel({
   setOpen,
   pose,
   setPose,
+  setPoseSmooth,
   resetPose,
 }: {
   open: boolean
   setOpen: (open: boolean) => void
   pose: Pose
   setPose: (pose: Pose) => void
+  setPoseSmooth: (pose: Pose) => void
   resetPose: () => void
 }) {
   const [description, setDescription] = useState("")
-  const descriptionRef = useRef<string>("")
-
-  useEffect(() => {
-    descriptionRef.current = description
-  }, [description])
 
   // Memoized bone update function
   const updateBoneRotation = useCallback(
@@ -68,9 +65,33 @@ export default function CustomizePanel({
     [pose, setPose]
   )
 
-  const exportPose = () => {
+  const handleFileUpload = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        try {
+          const poseData = JSON.parse(e.target?.result as string)
+          setDescription(poseData.description)
+          setPoseSmooth(poseData)
+        } catch (error) {
+          console.error("Error parsing JSON file:", error)
+          alert("Invalid JSON file. Please select a valid pose file.")
+        }
+      }
+      reader.readAsText(file)
+
+      event.target.value = ""
+    },
+    [setPoseSmooth]
+  )
+
+
+  const exportPose = useCallback(() => {
     const poseJson = {
-      description: descriptionRef.current,
+      description: description,
       face: {} as Morphs,
       movableBones: {} as MovableBones,
       rotatableBones: {} as RotatableBones,
@@ -97,12 +118,12 @@ export default function CustomizePanel({
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `pose_${new Date().toISOString().slice(0, 19).replace(/:/g, "-")}.json`
+    a.download = `${description.trim().replace(/\s+/g, "-").replace(/:/g, "-")}.json`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-  }
+  }, [pose, description])
 
   return (
     <div
@@ -111,23 +132,38 @@ export default function CustomizePanel({
     >
       <div className="flex flex-col gap-1.5 p-4 border-b">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Customization</h2>
+          <h4 className="scroll-m-20 text-base font-semibold tracking-tight">Customization</h4>
           <div className="flex items-center justify-end">
-            <Button size="icon" variant="ghost" onClick={resetPose} className="h-6 w-6">
+            <div className="relative mr-1">
+              <input
+                type="file"
+                accept=".json"
+                onChange={handleFileUpload}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                id="pose-upload"
+              />
+              <Button onClick={resetPose} className="flex" size="sm">
+                <Import className="size-4" />
+                <span className="text-xs">Import</span>
+              </Button>
+            </div>
+
+
+            <Button size="icon" variant="ghost" onClick={resetPose}>
               <RefreshCw className="size-3.5" />
             </Button>
-            <Button size="icon" variant="ghost" onClick={() => setOpen(false)} className="h-6 w-6">
+            <Button size="icon" variant="ghost" onClick={() => setOpen(false)}>
               <X className="size-4" />
             </Button>
           </div>
         </div>
       </div>
 
-      <Accordion type="single" className="px-4 flex-1 overflow-hidden" collapsible>
+      <Accordion type="single" className="px-4 flex-1 flex flex-col overflow-hidden" collapsible>
         <AccordionItem value="item-1">
           <AccordionTrigger>Face</AccordionTrigger>
           <AccordionContent>
-            <ScrollArea className="h-100 overflow-hidden">
+            <ScrollArea className="max-h-[calc(100dvh-22rem)] overflow-auto">
               {Object.keys(RotatableBonesTranslations).filter((bone) => bone === "左目" || bone === "右目").map((bone) => (
                 <div key={bone} className="pb-2 pr-6">
                   <div className="text-xs mb-2">
@@ -179,7 +215,7 @@ export default function CustomizePanel({
         <AccordionItem value="item-2">
           <AccordionTrigger>Movable Bones</AccordionTrigger>
           <AccordionContent>
-            <ScrollArea className="h-100 overflow-hidden">
+            <ScrollArea className="max-h-[calc(100dvh-22rem)] overflow-auto">
               {Object.keys(MovableBonesTranslations).map((bone) => (
                 <div key={bone} className="pb-3 pr-6">
                   <div className="text-xs mb-2">
@@ -192,8 +228,8 @@ export default function CustomizePanel({
                     <div key={axis} className="flex items-center gap-2 mb-1">
                       <p className="text-xs w-4 text-muted-foreground">{axis}</p>
                       <Slider
-                        min={axis === "Y" ? 0 : -10}
-                        max={20}
+                        min={axis === "Y" ? 0 : -20}
+                        max={30}
                         step={0.01}
                         value={[pose.movableBones[bone as keyof typeof pose.movableBones]?.[index] || 0]}
                         onValueChange={(value: number[]) => updateBonePosition(bone, index, value[0])}
@@ -212,7 +248,7 @@ export default function CustomizePanel({
         <AccordionItem value="item-3">
           <AccordionTrigger>Rotatable Bones</AccordionTrigger>
           <AccordionContent>
-            <ScrollArea className="h-100 overflow-hidden">
+            <ScrollArea className="max-h-[calc(100dvh-22rem)] overflow-auto">
               <Accordion type="single" className="px-4 flex-1 overflow-hidden" collapsible>
                 <AccordionItem value="item-1" className="my-0">
                   <AccordionTrigger>Body</AccordionTrigger>
@@ -382,7 +418,7 @@ export default function CustomizePanel({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-        <Button onClick={exportPose}>Export</Button>
+        <Button onClick={exportPose} disabled={!description}>Export</Button>
       </div>
     </div>
   )
