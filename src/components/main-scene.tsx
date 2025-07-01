@@ -78,13 +78,7 @@ export default function MainScene() {
   const bonesRef = useRef<{ [key: string]: IMmdRuntimeLinkedBone }>({})
   const targetRotationsRef = useRef<{ [key: string]: TargetRotation }>({})
   const targetPositionsRef = useRef<{ [key: string]: TargetPosition }>({})
-  const [poseManual, setPoseManual] = useState<Pose>({
-    description: "",
-    face: {} as Morphs,
-    movableBones: {} as MovableBones,
-    rotatableBones: {} as RotatableBones,
-  } as Pose)
-  const [poseAI, setPoseAI] = useState<Pose>({
+  const [pose, setPose] = useState<Pose>({
     description: "",
     face: {} as Morphs,
     movableBones: {} as MovableBones,
@@ -92,6 +86,11 @@ export default function MainScene() {
   } as Pose)
 
   const [openCustomizePanel, setOpenCustomizePanel] = useState(false)
+  const smoothUpdateRef = useRef(true)
+
+  const setSmoothUpdate = useCallback((smoothUpdate: boolean) => {
+    smoothUpdateRef.current = smoothUpdate
+  }, [])
 
   const getBone = (name: string): IMmdRuntimeLinkedBone | null => {
     return bonesRef.current[name]
@@ -135,7 +134,7 @@ export default function MainScene() {
     }
   }, [])
 
-  const importPoseManual = useCallback(
+  const applyPose = useCallback(
     (pose?: Pose) => {
       if (!modelRef.current || !pose) return
 
@@ -150,63 +149,41 @@ export default function MainScene() {
           if (!position || typeof position !== "object") {
             continue
           }
-          moveBone(boneName, position)
+          if (smoothUpdateRef.current) {
+            moveBoneSmooth(boneName, position)
+          } else {
+            moveBone(boneName, position)
+          }
         }
       }
       if (pose.rotatableBones) {
         for (const boneName of Object.keys(pose.rotatableBones)) {
           const boneRotationQuaternion = pose.rotatableBones[boneName as keyof RotatableBones]
-          rotateBone(
-            boneName,
-            new Quaternion(
-              boneRotationQuaternion[0],
-              boneRotationQuaternion[1],
-              boneRotationQuaternion[2],
-              boneRotationQuaternion[3]
+          if (smoothUpdateRef.current) {
+            rotateBoneSmooth(
+              boneName,
+              new Quaternion(
+                boneRotationQuaternion[0],
+                boneRotationQuaternion[1],
+                boneRotationQuaternion[2],
+                boneRotationQuaternion[3]
+              )
             )
-          )
-        }
-      }
-    },
-    [moveBone, rotateBone]
-  )
-
-  const importPoseAI = useCallback(
-    (pose?: Pose) => {
-      if (!modelRef.current || !pose) return
-      modelRef.current.morph.resetMorphWeights()
-
-      if (pose.face) {
-        for (const [morphName, targetValue] of Object.entries(pose.face)) {
-          modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
-        }
-      }
-      if (pose.movableBones) {
-        for (const boneName of Object.keys(pose.movableBones)) {
-          const position = pose.movableBones[boneName as keyof MovableBones]
-          if (!position || typeof position !== "object") {
-            continue
+          } else {
+            rotateBone(
+              boneName,
+              new Quaternion(
+                boneRotationQuaternion[0],
+                boneRotationQuaternion[1],
+                boneRotationQuaternion[2],
+                boneRotationQuaternion[3]
+              )
+            )
           }
-          moveBoneSmooth(boneName, position, 1000)
-        }
-      }
-      if (pose.rotatableBones) {
-        for (const boneName of Object.keys(pose.rotatableBones)) {
-          const boneRotationQuaternion = pose.rotatableBones[boneName as keyof RotatableBones]
-          rotateBoneSmooth(
-            boneName,
-            new Quaternion(
-              boneRotationQuaternion[0],
-              boneRotationQuaternion[1],
-              boneRotationQuaternion[2],
-              boneRotationQuaternion[3]
-            ),
-            1000
-          )
         }
       }
     },
-    [moveBoneSmooth, rotateBoneSmooth]
+    [moveBone, rotateBone, moveBoneSmooth, rotateBoneSmooth]
   )
 
   const loadModel = useCallback(async (): Promise<void> => {
@@ -293,7 +270,7 @@ export default function MainScene() {
         }
         defaultPose.description = "default pose"
 
-        setPoseManual(defaultPose)
+        setPose(defaultPose)
       }, 200)
       //   const material = modelRef.current!.mesh.metadata.materials.find((m: Material) => m.name === "胸口")
       //   const m = modelRef.current!.mesh.metadata.meshes.find((m: Mesh) => m.name === "胸口")
@@ -450,16 +427,10 @@ export default function MainScene() {
   }, [loadModel])
 
   useEffect(() => {
-    if (modelRef.current && poseManual) {
-      importPoseManual(poseManual)
+    if (modelRef.current && pose) {
+      applyPose(pose)
     }
-  }, [poseManual, importPoseManual])
-
-  useEffect(() => {
-    if (modelRef.current && poseAI) {
-      importPoseAI(poseAI)
-    }
-  }, [poseAI, importPoseAI])
+  }, [pose, applyPose])
 
   return (
     <div className="w-full h-full">
@@ -486,13 +457,13 @@ export default function MainScene() {
       <CustomizePanel
         open={openCustomizePanel}
         setOpen={setOpenCustomizePanel}
-        pose={poseManual}
-        setPose={setPoseManual}
-        setPoseSmooth={setPoseAI}
+        pose={pose}
+        setPose={setPose}
+        setSmoothUpdate={setSmoothUpdate}
         resetPose={() => loadModel()}
       />
       <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10">
-        <ChatInput setPose={setPoseAI} />
+        <ChatInput setPose={setPose} setSmoothUpdate={setSmoothUpdate} />
       </div>
     </div>
   )

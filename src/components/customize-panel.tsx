@@ -13,7 +13,7 @@ import { Accordion, AccordionContent, AccordionTrigger, AccordionItem } from "./
 import { Import, RefreshCw, X } from "lucide-react"
 import { Slider } from "./ui/slider"
 import { ScrollArea } from "./ui/scroll-area"
-import { useState, useCallback } from "react"
+import { useState, useCallback, SetStateAction, Dispatch } from "react"
 import { Input } from "./ui/input"
 
 export default function CustomizePanel({
@@ -21,48 +21,65 @@ export default function CustomizePanel({
   setOpen,
   pose,
   setPose,
-  setPoseSmooth,
+  setSmoothUpdate,
   resetPose,
 }: {
   open: boolean
   setOpen: (open: boolean) => void
   pose: Pose
-  setPose: (pose: Pose) => void
-  setPoseSmooth: (pose: Pose) => void
+  setPose: Dispatch<SetStateAction<Pose>>
+  setSmoothUpdate: (smoothUpdate: boolean) => void
   resetPose: () => void
 }) {
   const [description, setDescription] = useState("")
 
-  // Memoized bone update function
+  const updateMorph = useCallback(
+    (morph: string, value: number) => {
+      setPose((prev: Pose) => ({
+        ...prev,
+        face: { ...prev.face, [morph]: value },
+      }))
+    }, [setPose]
+  )
+
   const updateBoneRotation = useCallback(
     (boneName: string, componentIndex: number, value: number) => {
-      const currentRotation = [...pose.rotatableBones[boneName as keyof typeof pose.rotatableBones]]
-      currentRotation[componentIndex] = value
+      setSmoothUpdate(false)
+      setPose((prev: Pose) => {
+        const currentRotation = [...prev.rotatableBones[boneName as keyof typeof prev.rotatableBones]]
+        currentRotation[componentIndex] = value
 
-      // Normalize quaternion
-      const [x, y, z, w] = currentRotation
-      const magnitude = Math.sqrt(x * x + y * y + z * z + w * w)
-      const normalizedQuat: [number, number, number, number] =
-        magnitude > 0 ? [x / magnitude, y / magnitude, z / magnitude, w / magnitude] : [0, 0, 0, 1]
+        // Normalize quaternion
+        const [x, y, z, w] = currentRotation
+        const magnitude = Math.sqrt(x * x + y * y + z * z + w * w)
+        const normalizedQuat: [number, number, number, number] =
+          magnitude > 0 ? [x / magnitude, y / magnitude, z / magnitude, w / magnitude] : [0, 0, 0, 1]
 
-      setPose({
-        ...pose,
-        rotatableBones: {
-          ...pose.rotatableBones,
-          [boneName]: normalizedQuat,
-        },
+        return {
+          ...prev,
+          rotatableBones: {
+            ...prev.rotatableBones,
+            [boneName]: normalizedQuat,
+          },
+        }
       })
     },
-    [pose, setPose]
+    [setPose, setSmoothUpdate]
   )
 
   const updateBonePosition = useCallback(
     (boneName: string, componentIndex: number, value: number) => {
-      const currentPosition = [...pose.movableBones[boneName as keyof typeof pose.movableBones]]
-      currentPosition[componentIndex] = value
-      setPose({ ...pose, movableBones: { ...pose.movableBones, [boneName]: currentPosition } })
+      setSmoothUpdate(false)
+      setPose((prev: Pose) => {
+        const currentPosition = [...prev.movableBones[boneName as keyof typeof prev.movableBones]]
+        currentPosition[componentIndex] = value
+        return {
+          ...prev,
+          movableBones: { ...prev.movableBones, [boneName]: currentPosition },
+        }
+      })
     },
-    [pose, setPose]
+    [setPose, setSmoothUpdate]
   )
 
   const handleFileUpload = useCallback(
@@ -75,7 +92,14 @@ export default function CustomizePanel({
         try {
           const poseData = JSON.parse(e.target?.result as string)
           setDescription(poseData.description)
-          setPoseSmooth(poseData)
+          setSmoothUpdate(true)
+          setPose((prev: Pose) => ({
+            ...prev,
+            description: poseData.description || prev.description,
+            face: { ...prev.face, ...poseData.face },
+            movableBones: { ...prev.movableBones, ...poseData.movableBones },
+            rotatableBones: { ...prev.rotatableBones, ...poseData.rotatableBones },
+          }))
         } catch (error) {
           console.error("Error parsing JSON file:", error)
           alert("Invalid JSON file. Please select a valid pose file.")
@@ -85,7 +109,7 @@ export default function CustomizePanel({
 
       event.target.value = ""
     },
-    [setPoseSmooth]
+    [setPose, setSmoothUpdate]
   )
 
 
@@ -202,7 +226,7 @@ export default function CustomizePanel({
                     max={1}
                     step={0.01}
                     value={[pose.face[morph as keyof typeof pose.face]]}
-                    onValueChange={(value: number[]) => setPose({ ...pose, face: { ...pose.face, [morph]: value[0] } })}
+                    onValueChange={(value: number[]) => updateMorph(morph, value[0])}
                   />
                   <p className="text-xs w-10 text-right">{pose.face[morph as keyof typeof pose.face]}</p>
                 </div>
@@ -228,8 +252,8 @@ export default function CustomizePanel({
                     <div key={axis} className="flex items-center gap-2 mb-1">
                       <p className="text-xs w-4 text-muted-foreground">{axis}</p>
                       <Slider
-                        min={axis === "Y" ? 0 : -20}
-                        max={30}
+                        min={-25}
+                        max={25}
                         step={0.01}
                         value={[pose.movableBones[bone as keyof typeof pose.movableBones]?.[index] || 0]}
                         onValueChange={(value: number[]) => updateBonePosition(bone, index, value[0])}
