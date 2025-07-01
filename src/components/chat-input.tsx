@@ -16,15 +16,53 @@ const suggestedPoses: string[] = [
   "angry face while lifting left foot",
   "squatting down and cry",
   "point forward with shocked look",
+  "waving with both hands excitedly",
+  "sitting cross-legged with hands on knees",
+  "stretching arms up high with a yawn",
+  "covering face with hands shyly",
+  "dancing with one leg up",
+  "holding chin thoughtfully",
+  "jumping with arms spread wide",
+  "lying down reading a book",
+  "standing on one foot balancing",
+  "clapping hands with joy",
+  "looking over shoulder mysteriously",
+  "kneeling down to pet an imaginary cat",
+  "doing a peace sign with tongue out",
+  "hands on hips looking confident",
+  "crouching like a ninja",
+  "spinning around with arms out",
+  "sitting with legs dangling",
+  "flexing muscles proudly",
+  "tiptoeing sneakily",
+  "giving a thumbs up with a wink",
+  "hugging knees while sitting",
+  "doing jazz hands",
+  "leaning against an invisible wall",
+  "pretending to sleep standing up",
+  "making heart shape with hands",
+  "doing a superhero pose",
 ] as const
 
 export default function ChatInput({ setPose }: { setPose: (pose: Pose) => void }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(true)
   const [fileUrl, setFileUrl] = useState("")
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [waitingPoseResult, setWaitingPoseResult] = useState(false)
+  const [displayedPoses, setDisplayedPoses] = useState<string[]>([])
+
+  // Function to get 4 random poses
+  const getRandomPoses = () => {
+    const shuffled = [...suggestedPoses].sort(() => 0.5 - Math.random())
+    return shuffled.slice(0, 4)
+  }
+
+  // Initialize with random poses on component mount
+  useEffect(() => {
+    setDisplayedPoses(getRandomPoses())
+  }, [])
 
   useEffect(() => {
     if (fileUrl.length > 0) {
@@ -47,6 +85,8 @@ export default function ChatInput({ setPose }: { setPose: (pose: Pose) => void }
     setFileUrl("")
     setPose(poseData.result)
     setWaitingPoseResult(false)
+    // Get new random poses for next time
+    setDisplayedPoses(getRandomPoses())
   }
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -104,7 +144,7 @@ export default function ChatInput({ setPose }: { setPose: (pose: Pose) => void }
       <div className="relative w-full flex flex-col gap-3">
         {showSuggestions && !uploading && !fileUrl.length && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {suggestedPoses.map((pose, i) => (
+            {displayedPoses.map((pose, i) => (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

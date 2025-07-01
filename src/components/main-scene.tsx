@@ -108,7 +108,6 @@ export default function MainScene() {
     const bone = getBone(boneName)
     if (!bone) return
     bone.position = new Vector3(position[0], position[1], position[2])
-
   }, [])
 
   const rotateBoneSmooth = useCallback((boneName: string, targetQuaternion: Quaternion, duration: number = 1000) => {
@@ -135,8 +134,6 @@ export default function MainScene() {
       startPosition: bone.position.clone(),
     }
   }, [])
-
-
 
   const importPoseManual = useCallback(
     (pose?: Pose) => {
@@ -177,6 +174,7 @@ export default function MainScene() {
   const importPoseAI = useCallback(
     (pose?: Pose) => {
       if (!modelRef.current || !pose) return
+      modelRef.current.morph.resetMorphWeights()
 
       if (pose.face) {
         for (const [morphName, targetValue] of Object.entries(pose.face)) {
@@ -486,7 +484,13 @@ export default function MainScene() {
           </div>
         )}
       </div>
-      <CustomizePanel open={openCustomizePanel} setOpen={setOpenCustomizePanel} pose={poseManual} setPose={setPoseManual} resetPose={() => loadModel()} />
+      <CustomizePanel
+        open={openCustomizePanel}
+        setOpen={setOpenCustomizePanel}
+        pose={poseManual}
+        setPose={setPoseManual}
+        resetPose={() => loadModel()}
+      />
       <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-xl mx-auto flex p-4 w-full z-10">
         <ChatInput setPose={setPoseAI} />
       </div>
