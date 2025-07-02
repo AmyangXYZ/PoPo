@@ -225,42 +225,46 @@ export default function MainScene() {
           defaultFace[morph as keyof Morphs] = 0
         }
         for (const bone of Object.keys(MovableBonesTranslations)) {
-          const runtimeBone = modelRef.current!.runtimeBones.find((b) => b.name === bone)
-          if (runtimeBone) {
-            // Get this bone's world matrix
-            const worldMatrix = Matrix.FromArray(runtimeBone.worldMatrix, 0)
+          if (bonesRef.current[bone]) {
+            const runtimeBone = modelRef.current!.runtimeBones.find((b) => b.name === bone)
+            if (runtimeBone) {
+              // Get this bone's world matrix
+              const worldMatrix = Matrix.FromArray(runtimeBone.worldMatrix, 0)
 
-            // Get parent world matrix (identity if no parent)
-            let parentWorldMatrix = Matrix.Identity()
-            if (runtimeBone.parentBone) {
-              parentWorldMatrix = Matrix.FromArray(runtimeBone.parentBone.worldMatrix, 0)
-            }
+              // Get parent world matrix (identity if no parent)
+              let parentWorldMatrix = Matrix.Identity()
+              if (runtimeBone.parentBone) {
+                parentWorldMatrix = Matrix.FromArray(runtimeBone.parentBone.worldMatrix, 0)
+              }
 
-            // Compute local matrix: local = inverse(parentWorld) * world
-            const invParentWorld = parentWorldMatrix.invert()
-            const localMatrix = invParentWorld.multiply(worldMatrix)
+              // Compute local matrix: local = inverse(parentWorld) * world
+              const invParentWorld = parentWorldMatrix.invert()
+              const localMatrix = invParentWorld.multiply(worldMatrix)
 
-            // Decompose local matrix to get local position
-            const localRotation = new Quaternion()
-            const localPosition = new Vector3()
-            const localScaling = new Vector3()
-            localMatrix.decompose(localScaling, localRotation, localPosition)
+              // Decompose local matrix to get local position
+              const localRotation = new Quaternion()
+              const localPosition = new Vector3()
+              const localScaling = new Vector3()
+              localMatrix.decompose(localScaling, localRotation, localPosition)
 
-            const position: BonePosition = [localPosition.x, localPosition.y, localPosition.z]
-            if (!(position[0] === 0 && position[1] === 0 && position[2] === 0)) {
-              defaultMovableBones[bone as keyof MovableBones] = position
+              const position: BonePosition = [localPosition.x, localPosition.y, localPosition.z]
+              if (!(position[0] === 0 && position[1] === 0 && position[2] === 0)) {
+                defaultMovableBones[bone as keyof MovableBones] = position
+              }
             }
           }
         }
 
         for (const bone of Object.keys(RotatableBonesTranslations)) {
-          const boneRotationQuaternion = bonesRef.current[bone].rotationQuaternion.clone()
-          defaultRotatableBones[bone as keyof RotatableBones] = [
-            boneRotationQuaternion.x,
-            boneRotationQuaternion.y,
-            boneRotationQuaternion.z,
-            boneRotationQuaternion.w,
-          ]
+          if (bonesRef.current[bone]) {
+            const boneRotationQuaternion = bonesRef.current[bone].rotationQuaternion.clone()
+            defaultRotatableBones[bone as keyof RotatableBones] = [
+              boneRotationQuaternion.x,
+              boneRotationQuaternion.y,
+              boneRotationQuaternion.z,
+              boneRotationQuaternion.w,
+            ]
+          }
         }
         const defaultPose = {
           description: "",
@@ -462,9 +466,11 @@ export default function MainScene() {
         setSmoothUpdate={setSmoothUpdate}
         resetPose={() => loadModel()}
       />
-      <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10">
-        <ChatInput setPose={setPose} setSmoothUpdate={setSmoothUpdate} />
-      </div>
+      {!openCustomizePanel && (
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10">
+          <ChatInput setPose={setPose} setSmoothUpdate={setSmoothUpdate} />
+        </div>
+      )}
     </div>
   )
 }

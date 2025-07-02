@@ -254,10 +254,11 @@ export const MovableBonesTranslations = {
 } as const
 
 export const RotatableBonesTranslations = {
-  首: "Neck",
-  頭: "Head",
+  センター: "Center",
   上半身: "Upper Body",
   下半身: "Lower Body",
+  首: "Neck",
+  頭: "Head",
   左足: "Left Leg",
   右足: "Right Leg",
   左足首: "Left Ankle",
