@@ -1,9 +1,5 @@
 import {
-  KeyMorphs,
-  MovableBones,
-  Morphs,
   Pose,
-  RotatableBones,
   MorphsTranslations,
   RotatableBonesTranslations,
   MovableBonesTranslations,
@@ -23,6 +19,7 @@ export default function CustomizePanel({
   setPose,
   setSmoothUpdate,
   resetPose,
+  exportPose,
 }: {
   open: boolean
   setOpen: (open: boolean) => void
@@ -30,6 +27,7 @@ export default function CustomizePanel({
   setPose: Dispatch<SetStateAction<Pose>>
   setSmoothUpdate: (smoothUpdate: boolean) => void
   resetPose: () => void
+  exportPose: (description: string) => void
 }) {
   const [description, setDescription] = useState("")
 
@@ -112,42 +110,6 @@ export default function CustomizePanel({
     },
     [setPose, setSmoothUpdate]
   )
-
-  const exportPose = useCallback(() => {
-    const poseJson = {
-      description: description,
-      face: {} as Morphs,
-      movableBones: {} as MovableBones,
-      rotatableBones: {} as RotatableBones,
-    }
-    for (const morph of KeyMorphs) {
-      if (pose.face[morph as keyof typeof pose.face] !== 0) {
-        poseJson.face[morph as keyof typeof poseJson.face] = pose.face[morph as keyof typeof pose.face]
-      }
-    }
-    for (const bone of Object.keys(pose.rotatableBones)) {
-      const rotation = pose.rotatableBones[bone as keyof typeof pose.rotatableBones]
-      if (JSON.stringify(rotation) !== JSON.stringify([0, 0, 0, 1])) {
-        poseJson.rotatableBones[bone as keyof typeof poseJson.rotatableBones] = rotation
-      }
-    }
-    for (const bone of Object.keys(pose.movableBones)) {
-      const position = pose.movableBones[bone as keyof typeof pose.movableBones]
-      if (JSON.stringify(position) !== JSON.stringify([0, 0, 0])) {
-        poseJson.movableBones[bone as keyof typeof poseJson.movableBones] = position
-      }
-    }
-
-    const blob = new Blob([JSON.stringify(poseJson, null, 2)], { type: "application/json" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `${description.trim().replace(/\s+/g, "-").replace(/:/g, "-")}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }, [pose, description])
 
   return (
     <div
@@ -482,7 +444,7 @@ export default function CustomizePanel({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-        <Button onClick={exportPose} disabled={!description}>
+        <Button onClick={() => exportPose(description)} disabled={!description}>
           Export
         </Button>
       </div>

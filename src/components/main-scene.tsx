@@ -84,6 +84,7 @@ export default function MainScene() {
     movableBones: {} as MovableBones,
     rotatableBones: {} as RotatableBones,
   } as Pose)
+  const defaultPoseRef = useRef<Pose>(null)
 
   const [openCustomizePanel, setOpenCustomizePanel] = useState(false)
   const smoothUpdateRef = useRef(true)
@@ -272,6 +273,7 @@ export default function MainScene() {
           movableBones: defaultMovableBones,
           rotatableBones: defaultRotatableBones,
         }
+        defaultPoseRef.current = defaultPose
         defaultPose.description = "default pose"
 
         setPose(defaultPose)
@@ -279,6 +281,42 @@ export default function MainScene() {
 
     })
   }, [])
+
+  const exportPose = useCallback((description: string) => {
+    if (pose && defaultPoseRef.current) {
+      const exportedPose = {
+        description: description,
+        face: {} as Morphs,
+        movableBones: {} as MovableBones,
+        rotatableBones: {} as RotatableBones,
+      }
+      const defaultPose = defaultPoseRef.current
+      for (const [morphName, targetValue] of Object.entries(pose.face)) {
+        if (targetValue !== 0) {
+          exportedPose.face[morphName as keyof Morphs] = targetValue
+        }
+      }
+      for (const [boneName, position] of Object.entries(pose.movableBones)) {
+        if (JSON.stringify(position) !== JSON.stringify(defaultPose.movableBones[boneName as keyof MovableBones])) {
+          exportedPose.movableBones[boneName as keyof MovableBones] = position
+        }
+      }
+      for (const [boneName, rotation] of Object.entries(pose.rotatableBones)) {
+        if (JSON.stringify(rotation) !== JSON.stringify(defaultPose.rotatableBones[boneName as keyof RotatableBones])) {
+          exportedPose.rotatableBones[boneName as keyof RotatableBones] = rotation
+        }
+      }
+      const blob = new Blob([JSON.stringify(exportedPose, null, 2)], { type: "application/json" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `${description.trim().replace(/\s+/g, "-").replace(/:/g, "-")}.json`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    }
+  }, [pose, defaultPoseRef])
 
   useEffect(() => {
     const resize = () => {
@@ -460,6 +498,7 @@ export default function MainScene() {
         setPose={setPose}
         setSmoothUpdate={setSmoothUpdate}
         resetPose={() => loadModel()}
+        exportPose={exportPose}
       />
       {!openCustomizePanel && (
         <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10">
