@@ -56,6 +56,7 @@ export type BonePosition = [number, number, number] // [x, y, z]
 export type BoneRotationQuaternion = [number, number, number, number] // [x, y, z, w]
 
 export interface MovableBones {
+  全ての親: BonePosition
   センター: BonePosition
   左足ＩＫ: BonePosition
   右足ＩＫ: BonePosition
@@ -64,8 +65,11 @@ export interface MovableBones {
 }
 
 export interface RotatableBones {
+  全ての親: BoneRotationQuaternion
+  センター: BoneRotationQuaternion
   首: BoneRotationQuaternion
   頭: BoneRotationQuaternion
+  腰: BoneRotationQuaternion
   上半身: BoneRotationQuaternion
   下半身: BoneRotationQuaternion
   左足: BoneRotationQuaternion
@@ -148,11 +152,13 @@ export const KeyMorphs = [
 ] as const
 
 export const KeyBones = [
+  "全ての親",
   "センター",
   "首",
   "頭",
   "上半身",
   "下半身",
+  "腰",
   "左足",
   "右足",
   "左足首",
@@ -246,6 +252,7 @@ export const MorphsTranslations = {
 } as const
 
 export const MovableBonesTranslations = {
+  全ての親: "All Parents",
   センター: "Center",
   左足ＩＫ: "Left Foot",
   右足ＩＫ: "Right Foot",
@@ -254,9 +261,11 @@ export const MovableBonesTranslations = {
 } as const
 
 export const RotatableBonesTranslations = {
+  全ての親: "All Parents",
   センター: "Center",
   上半身: "Upper Body",
   下半身: "Lower Body",
+  腰: "Waist",
   首: "Neck",
   頭: "Head",
   左足: "Left Leg",
