@@ -197,7 +197,7 @@ export default function MainScene() {
       modelRef.current.mesh.dispose()
     }
 
-    ImportMeshAsync(`/models/深空之眼-梵天3/深空之眼-梵天3.pmx`, sceneRef.current!, {
+    ImportMeshAsync(`/models/深空之眼-梵天3/大梵天4.0.pmx`, sceneRef.current!, {
       pluginOptions: {
         mmdmodel: {
           materialBuilder: mmdMaterialBuilderRef.current || undefined,
