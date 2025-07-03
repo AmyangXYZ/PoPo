@@ -33,6 +33,7 @@ import {
   type IMmdWasmInstance,
   MmdStandardMaterialBuilder,
   MmdStandardMaterial,
+  VpdLoader,
 } from "babylon-mmd"
 import ChatInput from "./chat-input"
 import {
@@ -74,6 +75,7 @@ export default function MainScene() {
   const mmdWasmInstanceRef = useRef<IMmdWasmInstance>(null)
   const mmdRuntimeRef = useRef<MmdWasmRuntime>(null)
   const mmdMaterialBuilderRef = useRef<MmdStandardMaterialBuilder>(null)
+  const vpdLoaderRef = useRef<VpdLoader>(null)
   const modelRef = useRef<MmdWasmModel>(null)
   const bonesRef = useRef<{ [key: string]: IMmdRuntimeLinkedBone }>({})
   const targetRotationsRef = useRef<{ [key: string]: TargetRotation }>({})
@@ -194,7 +196,7 @@ export default function MainScene() {
       modelRef.current.mesh.dispose()
     }
 
-    ImportMeshAsync(`/models/深空之眼-托特/深空之眼-托特.pmx`, sceneRef.current!, {
+    ImportMeshAsync(`/models/深空之眼-梵天3/深空之眼-梵天3.pmx`, sceneRef.current!, {
       pluginOptions: {
         mmdmodel: {
           materialBuilder: mmdMaterialBuilderRef.current || undefined,
@@ -281,6 +283,11 @@ export default function MainScene() {
 
     })
   }, [])
+
+  // const importVpd = useCallback(async (vpd: string) => {
+  //   if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current || !vpdLoaderRef.current) return
+  //   const vpd = await vpdLoaderRef.current.importVpd(vpd)
+  // }, [])
 
   const exportPose = useCallback((description: string) => {
     if (pose && defaultPoseRef.current) {
@@ -391,6 +398,8 @@ export default function MainScene() {
         }
       }
       mmdMaterialBuilderRef.current = materialBuilder
+
+      vpdLoaderRef.current = new VpdLoader(scene)
 
       loadModel()
 
