@@ -38,6 +38,7 @@ import {
 import ChatInput from "./chat-input"
 import {
   BonePosition,
+  BoneRotationQuaternion,
   KeyBones,
   Morphs,
   MorphsTranslations,
@@ -284,10 +285,70 @@ export default function MainScene() {
     })
   }, [])
 
-  // const importVpd = useCallback(async (vpd: string) => {
-  //   if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current || !vpdLoaderRef.current) return
-  //   const vpd = await vpdLoaderRef.current.importVpd(vpd)
-  // }, [])
+  const loadVpd = useCallback(async (vpdUrl: string) => {
+    if (!vpdLoaderRef.current || !modelRef.current) return
+
+    const vpd = await vpdLoaderRef.current.loadAsync("vpd_pose", vpdUrl)
+
+    const poseVpd = {
+      description: "",
+      face: {} as Morphs,
+      movableBones: {} as MovableBones,
+      rotatableBones: {} as RotatableBones,
+    }
+
+    for (const boneTrack of vpd.boneTracks) {
+      const boneName = boneTrack.name
+
+      if (!Object.keys(RotatableBonesTranslations).includes(boneName)) continue
+
+      const rotations = boneTrack.rotations
+      if (rotations.length === 0) continue
+      const rotation: BoneRotationQuaternion = [...rotations] as BoneRotationQuaternion
+
+      if (!(rotation[0] === 0 && rotation[1] === 0 && rotation[2] === 0 && rotation[3] === 1)) {
+        poseVpd.rotatableBones[boneName as keyof typeof poseVpd.rotatableBones] = rotation
+      }
+    }
+
+    for (const boneTrack of vpd.movableBoneTracks) {
+      const boneName = boneTrack.name
+      if (!Object.keys(MovableBonesTranslations).includes(boneName)) continue
+
+      const runtimeBone = modelRef.current.runtimeBones.find((b) => b.name === boneName)
+      if (runtimeBone) {
+        const worldMatrix = Matrix.FromArray(runtimeBone.worldMatrix, 0)
+
+        let parentWorldMatrix = Matrix.Identity()
+        if (runtimeBone.parentBone) {
+          parentWorldMatrix = Matrix.FromArray(runtimeBone.parentBone.worldMatrix, 0)
+        }
+
+        const invParentWorld = parentWorldMatrix.invert()
+        const localMatrix = invParentWorld.multiply(worldMatrix)
+
+        const localRotation = new Quaternion()
+        const localPosition = new Vector3()
+        const localScaling = new Vector3()
+        localMatrix.decompose(localScaling, localRotation, localPosition)
+
+        const position: BonePosition = [localPosition.x, localPosition.y, localPosition.z]
+        if (!(position[0] === 0 && position[1] === 0 && position[2] === 0)) {
+          poseVpd.movableBones[boneName as keyof MovableBones] = position
+        }
+      }
+    }
+
+    setSmoothUpdate(true)
+    setPose((prev: Pose) => ({
+      ...prev,
+      description: "unlabeled pose from vpd",
+      face: { ...prev.face, ...poseVpd.face },
+      movableBones: { ...prev.movableBones, ...poseVpd.movableBones },
+      rotatableBones: { ...prev.rotatableBones, ...poseVpd.rotatableBones },
+    }))
+
+  }, [vpdLoaderRef, modelRef, setPose, setSmoothUpdate])
 
   const exportPose = useCallback((description: string) => {
     if (pose && defaultPoseRef.current) {
@@ -505,6 +566,7 @@ export default function MainScene() {
         setOpen={setOpenCustomizePanel}
         pose={pose}
         setPose={setPose}
+        loadVpd={loadVpd}
         setSmoothUpdate={setSmoothUpdate}
         resetPose={() => loadModel()}
         exportPose={exportPose}

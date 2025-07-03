@@ -17,6 +17,7 @@ export default function CustomizePanel({
   setOpen,
   pose,
   setPose,
+  loadVpd,
   setSmoothUpdate,
   resetPose,
   exportPose,
@@ -25,6 +26,7 @@ export default function CustomizePanel({
   setOpen: (open: boolean) => void
   pose: Pose
   setPose: Dispatch<SetStateAction<Pose>>
+  loadVpd: (vpdUrl: string) => void
   setSmoothUpdate: (smoothUpdate: boolean) => void
   resetPose: () => void
   exportPose: (description: string) => void
@@ -86,29 +88,35 @@ export default function CustomizePanel({
       const file = event.target.files?.[0]
       if (!file) return
 
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        try {
-          const poseData = JSON.parse(e.target?.result as string)
-          setDescription(poseData.description)
-          setSmoothUpdate(true)
-          setPose((prev: Pose) => ({
-            ...prev,
-            description: poseData.description || prev.description,
-            face: { ...prev.face, ...poseData.face },
-            movableBones: { ...prev.movableBones, ...poseData.movableBones },
-            rotatableBones: { ...prev.rotatableBones, ...poseData.rotatableBones },
-          }))
-        } catch (error) {
-          console.error("Error parsing JSON file:", error)
-          alert("Invalid JSON file. Please select a valid pose file.")
+      if (file.name.endsWith(".json")) {
+
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          try {
+            const poseData = JSON.parse(e.target?.result as string)
+            setDescription(poseData.description)
+            setSmoothUpdate(true)
+            setPose((prev: Pose) => ({
+              ...prev,
+              description: poseData.description || prev.description,
+              face: { ...prev.face, ...poseData.face },
+              movableBones: { ...prev.movableBones, ...poseData.movableBones },
+              rotatableBones: { ...prev.rotatableBones, ...poseData.rotatableBones },
+            }))
+          } catch (error) {
+            console.error("Error parsing JSON file:", error)
+            alert("Invalid JSON file. Please select a valid pose file.")
+          }
         }
+        reader.readAsText(file)
+      } else if (file.name.endsWith(".vpd")) {
+        const url = URL.createObjectURL(file)
+        loadVpd(url)
       }
-      reader.readAsText(file)
 
       event.target.value = ""
     },
-    [setPose, setSmoothUpdate]
+    [setPose, setSmoothUpdate, loadVpd]
   )
 
   return (
@@ -123,7 +131,7 @@ export default function CustomizePanel({
             <div className="relative mr-1">
               <input
                 type="file"
-                accept=".json"
+                accept=".json, .vpd"
                 onChange={handleFileUpload}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 id="pose-upload"
