@@ -197,7 +197,7 @@ export default function MainScene() {
       modelRef.current.mesh.dispose()
     }
 
-    ImportMeshAsync(`/models/深空之眼-梵天3/大梵天4.0.pmx`, sceneRef.current!, {
+    ImportMeshAsync(`/models/深空之眼-梵天3/深空之眼-梵天3-cleaned.pmx`, sceneRef.current!, {
       pluginOptions: {
         mmdmodel: {
           materialBuilder: mmdMaterialBuilderRef.current || undefined,
@@ -281,110 +281,116 @@ export default function MainScene() {
 
         setPose(defaultPose)
       }, 200)
-
     })
   }, [])
 
-  const loadVpd = useCallback(async (vpdUrl: string) => {
-    if (!vpdLoaderRef.current || !modelRef.current) return
+  const loadVpd = useCallback(
+    async (vpdUrl: string) => {
+      if (!vpdLoaderRef.current || !modelRef.current) return
 
-    const vpd = await vpdLoaderRef.current.loadAsync("vpd_pose", vpdUrl)
+      const vpd = await vpdLoaderRef.current.loadAsync("vpd_pose", vpdUrl)
 
-    const poseVpd = {
-      description: "",
-      face: {} as Morphs,
-      movableBones: {} as MovableBones,
-      rotatableBones: {} as RotatableBones,
-    }
-
-    for (const boneTrack of vpd.boneTracks) {
-      const boneName = boneTrack.name
-
-      if (!Object.keys(RotatableBonesTranslations).includes(boneName)) continue
-
-      const rotations = boneTrack.rotations
-      if (rotations.length === 0) continue
-      const rotation: BoneRotationQuaternion = [...rotations] as BoneRotationQuaternion
-
-      if (!(rotation[0] === 0 && rotation[1] === 0 && rotation[2] === 0 && rotation[3] === 1)) {
-        poseVpd.rotatableBones[boneName as keyof typeof poseVpd.rotatableBones] = rotation
-      }
-    }
-
-    for (const boneTrack of vpd.movableBoneTracks) {
-      const boneName = boneTrack.name
-      if (!Object.keys(MovableBonesTranslations).includes(boneName)) continue
-
-      const runtimeBone = modelRef.current.runtimeBones.find((b) => b.name === boneName)
-      if (runtimeBone) {
-        const worldMatrix = Matrix.FromArray(runtimeBone.worldMatrix, 0)
-
-        let parentWorldMatrix = Matrix.Identity()
-        if (runtimeBone.parentBone) {
-          parentWorldMatrix = Matrix.FromArray(runtimeBone.parentBone.worldMatrix, 0)
-        }
-
-        const invParentWorld = parentWorldMatrix.invert()
-        const localMatrix = invParentWorld.multiply(worldMatrix)
-
-        const localRotation = new Quaternion()
-        const localPosition = new Vector3()
-        const localScaling = new Vector3()
-        localMatrix.decompose(localScaling, localRotation, localPosition)
-
-        const position: BonePosition = [localPosition.x, localPosition.y, localPosition.z]
-        if (!(position[0] === 0 && position[1] === 0 && position[2] === 0)) {
-          poseVpd.movableBones[boneName as keyof MovableBones] = position
-        }
-      }
-    }
-
-    setSmoothUpdate(true)
-    setPose((prev: Pose) => ({
-      ...prev,
-      description: "unlabeled pose from vpd",
-      face: { ...prev.face, ...poseVpd.face },
-      movableBones: { ...prev.movableBones, ...poseVpd.movableBones },
-      rotatableBones: { ...prev.rotatableBones, ...poseVpd.rotatableBones },
-    }))
-
-  }, [vpdLoaderRef, modelRef, setPose, setSmoothUpdate])
-
-  const exportPose = useCallback((description: string) => {
-    if (pose && defaultPoseRef.current) {
-      const exportedPose = {
-        description: description,
+      const poseVpd = {
+        description: "",
         face: {} as Morphs,
         movableBones: {} as MovableBones,
         rotatableBones: {} as RotatableBones,
       }
-      const defaultPose = defaultPoseRef.current
-      for (const [morphName, targetValue] of Object.entries(pose.face)) {
-        if (targetValue !== 0) {
-          exportedPose.face[morphName as keyof Morphs] = targetValue
+
+      for (const boneTrack of vpd.boneTracks) {
+        const boneName = boneTrack.name
+
+        if (!Object.keys(RotatableBonesTranslations).includes(boneName)) continue
+
+        const rotations = boneTrack.rotations
+        if (rotations.length === 0) continue
+        const rotation: BoneRotationQuaternion = [...rotations] as BoneRotationQuaternion
+
+        if (!(rotation[0] === 0 && rotation[1] === 0 && rotation[2] === 0 && rotation[3] === 1)) {
+          poseVpd.rotatableBones[boneName as keyof typeof poseVpd.rotatableBones] = rotation
         }
       }
-      for (const [boneName, position] of Object.entries(pose.movableBones)) {
-        if (JSON.stringify(position) !== JSON.stringify(defaultPose.movableBones[boneName as keyof MovableBones])) {
-          exportedPose.movableBones[boneName as keyof MovableBones] = position
+
+      for (const boneTrack of vpd.movableBoneTracks) {
+        const boneName = boneTrack.name
+        if (!Object.keys(MovableBonesTranslations).includes(boneName)) continue
+
+        const runtimeBone = modelRef.current.runtimeBones.find((b) => b.name === boneName)
+        if (runtimeBone) {
+          const worldMatrix = Matrix.FromArray(runtimeBone.worldMatrix, 0)
+
+          let parentWorldMatrix = Matrix.Identity()
+          if (runtimeBone.parentBone) {
+            parentWorldMatrix = Matrix.FromArray(runtimeBone.parentBone.worldMatrix, 0)
+          }
+
+          const invParentWorld = parentWorldMatrix.invert()
+          const localMatrix = invParentWorld.multiply(worldMatrix)
+
+          const localRotation = new Quaternion()
+          const localPosition = new Vector3()
+          const localScaling = new Vector3()
+          localMatrix.decompose(localScaling, localRotation, localPosition)
+
+          const position: BonePosition = [localPosition.x, localPosition.y, localPosition.z]
+          if (!(position[0] === 0 && position[1] === 0 && position[2] === 0)) {
+            poseVpd.movableBones[boneName as keyof MovableBones] = position
+          }
         }
       }
-      for (const [boneName, rotation] of Object.entries(pose.rotatableBones)) {
-        if (JSON.stringify(rotation) !== JSON.stringify(defaultPose.rotatableBones[boneName as keyof RotatableBones])) {
-          exportedPose.rotatableBones[boneName as keyof RotatableBones] = rotation
+
+      setSmoothUpdate(true)
+      setPose((prev: Pose) => ({
+        ...prev,
+        description: "unlabeled pose from vpd",
+        face: { ...prev.face, ...poseVpd.face },
+        movableBones: { ...prev.movableBones, ...poseVpd.movableBones },
+        rotatableBones: { ...prev.rotatableBones, ...poseVpd.rotatableBones },
+      }))
+    },
+    [vpdLoaderRef, modelRef, setPose, setSmoothUpdate]
+  )
+
+  const exportPose = useCallback(
+    (description: string) => {
+      if (pose && defaultPoseRef.current) {
+        const exportedPose = {
+          description: description,
+          face: {} as Morphs,
+          movableBones: {} as MovableBones,
+          rotatableBones: {} as RotatableBones,
         }
+        const defaultPose = defaultPoseRef.current
+        for (const [morphName, targetValue] of Object.entries(pose.face)) {
+          if (targetValue !== 0) {
+            exportedPose.face[morphName as keyof Morphs] = targetValue
+          }
+        }
+        for (const [boneName, position] of Object.entries(pose.movableBones)) {
+          if (JSON.stringify(position) !== JSON.stringify(defaultPose.movableBones[boneName as keyof MovableBones])) {
+            exportedPose.movableBones[boneName as keyof MovableBones] = position
+          }
+        }
+        for (const [boneName, rotation] of Object.entries(pose.rotatableBones)) {
+          if (
+            JSON.stringify(rotation) !== JSON.stringify(defaultPose.rotatableBones[boneName as keyof RotatableBones])
+          ) {
+            exportedPose.rotatableBones[boneName as keyof RotatableBones] = rotation
+          }
+        }
+        const blob = new Blob([JSON.stringify(exportedPose, null, 2)], { type: "application/json" })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = `${description.trim().replace(/\s+/g, "-").replace(/:/g, "-")}.json`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
       }
-      const blob = new Blob([JSON.stringify(exportedPose, null, 2)], { type: "application/json" })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `${description.trim().replace(/\s+/g, "-").replace(/:/g, "-")}.json`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
-    }
-  }, [pose, defaultPoseRef])
+    },
+    [pose, defaultPoseRef]
+  )
 
   useEffect(() => {
     const resize = () => {
