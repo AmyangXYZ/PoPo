@@ -52,7 +52,8 @@ import { IMmdRuntimeLinkedBone } from "babylon-mmd/esm/Runtime/IMmdRuntimeLinked
 import { Button } from "./ui/button"
 import Link from "next/link"
 import CustomizePanel from "./customize-panel"
-import { HandMetal } from "lucide-react"
+import { HandMetal, Shirt } from "lucide-react"
+import ClothesPanel from "./clothes-panel"
 
 interface TargetRotation {
   quaternion: Quaternion
@@ -88,9 +89,12 @@ export default function MainScene() {
     rotatableBones: {} as RotatableBones,
   } as Pose)
   const defaultPoseRef = useRef<Pose>(null)
+  const [meshes, setMeshes] = useState<Mesh[]>([])
 
   const [openCustomizePanel, setOpenCustomizePanel] = useState(false)
   const smoothUpdateRef = useRef(true)
+
+  const [openClothesPanel, setOpenClothesPanel] = useState(false)
 
   const setSmoothUpdate = useCallback((smoothUpdate: boolean) => {
     smoothUpdateRef.current = smoothUpdate
@@ -281,6 +285,8 @@ export default function MainScene() {
 
         setPose(defaultPose)
       }, 200)
+
+      setMeshes(mesh.metadata.meshes)
     })
   }, [])
 
@@ -555,18 +561,32 @@ export default function MainScene() {
             <Image src="/github-mark.svg" alt="GitHub" width={18} height={18} />
           </Link>
         </Button>
-        {!openCustomizePanel && (
-          <div className="hidden md:block">
-            <Button
-              size="icon"
-              className="bg-white text-black size-7 rounded-full hover:bg-gray-200"
-              onClick={() => setOpenCustomizePanel(true)}
-            >
-              <HandMetal />
-            </Button>
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {!openClothesPanel && (
+            <div className="hidden md:block">
+              <Button
+                size="icon"
+                className="bg-white text-black size-7 rounded-full hover:bg-gray-200"
+                onClick={() => setOpenClothesPanel(true)}
+              >
+                <Shirt />
+              </Button>
+            </div>
+          )}
+          {!openCustomizePanel && (
+            <div className="hidden md:block">
+              <Button
+                size="icon"
+                className="bg-white text-black size-7 rounded-full hover:bg-gray-200"
+                onClick={() => setOpenCustomizePanel(true)}
+              >
+                <HandMetal />
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
+      <ClothesPanel open={openClothesPanel} setOpen={setOpenClothesPanel} meshes={meshes} setMeshes={setMeshes} />
       <CustomizePanel
         open={openCustomizePanel}
         setOpen={setOpenCustomizePanel}
