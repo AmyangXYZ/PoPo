@@ -5,8 +5,6 @@ import { SetStateAction, Dispatch } from "react"
 import { Mesh } from "@babylonjs/core/Meshes/mesh"
 import { Switch } from "./ui/switch"
 
-const clothes = ["衣边", "衣服", "袖子", "头饰", "脖环", "脖带", "鞋子", "眼镜"]
-
 export default function ClothesPanel({
   open,
   setOpen,
@@ -34,22 +32,20 @@ export default function ClothesPanel({
       </div>
 
       <ScrollArea className="max-h-[calc(100dvh-22rem)] overflow-auto p-4 ">
-        {meshes
-          .filter((mesh) => clothes.includes(mesh.name))
-          .map((mesh) => (
-            <div key={mesh.name} className="flex items-center gap-2 pb-1 pr-6">
-              <div className="text-xs w-44">
-                <p className="font-medium">{mesh.name}</p>
-              </div>
-              <Switch
-                checked={mesh.isEnabled() || false}
-                onCheckedChange={(checked) => {
-                  mesh.setEnabled(checked)
-                  setMeshes((prev) => prev.map((m) => (m.name === mesh.name ? mesh : m)))
-                }}
-              />
+        {meshes.map((mesh) => (
+          <div key={mesh.name} className="flex items-center justify-between px-4 gap-2 pb-1">
+            <div className="text-xs w-44">
+              <p className="font-medium">{mesh.name}</p>
             </div>
-          ))}
+            <Switch
+              checked={mesh.isEnabled() || false}
+              onCheckedChange={(checked) => {
+                mesh.setEnabled(checked)
+                setMeshes((prev) => prev.map((m) => (m.name === mesh.name ? mesh : m)))
+              }}
+            />
+          </div>
+        ))}
       </ScrollArea>
     </div>
   )

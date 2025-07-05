@@ -286,7 +286,21 @@ export default function MainScene() {
         setPose(defaultPose)
       }, 200)
 
-      setMeshes(mesh.metadata.meshes)
+      const clothes = ["衣边", "衣服", "袖子", "头饰", "脖环", "脖带", "鞋子", "眼镜"]
+
+      setMeshes((prev) => {
+        const newMeshes = mesh.metadata.meshes.filter((mesh: Mesh) => clothes.includes(mesh.name))
+        if (prev.length === 0) {
+          return newMeshes
+        }
+        for (const m of newMeshes) {
+          const prevMesh = prev.find((p) => p.name === m.name)
+          if (prevMesh) {
+            m.setEnabled(prevMesh.isEnabled())
+          }
+        }
+        return newMeshes
+      })
     })
   }, [])
 
@@ -563,7 +577,7 @@ export default function MainScene() {
         </Button>
         <div className="flex items-center gap-2">
           {!openClothesPanel && (
-            <div className="hidden md:block">
+            <div className="">
               <Button
                 size="icon"
                 className="bg-white text-black size-7 rounded-full hover:bg-gray-200"
@@ -574,7 +588,7 @@ export default function MainScene() {
             </div>
           )}
           {!openCustomizePanel && (
-            <div className="hidden md:block">
+            <div className="">
               <Button
                 size="icon"
                 className="bg-white text-black size-7 rounded-full hover:bg-gray-200"
@@ -597,7 +611,7 @@ export default function MainScene() {
         resetPose={() => loadModel()}
         exportPose={exportPose}
       />
-      {!openCustomizePanel && (
+      {!openCustomizePanel && !openClothesPanel && (
         <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10">
           <ChatInput setPose={setPose} setSmoothUpdate={setSmoothUpdate} />
         </div>
