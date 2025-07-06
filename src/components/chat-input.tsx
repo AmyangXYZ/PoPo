@@ -44,7 +44,13 @@ const suggestedPoses: string[] = [
   "doing a superhero pose",
 ] as const
 
-export default function ChatInput({ setPose, setSmoothUpdate }: { setPose: Dispatch<SetStateAction<Pose>>, setSmoothUpdate: (smoothUpdate: boolean) => void }) {
+export default function ChatInput({
+  setPose,
+  setSmoothUpdate,
+}: {
+  setPose: Dispatch<SetStateAction<Pose>>
+  setSmoothUpdate: (smoothUpdate: boolean) => void
+}) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [showSuggestions, setShowSuggestions] = useState(true)
   const [fileUrl, setFileUrl] = useState("")
@@ -72,30 +78,33 @@ export default function ChatInput({ setPose, setSmoothUpdate }: { setPose: Dispa
 
   const [description, setDescription] = useState("")
 
-  const generatePose = useCallback(async (description: string, fileUrl: string) => {
-    resetHeight()
-    setWaitingPoseResult(true)
-    setShowSuggestions(false)
-    const poseRes = await fetch("/api/pose-generate", {
-      method: "POST",
-      body: JSON.stringify({ description, fileUrl }),
-    })
-    const poseData = await poseRes.json()
-    setDescription("")
-    setFileUrl("")
-    setSmoothUpdate(true)
-    setPose(prev => ({
-      ...prev,
-      description: poseData.result.description || prev.description,
-      face: { ...prev.face, ...poseData.result.face },
-      movableBones: { ...prev.movableBones, ...poseData.result.movableBones } as MovableBones,
-      rotatableBones: { ...prev.rotatableBones, ...poseData.result.rotatableBones },
-    }))
-    console.log(poseData)
-    setWaitingPoseResult(false)
-    // Get new random poses for next time
-    setDisplayedPoses(getRandomPoses())
-  }, [setPose, setSmoothUpdate])
+  const generatePose = useCallback(
+    async (description: string, fileUrl: string) => {
+      resetHeight()
+      setWaitingPoseResult(true)
+      setShowSuggestions(false)
+      const poseRes = await fetch("/api/pose-generate", {
+        method: "POST",
+        body: JSON.stringify({ description, fileUrl }),
+      })
+      const poseData = await poseRes.json()
+      setDescription("")
+      setFileUrl("")
+      setSmoothUpdate(true)
+      setPose((prev) => ({
+        ...prev,
+        description: poseData.result.description || prev.description,
+        face: { ...prev.face, ...poseData.result.face },
+        movableBones: { ...prev.movableBones, ...poseData.result.movableBones } as MovableBones,
+        rotatableBones: { ...prev.rotatableBones, ...poseData.result.rotatableBones },
+      }))
+      console.log(poseData)
+      setWaitingPoseResult(false)
+      // Get new random poses for next time
+      setDisplayedPoses(getRandomPoses())
+    },
+    [setPose, setSmoothUpdate]
+  )
 
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     setFileUrl("")
@@ -163,8 +172,9 @@ export default function ChatInput({ setPose, setSmoothUpdate }: { setPose: Dispa
               >
                 <Card
                   key={i}
-                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-xs shadow-lg ${i >= 2 ? "hidden md:block" : ""
-                    }`}
+                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${
+                    i >= 2 ? "hidden md:block" : ""
+                  }`}
                   onClick={() => {
                     generatePose(pose, "")
                   }}
@@ -194,7 +204,7 @@ export default function ChatInput({ setPose, setSmoothUpdate }: { setPose: Dispa
         <div className="relative w-full">
           <Textarea
             ref={textareaRef}
-            className="max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-white/50 text-zinc-800 pb-8 md:pb-10 backdrop-blur-xs shadow-lg px-4"
+            className="max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-white/50 text-zinc-800 pb-8 md:pb-10 backdrop-blur-[3px] shadow-lg px-4"
             value={description}
             onChange={(e) => {
               setDescription(e.target.value)

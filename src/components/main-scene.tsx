@@ -210,9 +210,6 @@ export default function MainScene() {
       },
     }).then(async (result) => {
       const mesh = result.meshes[0]
-      for (const m of mesh.metadata.meshes) {
-        m.receiveShadows = true
-      }
       shadowGeneratorRef.current!.addShadowCaster(mesh)
       modelRef.current = mmdRuntimeRef.current!.createMmdModel(mesh as Mesh, {
         buildPhysics: {
@@ -432,7 +429,7 @@ export default function MainScene() {
       const scene = new Scene(engine)
 
       scene.clearColor = new Color4(0.99, 0.44, 0.66, 1.0)
-      // scene.ambientColor = new Color3(0.18, 0.12, 0.1)
+      scene.ambientColor = new Color3(0.18, 0.12, 0.1)
 
       engineRef.current = engine
       sceneRef.current = scene
@@ -446,17 +443,17 @@ export default function MainScene() {
       scene.activeCameras = [camera]
 
       const hemisphericLight = new HemisphericLight("hemisphericLight", new Vector3(0, 1, 0), scene)
-      hemisphericLight.intensity = 0.7
+      hemisphericLight.intensity = 0.5
       hemisphericLight.specular = new Color3(0, 0, 0)
       hemisphericLight.groundColor = new Color3(1, 1, 1)
 
-      const directionalLight = new DirectionalLight("directionalLight", new Vector3(6, -18, 12), scene)
+      const directionalLight = new DirectionalLight("directionalLight", new Vector3(12, -32, 18), scene)
       directionalLight.intensity = 1
 
       const shadowGenerator = new ShadowGenerator(2048, directionalLight)
       shadowGenerator.usePercentageCloserFiltering = true
       shadowGenerator.forceBackFacesOnly = true
-      shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_HIGH
+      shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM
       shadowGeneratorRef.current = shadowGenerator
 
       // Add glow layer for glowing effects
@@ -468,7 +465,7 @@ export default function MainScene() {
       mmdRuntime.register(scene)
       mmdRuntimeRef.current = mmdRuntime
 
-      const ground = CreateDisc("stageGround", { radius: 20, tessellation: 64 }, scene)
+      const ground = CreateDisc("stageGround", { radius: 18, tessellation: 64 }, scene)
       const groundMaterial = new StandardMaterial("groundMaterial", scene)
       groundMaterial.diffuseColor = new Color3(0.95, 0.98, 1.0)
       groundMaterial.emissiveColor = new Color3(0.1, 0.15, 0.25)
@@ -587,7 +584,7 @@ export default function MainScene() {
             <div className="">
               <Button
                 size="icon"
-                className="bg-white text-black size-7 rounded-full hover:bg-gray-200"
+                className="bg-white text-black size-7 rounded-full hover:bg-pink-100 cursor-pointer"
                 onClick={() => setOpenClothesPanel(true)}
               >
                 <Shirt />
@@ -598,7 +595,7 @@ export default function MainScene() {
             <div className="">
               <Button
                 size="icon"
-                className="bg-white text-black size-7 rounded-full hover:bg-gray-200"
+                className="bg-white text-black size-7 rounded-full hover:bg-pink-100 cursor-pointer"
                 onClick={() => setOpenCustomizePanel(true)}
               >
                 <HandMetal />
