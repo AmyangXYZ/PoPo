@@ -7,6 +7,7 @@ import {
   CreateDisc,
   DirectionalLight,
   Engine,
+  GlowLayer,
   HemisphericLight,
   ImportMeshAsync,
   Material,
@@ -430,7 +431,7 @@ export default function MainScene() {
 
       const scene = new Scene(engine)
 
-      scene.clearColor = new Color4(0.96, 0.38, 0.54, 1.0)
+      scene.clearColor = new Color4(0.99, 0.44, 0.66, 1.0)
       // scene.ambientColor = new Color3(0.18, 0.12, 0.1)
 
       engineRef.current = engine
@@ -458,6 +459,10 @@ export default function MainScene() {
       shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_HIGH
       shadowGeneratorRef.current = shadowGenerator
 
+      // Add glow layer for glowing effects
+      const glowLayer = new GlowLayer("glow", scene)
+      glowLayer.intensity = 1
+
       mmdWasmInstanceRef.current = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPR())
       const mmdRuntime = new MmdWasmRuntime(mmdWasmInstanceRef.current, scene, new MmdWasmPhysics(scene))
       mmdRuntime.register(scene)
@@ -465,7 +470,9 @@ export default function MainScene() {
 
       const ground = CreateDisc("stageGround", { radius: 20, tessellation: 64 }, scene)
       const groundMaterial = new StandardMaterial("groundMaterial", scene)
-      groundMaterial.diffuseColor = new Color3(1.02, 1.02, 1.02)
+      groundMaterial.diffuseColor = new Color3(0.95, 0.98, 1.0)
+      groundMaterial.emissiveColor = new Color3(0.1, 0.15, 0.25)
+      groundMaterial.specularColor = new Color3(0.2, 0.3, 0.5)
       ground.material = groundMaterial
       ground.rotation.x = Math.PI / 2
       ground.receiveShadows = true
@@ -611,11 +618,13 @@ export default function MainScene() {
         resetPose={() => loadModel()}
         exportPose={exportPose}
       />
-      {!openCustomizePanel && !openClothesPanel && (
-        <div className="fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10">
-          <ChatInput setPose={setPose} setSmoothUpdate={setSmoothUpdate} />
-        </div>
-      )}
+      <div
+        className={`fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${
+          openCustomizePanel || openClothesPanel ? "hidden" : ""
+        }`}
+      >
+        <ChatInput setPose={setPose} setSmoothUpdate={setSmoothUpdate} />
+      </div>
     </div>
   )
 }

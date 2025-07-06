@@ -34,7 +34,7 @@ export default function ClothesPanel({
       <ScrollArea className="max-h-[calc(100dvh-22rem)] overflow-auto p-4 ">
         {meshes.map((mesh) => (
           <div key={mesh.name} className="flex items-center justify-between px-4 gap-2 pb-1">
-            <div className="text-xs w-44">
+            <div className="text-sm md:text-xs w-44">
               <p className="font-medium">{mesh.name}</p>
             </div>
             <Switch
