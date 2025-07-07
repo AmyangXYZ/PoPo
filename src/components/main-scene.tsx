@@ -7,7 +7,6 @@ import {
   CreateDisc,
   DirectionalLight,
   Engine,
-  GlowLayer,
   HemisphericLight,
   ImportMeshAsync,
   Material,
@@ -429,7 +428,7 @@ export default function MainScene() {
       const scene = new Scene(engine)
 
       scene.clearColor = new Color4(0.99, 0.44, 0.66, 1.0)
-      scene.ambientColor = new Color3(0.18, 0.12, 0.1)
+      // scene.ambientColor = new Color3(0.18, 0.12, 0.1)
 
       engineRef.current = engine
       sceneRef.current = scene
@@ -448,24 +447,21 @@ export default function MainScene() {
       hemisphericLight.groundColor = new Color3(1, 1, 1)
 
       const directionalLight = new DirectionalLight("directionalLight", new Vector3(-6, -32, 4), scene)
-      directionalLight.intensity = 1
+      directionalLight.intensity = 0.9
 
-      const shadowGenerator = new ShadowGenerator(1024, directionalLight)
+      const shadowGenerator = new ShadowGenerator(2048, directionalLight)
       shadowGenerator.usePercentageCloserFiltering = true
       shadowGenerator.forceBackFacesOnly = true
       shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM
       shadowGeneratorRef.current = shadowGenerator
 
-      // Add glow layer for glowing effects
-      const glowLayer = new GlowLayer("glow", scene)
-      glowLayer.intensity = 1
 
       mmdWasmInstanceRef.current = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPR())
       const mmdRuntime = new MmdWasmRuntime(mmdWasmInstanceRef.current, scene, new MmdWasmPhysics(scene))
       mmdRuntime.register(scene)
       mmdRuntimeRef.current = mmdRuntime
 
-      const ground = CreateDisc("stageGround", { radius: 14, tessellation: 64 }, scene)
+      const ground = CreateDisc("stageGround", { radius: 12, tessellation: 64 }, scene)
       const groundMaterial = new StandardMaterial("groundMaterial", scene)
       groundMaterial.diffuseColor = new Color3(0.95, 0.98, 1.0)
       groundMaterial.emissiveColor = new Color3(0.1, 0.15, 0.25)
@@ -616,9 +612,8 @@ export default function MainScene() {
         exportPose={exportPose}
       />
       <div
-        className={`fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${
-          openCustomizePanel || openClothesPanel ? "hidden" : ""
-        }`}
+        className={`fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${openCustomizePanel || openClothesPanel ? "hidden" : ""
+          }`}
       >
         <ChatInput setPose={setPose} setSmoothUpdate={setSmoothUpdate} />
       </div>
