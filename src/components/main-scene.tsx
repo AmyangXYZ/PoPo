@@ -447,10 +447,10 @@ export default function MainScene() {
       hemisphericLight.specular = new Color3(0, 0, 0)
       hemisphericLight.groundColor = new Color3(1, 1, 1)
 
-      const directionalLight = new DirectionalLight("directionalLight", new Vector3(12, -32, 18), scene)
+      const directionalLight = new DirectionalLight("directionalLight", new Vector3(-6, -32, 4), scene)
       directionalLight.intensity = 1
 
-      const shadowGenerator = new ShadowGenerator(2048, directionalLight)
+      const shadowGenerator = new ShadowGenerator(1024, directionalLight)
       shadowGenerator.usePercentageCloserFiltering = true
       shadowGenerator.forceBackFacesOnly = true
       shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM
@@ -465,7 +465,7 @@ export default function MainScene() {
       mmdRuntime.register(scene)
       mmdRuntimeRef.current = mmdRuntime
 
-      const ground = CreateDisc("stageGround", { radius: 18, tessellation: 64 }, scene)
+      const ground = CreateDisc("stageGround", { radius: 14, tessellation: 64 }, scene)
       const groundMaterial = new StandardMaterial("groundMaterial", scene)
       groundMaterial.diffuseColor = new Color3(0.95, 0.98, 1.0)
       groundMaterial.emissiveColor = new Color3(0.1, 0.15, 0.25)
