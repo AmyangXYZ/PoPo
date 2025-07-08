@@ -428,7 +428,6 @@ export default function MainScene() {
       const scene = new Scene(engine)
 
       scene.clearColor = new Color4(0.99, 0.44, 0.66, 1.0)
-      scene.ambientColor = new Color3(0.18, 0.12, 0.1)
 
       engineRef.current = engine
       sceneRef.current = scene
@@ -446,15 +445,11 @@ export default function MainScene() {
       hemisphericLight.specular = new Color3(0, 0, 0)
       hemisphericLight.groundColor = new Color3(1, 1, 1)
 
-      const directionalLight = new DirectionalLight("directionalLight", new Vector3(6, -50, 12), scene)
+      const directionalLight = new DirectionalLight("directionalLight", new Vector3(2, -19.15, 4), scene)
       directionalLight.intensity = 0.9
 
       const shadowGenerator = new ShadowGenerator(2048, directionalLight)
-      shadowGenerator.usePercentageCloserFiltering = true
-      shadowGenerator.forceBackFacesOnly = true
-      shadowGenerator.filteringQuality = ShadowGenerator.QUALITY_MEDIUM
       shadowGeneratorRef.current = shadowGenerator
-
 
       mmdWasmInstanceRef.current = await GetMmdWasmInstance(new MmdWasmInstanceTypeMPR())
       const mmdRuntime = new MmdWasmRuntime(mmdWasmInstanceRef.current, scene, new MmdWasmPhysics(scene))
@@ -477,6 +472,7 @@ export default function MainScene() {
       materialBuilder.afterBuildSingleMaterial = (material: MmdStandardMaterial): void => {
         material.forceDepthWrite = true
         material.useAlphaFromDiffuseTexture = true
+        material.specularColor = new Color3(0, 0, 0)
         if (material.diffuseTexture !== null) material.diffuseTexture.hasAlpha = true
 
         if (material.transparencyMode === Material.MATERIAL_ALPHABLEND) {
