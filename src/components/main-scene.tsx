@@ -428,7 +428,7 @@ export default function MainScene() {
       const scene = new Scene(engine)
 
       scene.clearColor = new Color4(0.99, 0.44, 0.66, 1.0)
-      // scene.ambientColor = new Color3(0.18, 0.12, 0.1)
+      scene.ambientColor = new Color3(0.18, 0.12, 0.1)
 
       engineRef.current = engine
       sceneRef.current = scene
@@ -446,7 +446,7 @@ export default function MainScene() {
       hemisphericLight.specular = new Color3(0, 0, 0)
       hemisphericLight.groundColor = new Color3(1, 1, 1)
 
-      const directionalLight = new DirectionalLight("directionalLight", new Vector3(-6, -32, 4), scene)
+      const directionalLight = new DirectionalLight("directionalLight", new Vector3(6, -50, 12), scene)
       directionalLight.intensity = 0.9
 
       const shadowGenerator = new ShadowGenerator(2048, directionalLight)
