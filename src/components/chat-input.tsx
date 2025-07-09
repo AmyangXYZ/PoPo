@@ -12,36 +12,15 @@ import { Skeleton } from "./ui/skeleton"
 import { Pose, MovableBones } from "@/lib/pose"
 
 const suggestedPoses: string[] = [
-  "look right with a shy smile",
-  "angry face while lifting left foot",
-  "squatting down and cry",
-  "point forward with shocked look",
-  "waving with both hands excitedly",
-  "sitting cross-legged with hands on knees",
-  "stretching arms up high with a yawn",
-  "covering face with hands shyly",
-  "dancing with one leg up",
-  "holding chin thoughtfully",
-  "jumping with arms spread wide",
-  "lying down reading a book",
-  "standing on one foot balancing",
-  "clapping hands with joy",
-  "looking over shoulder mysteriously",
-  "kneeling down to pet an imaginary cat",
-  "doing a peace sign with tongue out",
-  "hands on hips looking confident",
-  "crouching like a ninja",
-  "spinning around with arms out",
-  "sitting with legs dangling",
-  "flexing muscles proudly",
-  "tiptoeing sneakily",
-  "giving a thumbs up with a wink",
-  "hugging knees while sitting",
-  "doing jazz hands",
-  "leaning against an invisible wall",
-  "pretending to sleep standing up",
-  "making heart shape with hands",
-  "doing a superhero pose",
+  "shy smile with left hand thumb up",
+  "squat with right hand fist",
+  "lift left leg with shocked expression",
+  "sit with fingers apart both hands",
+  "bend over with wink",
+  "turn around with smile",
+  "Standing with body and head tilted left",
+  "gun left hand with serious expression",
+  "index finger up right hand with wink",
 ] as const
 
 export default function ChatInput({
@@ -172,9 +151,8 @@ export default function ChatInput({
               >
                 <Card
                   key={i}
-                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${
-                    i >= 2 ? "hidden md:block" : ""
-                  }`}
+                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${i >= 2 ? "hidden md:block" : ""
+                    }`}
                   onClick={() => {
                     generatePose(pose, "")
                   }}
