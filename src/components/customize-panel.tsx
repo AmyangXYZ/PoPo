@@ -1,9 +1,4 @@
-import {
-  Pose,
-  MorphsTranslations,
-  RotatableBonesTranslations,
-  MovableBonesTranslations,
-} from "@/lib/pose"
+import { Pose, MorphsTranslations, RotatableBonesTranslations, MovableBonesTranslations } from "@/lib/pose"
 import { Button } from "./ui/button"
 import { Accordion, AccordionContent, AccordionTrigger, AccordionItem } from "./ui/accordion"
 import { Import, RefreshCw, X } from "lucide-react"
@@ -89,7 +84,6 @@ export default function CustomizePanel({
       if (!file) return
 
       if (file.name.endsWith(".json")) {
-
         const reader = new FileReader()
         reader.onload = (e) => {
           try {
@@ -121,8 +115,9 @@ export default function CustomizePanel({
 
   return (
     <div
-      className={`fixed right-0 top-0 h-full w-80 bg-background border-l shadow-lg z-50 flex flex-col  transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"
-        }`}
+      className={`fixed right-0 top-0 h-full w-80 bg-background border-l shadow-lg z-50 flex flex-col  transition-transform duration-300 ease-in-out ${
+        open ? "translate-x-0" : "translate-x-full"
+      }`}
     >
       <div className="flex flex-col gap-1.5 p-4 border-b">
         <div className="flex items-center justify-between">
@@ -178,7 +173,7 @@ export default function CustomizePanel({
                           onValueChange={(value: number[]) => updateBoneRotation(bone, index, value[0])}
                         />
                         <p className="text-xs w-12 text-right">
-                          {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index].toFixed(2)}
+                          {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index]?.toFixed(2) || 0}
                         </p>
                       </div>
                     ))}
@@ -229,7 +224,7 @@ export default function CustomizePanel({
                         onValueChange={(value: number[]) => updateBonePosition(bone, index, value[0])}
                       />
                       <p className="text-xs w-12 text-right">
-                        {pose.movableBones[bone as keyof typeof pose.movableBones]?.[index].toFixed(2)}
+                        {pose.movableBones[bone as keyof typeof pose.movableBones]?.[index]?.toFixed(2) || 0}
                       </p>
                     </div>
                   ))}
@@ -268,7 +263,8 @@ export default function CustomizePanel({
                                 onValueChange={(value: number[]) => updateBoneRotation(bone, index, value[0])}
                               />
                               <p className="text-xs w-12 text-right">
-                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index].toFixed(2)}
+                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index]?.toFixed(2) ||
+                                  0}
                               </p>
                             </div>
                           ))}
@@ -300,7 +296,8 @@ export default function CustomizePanel({
                                 onValueChange={(value: number[]) => updateBoneRotation(bone, index, value[0])}
                               />
                               <p className="text-xs w-12 text-right">
-                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index].toFixed(2)}
+                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index]?.toFixed(2) ||
+                                  0}
                               </p>
                             </div>
                           ))}
@@ -332,7 +329,8 @@ export default function CustomizePanel({
                                 onValueChange={(value: number[]) => updateBoneRotation(bone, index, value[0])}
                               />
                               <p className="text-xs w-12 text-right">
-                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index].toFixed(2)}
+                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index]?.toFixed(2) ||
+                                  0}
                               </p>
                             </div>
                           ))}
@@ -381,7 +379,8 @@ export default function CustomizePanel({
                                 onValueChange={(value: number[]) => updateBoneRotation(bone, index, value[0])}
                               />
                               <p className="text-xs w-12 text-right">
-                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index].toFixed(2)}
+                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index]?.toFixed(2) ||
+                                  0}
                               </p>
                             </div>
                           ))}
@@ -430,7 +429,8 @@ export default function CustomizePanel({
                                 onValueChange={(value: number[]) => updateBoneRotation(bone, index, value[0])}
                               />
                               <p className="text-xs w-12 text-right">
-                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index].toFixed(2)}
+                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index]?.toFixed(2) ||
+                                  0}
                               </p>
                             </div>
                           ))}
