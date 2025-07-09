@@ -51,16 +51,7 @@ Demo model: 深空之眼 三相·梵天「无间玩伴
    - Use the **Export** button to get the JSON data
    - Email your labeled pose data set to: **amyang.xyz@gmail.com**
 
-**Example contribution format:**
-
-```json
-{
-  "description": "tired after work, looking down sadly and tilt backward",
-  "pose_data": {
-    /* exported JSON from customization panel */
-  }
-}
-```
+Here is an exported [sample pose.json](./pose_dataset/sample.json)
 
 Your contributions directly improve the AI model for everyone! 🙏
 
