@@ -18,9 +18,8 @@ export default function ClothesPanel({
 }) {
   return (
     <div
-      className={`fixed right-0 top-0 h-full w-80 bg-background border-l shadow-lg z-50 flex flex-col  transition-transform duration-300 ease-in-out ${
-        open ? "translate-x-0" : "translate-x-full"
-      }`}
+      className={`fixed right-0 top-0 h-full w-80 bg-background border-l shadow-lg z-50 flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"
+        }`}
     >
       <div className="flex flex-col gap-1.5 p-4 border-b">
         <div className="flex items-center justify-between">
@@ -33,7 +32,7 @@ export default function ClothesPanel({
 
       <ScrollArea className="max-h-[calc(100dvh-22rem)] overflow-auto p-4 ">
         {meshes.map((mesh) => (
-          <div key={mesh.name} className="flex items-center justify-between px-4 gap-2 pb-1">
+          <div key={mesh.name} className="flex items-center justify-between px-4 gap-2 pb-2">
             <div className="text-sm md:text-xs w-44">
               <p className="font-medium">{mesh.name}</p>
             </div>
