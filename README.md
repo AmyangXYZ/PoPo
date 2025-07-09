@@ -6,7 +6,7 @@
 
 **🌐 Live demo: [popo.love](https://popo.love)**
 
-Demo model: 深空之眼 三相·梵天「无间玩伴
+Demo model: 深空之眼 三相·梵天「无间玩伴」
 
 ## ✨ Features
 
