@@ -3,7 +3,7 @@ import glob
 import os
 
 
-def convert_pose_to_openai_format(input_dir="pose_dataset", output_file="pose_training_data.jsonl"):
+def convert_pose_to_openai_format(input_dir="C:/Users/amyan/Dropbox/pose_json", output_file="pose_training_data.jsonl"):
     """Convert pose JSON files to OpenAI fine-tuning JSONL format"""
 
     training_examples = []
