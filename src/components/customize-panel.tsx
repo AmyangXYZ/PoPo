@@ -243,7 +243,7 @@ export default function CustomizePanel({
                   <AccordionTrigger>Body</AccordionTrigger>
                   <AccordionContent>
                     {Object.keys(RotatableBonesTranslations)
-                      .filter((bone) => ["全ての親", "センター", "上半身", "下半身", "腰", "首", "頭"].includes(bone))
+                      .filter((bone) => ["全ての親", "センター", "上半身", "下半身", "腰"].includes(bone))
                       .map((bone) => (
                         <div key={bone} className="pb-3 pr-6">
                           <div className="text-xs mb-2">
@@ -272,7 +272,40 @@ export default function CustomizePanel({
                       ))}
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="item-2">
+                <AccordionItem value="item-2" className="my-0">
+                  <AccordionTrigger>Head</AccordionTrigger>
+                  <AccordionContent>
+                    {Object.keys(RotatableBonesTranslations)
+                      .filter((bone) => ["首", "頭"].includes(bone))
+                      .map((bone) => (
+                        <div key={bone} className="pb-3 pr-6">
+                          <div className="text-xs mb-2">
+                            <p className="font-medium">{bone}</p>
+                            <p className="font-medium text-muted-foreground">
+                              {RotatableBonesTranslations[bone as keyof typeof RotatableBonesTranslations] || bone}
+                            </p>
+                          </div>
+                          {(["X", "Y", "Z", "W"] as const).map((axis, index) => (
+                            <div key={axis} className="flex items-center gap-2 mb-1">
+                              <p className="text-xs w-4 text-muted-foreground">{axis}</p>
+                              <Slider
+                                min={-1}
+                                max={1}
+                                step={0.01}
+                                value={[pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index] || 0]}
+                                onValueChange={(value: number[]) => updateBoneRotation(bone, index, value[0])}
+                              />
+                              <p className="text-xs w-12 text-right">
+                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index]?.toFixed(2) ||
+                                  0}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-3">
                   <AccordionTrigger>Legs</AccordionTrigger>
                   <AccordionContent>
                     {Object.keys(RotatableBonesTranslations)
@@ -305,61 +338,11 @@ export default function CustomizePanel({
                       ))}
                   </AccordionContent>
                 </AccordionItem>
-                <AccordionItem value="item-3">
+                <AccordionItem value="item-4">
                   <AccordionTrigger>Arms</AccordionTrigger>
                   <AccordionContent>
                     {Object.keys(RotatableBonesTranslations)
                       .filter((bone) => ["左腕", "右腕", "左ひじ", "右ひじ", "左手首", "右手首"].includes(bone))
-                      .map((bone) => (
-                        <div key={bone} className="pb-3 pr-6">
-                          <div className="text-xs mb-2">
-                            <p className="font-medium">{bone}</p>
-                            <p className="font-medium text-muted-foreground">
-                              {RotatableBonesTranslations[bone as keyof typeof RotatableBonesTranslations] || bone}
-                            </p>
-                          </div>
-                          {(["X", "Y", "Z", "W"] as const).map((axis, index) => (
-                            <div key={axis} className="flex items-center gap-2 mb-1">
-                              <p className="text-xs w-4 text-muted-foreground">{axis}</p>
-                              <Slider
-                                min={-1}
-                                max={1}
-                                step={0.01}
-                                value={[pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index] || 0]}
-                                onValueChange={(value: number[]) => updateBoneRotation(bone, index, value[0])}
-                              />
-                              <p className="text-xs w-12 text-right">
-                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index]?.toFixed(2) ||
-                                  0}
-                              </p>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="item-4">
-                  <AccordionTrigger>Right Hand</AccordionTrigger>
-                  <AccordionContent>
-                    {Object.keys(RotatableBonesTranslations)
-                      .filter((bone) =>
-                        [
-                          "右親指１",
-                          "右親指２",
-                          "右人指１",
-                          "右人指２",
-                          "右人指３",
-                          "右中指１",
-                          "右中指２",
-                          "右中指３",
-                          "右薬指１",
-                          "右薬指２",
-                          "右薬指３",
-                          "右小指１",
-                          "右小指２",
-                          "右小指３",
-                        ].includes(bone)
-                      )
                       .map((bone) => (
                         <div key={bone} className="pb-3 pr-6">
                           <div className="text-xs mb-2">
@@ -408,6 +391,56 @@ export default function CustomizePanel({
                           "左小指１",
                           "左小指２",
                           "左小指３",
+                        ].includes(bone)
+                      )
+                      .map((bone) => (
+                        <div key={bone} className="pb-3 pr-6">
+                          <div className="text-xs mb-2">
+                            <p className="font-medium">{bone}</p>
+                            <p className="font-medium text-muted-foreground">
+                              {RotatableBonesTranslations[bone as keyof typeof RotatableBonesTranslations] || bone}
+                            </p>
+                          </div>
+                          {(["X", "Y", "Z", "W"] as const).map((axis, index) => (
+                            <div key={axis} className="flex items-center gap-2 mb-1">
+                              <p className="text-xs w-4 text-muted-foreground">{axis}</p>
+                              <Slider
+                                min={-1}
+                                max={1}
+                                step={0.01}
+                                value={[pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index] || 0]}
+                                onValueChange={(value: number[]) => updateBoneRotation(bone, index, value[0])}
+                              />
+                              <p className="text-xs w-12 text-right">
+                                {pose.rotatableBones[bone as keyof typeof pose.rotatableBones]?.[index]?.toFixed(2) ||
+                                  0}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                  </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="item-6">
+                  <AccordionTrigger>Right Hand</AccordionTrigger>
+                  <AccordionContent>
+                    {Object.keys(RotatableBonesTranslations)
+                      .filter((bone) =>
+                        [
+                          "右親指１",
+                          "右親指２",
+                          "右人指１",
+                          "右人指２",
+                          "右人指３",
+                          "右中指１",
+                          "右中指２",
+                          "右中指３",
+                          "右薬指１",
+                          "右薬指２",
+                          "右薬指３",
+                          "右小指１",
+                          "右小指２",
+                          "右小指３",
                         ].includes(bone)
                       )
                       .map((bone) => (

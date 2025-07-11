@@ -10,6 +10,7 @@ import { useState, useEffect, useRef, ChangeEvent, useCallback, Dispatch, SetSta
 import Image from "next/image"
 import { Skeleton } from "./ui/skeleton"
 import { Pose, MovableBones } from "@/lib/pose"
+import { Quaternion } from "@babylonjs/core/Maths/math.vector"
 
 const suggestedPoses: string[] = [
   "shy smile with left hand thumb up",
@@ -70,6 +71,13 @@ export default function ChatInput({
       setDescription("")
       setFileUrl("")
       setSmoothUpdate(true)
+      const quat = new Quaternion(0, 0, 0, 0)
+      for (const bone in poseData.result.rotatableBones) {
+        const rawQuat = poseData.result.rotatableBones[bone]
+        quat.set(rawQuat[0], rawQuat[1], rawQuat[2], rawQuat[3])
+        quat.normalize()
+        poseData.result.rotatableBones[bone] = [quat.x, quat.y, quat.z, quat.w]
+      }
       setPose((prev) => ({
         ...prev,
         description: poseData.result.description || prev.description,
@@ -151,8 +159,9 @@ export default function ChatInput({
               >
                 <Card
                   key={i}
-                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${i >= 2 ? "hidden md:block" : ""
-                    }`}
+                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${
+                    i >= 2 ? "hidden md:block" : ""
+                  }`}
                   onClick={() => {
                     generatePose(pose, "")
                   }}
