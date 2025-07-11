@@ -115,9 +115,8 @@ export default function CustomizePanel({
 
   return (
     <div
-      className={`fixed right-0 top-0 h-full w-80 bg-background border-l shadow-lg z-50 flex flex-col  transition-transform duration-300 ease-in-out ${
-        open ? "translate-x-0" : "translate-x-full"
-      }`}
+      className={`fixed right-0 top-0 h-full w-80 bg-background border-l shadow-lg z-50 flex flex-col  transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"
+        }`}
     >
       <div className="flex flex-col gap-1.5 p-4 border-b">
         <div className="flex items-center justify-between">
@@ -342,7 +341,7 @@ export default function CustomizePanel({
                   <AccordionTrigger>Arms</AccordionTrigger>
                   <AccordionContent>
                     {Object.keys(RotatableBonesTranslations)
-                      .filter((bone) => ["左腕", "右腕", "左ひじ", "右ひじ", "左手首", "右手首"].includes(bone))
+                      .filter((bone) => ["左肩", "右肩", "左腕", "右腕", "左ひじ", "右ひじ", "左手首", "右手首"].includes(bone))
                       .map((bone) => (
                         <div key={bone} className="pb-3 pr-6">
                           <div className="text-xs mb-2">
