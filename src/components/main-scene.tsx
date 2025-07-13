@@ -39,7 +39,6 @@ import ChatInput from "./chat-input"
 import {
   BonePosition,
   BoneRotationQuaternion,
-  KeyBones,
   Morphs,
   MorphsTranslations,
   MovableBones,
@@ -217,7 +216,10 @@ export default function MainScene() {
       })
 
       for (const bone of modelRef.current!.skeleton.bones) {
-        if (KeyBones.includes(bone.name)) {
+        if (
+          Object.keys(RotatableBonesTranslations).includes(bone.name) ||
+          Object.keys(MovableBonesTranslations).includes(bone.name)
+        ) {
           bonesRef.current[bone.name] = bone
         }
       }

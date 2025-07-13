@@ -5,6 +5,10 @@ export interface Pose {
   rotatableBones: RotatableBones
 }
 
+export type BonePosition = [number, number, number] // [x, y, z]
+
+export type BoneRotationQuaternion = [number, number, number, number] // [x, y, z, w]
+
 export interface Morphs {
   // Basic expressions
   真面目: number // Serious/Neutral
@@ -50,10 +54,6 @@ export interface Morphs {
   // Special effects
   照れ: number // Embarrassed
 }
-
-export type BonePosition = [number, number, number] // [x, y, z]
-
-export type BoneRotationQuaternion = [number, number, number, number] // [x, y, z, w]
 
 export interface MovableBones {
   全ての親: BonePosition
@@ -115,99 +115,6 @@ export interface RotatableBones {
   左小指２: BoneRotationQuaternion
   左小指３: BoneRotationQuaternion
 }
-
-export const KeyMorphs = [
-  "真面目",
-  "困る",
-  "にこり",
-  "怒り",
-  "まばたき",
-  "笑い",
-  "ウィンク",
-  "ウィンク右",
-  "ウィンク２",
-  "ｳｨﾝｸ２右",
-  "なごみ",
-  "びっくり",
-  "恐ろしい子！",
-  "はちゅ目",
-  "はぅ",
-  "ｷﾘｯ",
-  "眼睑上",
-  "眼角下",
-  "じと目",
-  "じと目1",
-  "あ",
-  "い",
-  "う",
-  "え",
-  "お",
-  "お1",
-  "口角上げ",
-  "口角下げ",
-  "口角下げ1",
-  "口横缩げ",
-  "口横広げ",
-  "にやり２",
-  "にやり２1",
-  "照れ",
-] as const
-
-export const KeyBones = [
-  "全ての親",
-  "センター",
-  "首",
-  "頭",
-  "上半身",
-  "下半身",
-  "左肩",
-  "右肩",
-  "腰",
-  "左足",
-  "右足",
-  "左足首",
-  "右足首",
-  "左腕",
-  "右腕",
-  "左ひじ",
-  "右ひじ",
-  "左足ＩＫ",
-  "右足ＩＫ",
-  "右つま先ＩＫ",
-  "左つま先ＩＫ",
-  "左目",
-  "右目",
-  "左手首",
-  "右手首",
-  "右親指１",
-  "右親指２",
-  "右人指１",
-  "右人指２",
-  "右人指３",
-  "右中指１",
-  "右中指２",
-  "右中指３",
-  "右薬指１",
-  "右薬指２",
-  "右薬指３",
-  "右小指１",
-  "右小指２",
-  "右小指３",
-  "左親指１",
-  "左親指２",
-  "左人指１",
-  "左人指２",
-  "左人指３",
-  "左中指１",
-  "左中指２",
-  "左中指３",
-  "左薬指１",
-  "左薬指２",
-  "左薬指３",
-  "左小指１",
-  "左小指２",
-  "左小指３",
-]
 
 export const MorphsTranslations = {
   // Basic expressions
