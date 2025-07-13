@@ -1,9 +1,9 @@
 import OpenAI from "openai"
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions"
 
-const systemPrompt = `You are an expert in MMD (MikuMikuDance) pose generation. Given a description of a pose, you generate the corresponding bone rotations, positions, and facial morphs in JSON format.`
+const systemPrompt = `Generate MMD pose data from description.`
 
-const userPrompt = `Generate MMD pose data for: {description}`
+const userPrompt = `Description: {description}`
 
 export async function POST(request: Request) {
   if (!process.env.AI_MODEL || !process.env.AI_API_KEY || !process.env.AI_API_BASE_URL) {
@@ -27,8 +27,8 @@ export async function POST(request: Request) {
     const response = await provider.chat.completions.create({
       model: process.env.AI_MODEL,
       messages,
-      // temperature: 0, // Most deterministic
-      top_p: 0.1, // Very focused sampling
+      temperature: 0.5,
+      top_p: 0.1,
     })
 
     let result

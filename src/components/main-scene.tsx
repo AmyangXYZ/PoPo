@@ -608,8 +608,9 @@ export default function MainScene() {
         exportPose={exportPose}
       />
       <div
-        className={`fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${openCustomizePanel || openClothesPanel ? "hidden" : ""
-          }`}
+        className={`fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${
+          openCustomizePanel || openClothesPanel ? "hidden" : ""
+        }`}
       >
         <ChatInput setPose={setPose} setSmoothUpdate={setSmoothUpdate} />
       </div>

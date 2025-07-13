@@ -2,6 +2,21 @@ import json
 import glob
 import os
 
+# System prompt used for both training and inference (consistency is key)
+SYSTEM_PROMPT = """Generate MMD pose data from description."""
+
+
+def round_values(obj, decimals=4):
+    """Recursively round decimal values in nested objects/arrays"""
+    if isinstance(obj, dict):
+        return {key: round_values(value, decimals) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [round_values(item, decimals) for item in obj]
+    elif isinstance(obj, float):
+        return round(obj, decimals)
+    else:
+        return obj
+
 
 def convert_pose_to_openai_format(input_dir="C:/Users/amyan/Dropbox/pose_json", output_file="pose_training_data.jsonl"):
     """Convert pose JSON files to OpenAI fine-tuning JSONL format"""
@@ -9,7 +24,7 @@ def convert_pose_to_openai_format(input_dir="C:/Users/amyan/Dropbox/pose_json", 
     training_examples = []
 
     # System message for the AI model
-    system_message = "You are an expert in MMD (MikuMikuDance) pose generation. Given a description of a pose, you generate the corresponding bone rotations, positions, and facial morphs in JSON format."
+    system_message = SYSTEM_PROMPT
 
     # Load all pose JSON files
     for file_path in glob.glob(os.path.join(input_dir, "*.json")):
@@ -20,14 +35,14 @@ def convert_pose_to_openai_format(input_dir="C:/Users/amyan/Dropbox/pose_json", 
             # Extract description and create the pose data without description
             description = pose_data.get("description", "")
 
-            # Create a clean pose data without the description
+            # Create a clean pose data with rounded values
             clean_pose_data = {
-                "face": pose_data.get("face", {}),
-                "rotatableBones": pose_data.get("rotatableBones", {}),
-                "movableBones": pose_data.get("movableBones", {})
+                "face": round_values(pose_data.get("face", {})),
+                "rotatableBones": round_values(pose_data.get("rotatableBones", {})),
+                "movableBones": round_values(pose_data.get("movableBones", {}))
             }
 
-            # Create training example
+            # Create training example with minimal prompts
             training_example = {
                 "messages": [
                     {
@@ -36,7 +51,7 @@ def convert_pose_to_openai_format(input_dir="C:/Users/amyan/Dropbox/pose_json", 
                     },
                     {
                         "role": "user",
-                        "content": f"Generate MMD pose data for: {description}"
+                        "content": f"Description: {description}"
                     },
                     {
                         "role": "assistant",

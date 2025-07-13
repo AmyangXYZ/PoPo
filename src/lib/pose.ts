@@ -72,6 +72,8 @@ export interface RotatableBones {
   腰: BoneRotationQuaternion
   上半身: BoneRotationQuaternion
   下半身: BoneRotationQuaternion
+  左肩: BoneRotationQuaternion
+  右肩: BoneRotationQuaternion
   左足: BoneRotationQuaternion
   右足: BoneRotationQuaternion
   左足首: BoneRotationQuaternion
