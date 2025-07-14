@@ -16,12 +16,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "PoPo - AI MMD Pose Generator",
   description:
-    "Generate MMD poses and facial morphs directly from natural language. Specialized AI for MikuMikuDance bone control and character expressions.",
-  keywords: ["MMD", "MikuMikuDance", "AI pose", "bone control", "facial morphs", "VMD", "PMX"],
+    "Generate MMD poses and facial morphs directly from natural language. Fine-tuned LLM for MikuMikuDance bone control and character expressions.",
+  keywords: ["MMD", "MikuMikuDance", "AI pose", "text to pose", "anime", "waifu", "pose generation"],
   openGraph: {
     title: "PoPo - AI MMD Pose Generator",
     description:
-      "Generate MMD poses and facial morphs directly from natural language. Specialized AI for MikuMikuDance bone control.",
+      "Generate MMD poses and facial morphs directly from natural language. Fine-tuned LLM for MikuMikuDance bone control.",
     url: "https://popo.love",
     siteName: "PoPo",
     type: "website",
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "PoPo - AI MMD Pose Generator",
-    description: "Generate MMD poses and facial morphs directly from natural language.",
+    description: "Generate MMD poses and facial morphs directly from natural language. Fine-tuned LLM for MikuMikuDance bone control.",
   },
 }
 
