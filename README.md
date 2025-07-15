@@ -2,7 +2,7 @@
 
 > AI-powered MMD pose generator - Transform natural language into expressive 3D character animations
 
-**PoPo** bridges natural language and 3D character animation. Describe any pose or expression in plain English—from simple gestures to complex emotional scenarios—and watch as AI translates your words into precise MMD character animations in real-time.
+**PoPo** bridges natural language and 3D character animation. Describe any pose or expression in plain text—from simple gestures to complex emotional scenarios—and watch as AI translates your words into precise MMD character animations in real-time. No need to understand complex bone rotations quaternions!
 
 **🌐 Live demo: [popo.love](https://popo.love)**
 
@@ -10,7 +10,7 @@ Demo model: 深空之眼 三相·梵天「无间玩伴」
 
 ## ✨ Features
 
-- **Natural Language Input**: "tired after work, stretching arms, but shy about friend's affair news"
+- **Natural Language Input**: "wave right hand with big laugh, inviting me for dinner"
 - **Real-time Generation**: Instant pose creation with smooth bone animations
 - **Advanced Character Control**: 20+ facial morphs + full skeletal manipulation
 - **Professional Quality**: Quaternion-based rotations with MMD physics integration
@@ -19,14 +19,15 @@ Demo model: 深空之眼 三相·梵天「无间玩伴」
 
 **Generic pose-to-3D tools** generate abstract joint rotations for universal 3D models.
 
-**PoPo focuses on MMD**: Direct bone/morph control using MMD's exact naming conventions and constraints. Perfect for MMD creators who need precise character animation without manual bone adjustment.
+**PoPo focuses on MMD**: Direct bone/morph control using MMD's exact naming conventions and constraints. Perfect for anime fans who want to pose their favorite characters without learning complex bone rigging or technical animation skills.
 
 ## 💬 Example Prompts
 
 ```
-"look right with a shy smile"
+"sit and raise hands"
+"bend over and look right with a shy smile"
 "angry face while lifting left foot"
-"nervous before presentation, fidgeting hands, looking down"
+"my exam failed"
 ```
 
 ## 🤝 Help Improve PoPo
@@ -61,15 +62,6 @@ Your contributions directly improve the AI model for everyone! 🙏
 - **3D Engine**: Babylon.js with babylon-mmd
 - **AI Model**: Fine-tuned GPT-4o-mini specialized for MMD pose generation
 - **Deployment**: Vercel
-
-### MMD-Specialized AI Model
-
-Our fine-tuned model understands MMD-specific terminology and constraints:
-
-- **MMD Bone Names**: Direct control of MMD skeleton (首, 頭, 上半身, 左腕, 右腕, etc.)
-- **Japanese Morphs**: Native MMD facial expressions (困る, にこり, 怒り, 照れ, etc.)
-- **Anatomical Constraints**: MMD-specific bone hierarchies and rotation limits
-- **Context Understanding**: Complex emotional + physical state combinations
 
 ## 🎭 Evolution from MiKaPo
 

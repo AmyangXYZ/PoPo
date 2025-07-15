@@ -13,15 +13,15 @@ import { Pose, MovableBones } from "@/lib/pose"
 import { Quaternion } from "@babylonjs/core/Maths/math.vector"
 
 const suggestedPoses: string[] = [
-  "shy smile with left hand thumb up",
+  "left hand thumb up",
   "squat with right hand fist",
   "lift left leg with shocked expression",
   "sit with fingers apart both hands",
-  "bend over with wink",
+  "bend over and look right with a shy smile",
   "turn around with smile",
   "Standing with body and head tilted left",
   "gun left hand with serious expression",
-  "index finger up right hand with wink",
+  "my exam failed",
 ] as const
 
 export default function ChatInput({
@@ -159,9 +159,8 @@ export default function ChatInput({
               >
                 <Card
                   key={i}
-                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${
-                    i >= 2 ? "hidden md:block" : ""
-                  }`}
+                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${i >= 2 ? "hidden md:block" : ""
+                    }`}
                   onClick={() => {
                     generatePose(pose, "")
                   }}
