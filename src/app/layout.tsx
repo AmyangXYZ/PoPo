@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   title: "PoPo - AI MMD Pose Generator",
   description:
     "Generate MMD poses and facial morphs directly from natural language. Fine-tuned LLM for MikuMikuDance bone control and character expressions.",
-  keywords: ["MMD", "MikuMikuDance", "AI pose", "text to pose", "anime", "waifu", "pose generation"],
+  keywords: ["MMD", "MikuMikuDance", "AI pose", "text to pose", "ai companion", "waifu", "pose generation"],
   openGraph: {
     title: "PoPo - AI MMD Pose Generator",
     description:

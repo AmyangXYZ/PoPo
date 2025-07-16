@@ -21,13 +21,16 @@ export async function POST(request: Request) {
     // Use the exact format from fine-tuning data
     const messages: ChatCompletionMessageParam[] = [
       { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt.replace("{description}", description || "standing pose") },
+      {
+        role: "user",
+        content: userPrompt.replace("{description}", description),
+      },
     ]
 
     const response = await provider.chat.completions.create({
       model: process.env.AI_MODEL,
       messages,
-      temperature: 0.5,
+      temperature: 0.7,
       top_p: 0.1,
     })
 
