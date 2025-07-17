@@ -34,6 +34,10 @@ import {
   MmdStandardMaterialBuilder,
   MmdStandardMaterial,
   VpdLoader,
+  MotionType,
+  RigidBodyConstructionInfo,
+  RigidBody,
+  PhysicsStaticPlaneShape,
 } from "babylon-mmd"
 import ChatInput from "./chat-input"
 import {
@@ -53,6 +57,7 @@ import Link from "next/link"
 import CustomizePanel from "./customize-panel"
 import { HandMetal, Shirt } from "lucide-react"
 import ClothesPanel from "./clothes-panel"
+import { MmdWasmPhysicsRuntimeImpl } from "babylon-mmd/esm/Runtime/Optimized/Physics/mmdWasmPhysicsRuntimeImpl"
 
 interface TargetRotation {
   quaternion: Quaternion
@@ -466,6 +471,15 @@ export default function MainScene() {
       ground.material = groundMaterial
       ground.rotation.x = Math.PI / 2
       ground.receiveShadows = true
+
+      const physicsRuntime = mmdRuntime.physics!.getImpl(MmdWasmPhysicsRuntimeImpl)
+      {
+        const info = new RigidBodyConstructionInfo(mmdRuntime.wasmInstance)
+        info.motionType = MotionType.Static
+        info.shape = new PhysicsStaticPlaneShape(physicsRuntime, new Vector3(0, 0.5, 0), 0)
+        const groundBody = new RigidBody(physicsRuntime, info)
+        physicsRuntime.addRigidBodyToGlobal(groundBody)
+      }
 
       const materialBuilder = new MmdStandardMaterialBuilder()
       //   materialBuilder.loadOutlineRenderingProperties = (): void => {
