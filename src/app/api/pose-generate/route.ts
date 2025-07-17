@@ -47,8 +47,8 @@ export async function POST(request: Request) {
       const resultAnalysis = JSON.parse(JSON.stringify(result))
       resultAnalysis.description = description
 
-      // Save to database for analysis
-      await savePoseAnalysis({
+      // Save to database for analysis (non-blocking)
+      savePoseAnalysis({
         description,
         result: resultAnalysis,
         aiModel: process.env.AI_MODEL,
