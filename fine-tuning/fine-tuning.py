@@ -12,7 +12,7 @@ model, tokenizer = FastLanguageModel.from_pretrained(
 )
 
 conversations = []
-with open("/content/drive/MyDrive/pose_dataset/pose_training_data.jsonl", 'r') as f:
+with open("./pose_training_data.jsonl", 'r') as f:
     for line in f:
         data = json.loads(line.strip())
         messages = data['messages']

@@ -1,9 +1,13 @@
 import OpenAI from "openai"
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions"
+import { savePoseAnalysis } from "@/lib/database"
 
 const systemPrompt = `Generate MMD pose data from description.`
 
 const userPrompt = `Description: {description}`
+
+const temperature = 0.7
+const topP = 0.1
 
 export async function POST(request: Request) {
   if (!process.env.AI_MODEL || !process.env.AI_API_KEY || !process.env.AI_API_BASE_URL) {
@@ -30,8 +34,8 @@ export async function POST(request: Request) {
     const response = await provider.chat.completions.create({
       model: process.env.AI_MODEL,
       messages,
-      temperature: 0.7,
-      top_p: 0.1,
+      temperature,
+      top_p: topP,
     })
 
     let result
@@ -40,6 +44,18 @@ export async function POST(request: Request) {
         response.choices[0].message.content ??
           '{"description": "", "face": [], "movableBones": [], "rotatableBones": []}'
       )
+      const resultAnalysis = JSON.parse(JSON.stringify(result))
+      resultAnalysis.description = description
+
+      // Save to database for analysis
+      await savePoseAnalysis({
+        description,
+        result: resultAnalysis,
+        aiModel: process.env.AI_MODEL,
+        temperature,
+        topP,
+        rawResponse: response.choices[0].message.content || undefined,
+      })
     } catch {
       return Response.json(
         {
