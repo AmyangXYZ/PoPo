@@ -54,7 +54,6 @@ export async function POST(request: Request) {
         aiModel: process.env.AI_MODEL,
         temperature,
         topP,
-        rawResponse: response.choices[0].message.content || undefined,
       })
     } catch {
       return Response.json(

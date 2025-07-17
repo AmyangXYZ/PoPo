@@ -20,7 +20,6 @@ export interface PoseAnalysis {
   aiModel?: string
   temperature?: number
   topP?: number
-  rawResponse?: string
 }
 
 export async function savePoseAnalysis(analysis: PoseAnalysis) {
@@ -32,15 +31,14 @@ export async function savePoseAnalysis(analysis: PoseAnalysis) {
   try {
     const result = await client.execute({
       sql: `INSERT INTO pose_analyses 
-            (description, result, ai_model, temperature, top_p, raw_response) 
-            VALUES (?, ?, ?, ?, ?, ?)`,
+            (description, result, ai_model, temperature, top_p) 
+            VALUES (?, ?, ?, ?, ?)`,
       args: [
         analysis.description,
         JSON.stringify(analysis.result),
         analysis.aiModel || null,
         analysis.temperature || null,
         analysis.topP || null,
-        analysis.rawResponse || null,
       ],
     })
     return { success: true, id: result.lastInsertRowid }
