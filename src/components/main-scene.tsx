@@ -284,6 +284,8 @@ export default function MainScene() {
           movableBones: defaultMovableBones,
           rotatableBones: defaultRotatableBones,
         }
+        console.log(defaultPose)
+
         defaultPoseRef.current = defaultPose
         defaultPose.description = "default pose"
 
@@ -313,14 +315,16 @@ export default function MainScene() {
       if (!vpdLoaderRef.current || !modelRef.current) return
 
       const vpd = await vpdLoaderRef.current.loadAsync("vpd_pose", vpdUrl)
-
+      // modelRef.current.addAnimation(vpd)
+      // modelRef.current.setAnimation("vpd_pose")
+      // modelRef.current.currentAnimation?.animate(0)
       const poseVpd = {
         description: "",
         face: {} as Morphs,
         movableBones: {} as MovableBones,
         rotatableBones: {} as RotatableBones,
       }
-
+      console.log(vpd)
       for (const boneTrack of vpd.boneTracks) {
         const boneName = boneTrack.name
 
@@ -624,9 +628,8 @@ export default function MainScene() {
         exportPose={exportPose}
       />
       <div
-        className={`fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${
-          openCustomizePanel || openClothesPanel ? "hidden" : ""
-        }`}
+        className={`fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${openCustomizePanel || openClothesPanel ? "hidden" : ""
+          }`}
       >
         <ChatInput setPose={setPose} setSmoothUpdate={setSmoothUpdate} />
       </div>
