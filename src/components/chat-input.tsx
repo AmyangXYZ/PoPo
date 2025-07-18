@@ -13,10 +13,11 @@ const suggestedPoses: string[] = [
   "squat with right hand fist",
   "lift left leg with shocked expression",
   "sit with fingers apart both hands",
-  "bend over and look right with a shy smile",
+  "bend and look right with a shy smile",
   "turn around with smile",
-  "Standing with body and head tilted left",
+  "standing with body and head tilted left",
   "gun left hand with serious expression",
+  "I broke with my girlfriend",
   "my exam failed",
 ] as const
 
@@ -46,7 +47,7 @@ export default function ChatInput({
   const [description, setDescription] = useState("")
 
   const generatePose = useCallback(
-    async (description: string,) => {
+    async (description: string) => {
       resetHeight()
       setWaitingPoseResult(true)
       setShowSuggestions(false)
@@ -79,7 +80,6 @@ export default function ChatInput({
     },
     [setPose, setSmoothUpdate]
   )
-
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -115,8 +115,9 @@ export default function ChatInput({
               >
                 <Card
                   key={i}
-                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${i >= 2 ? "hidden md:block" : ""
-                    }`}
+                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${
+                    i >= 2 ? "hidden md:block" : ""
+                  }`}
                   onClick={() => {
                     generatePose(pose)
                   }}

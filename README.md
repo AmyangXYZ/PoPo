@@ -27,7 +27,7 @@ Demo model: 深空之眼 三相·梵天「无间玩伴」
 "sit and raise hands"
 "bend over and look right with a shy smile"
 "angry face while lifting left foot"
-"my exam failed"
+"I broke with my girlfriend"
 ```
 
 ## 🤝 Help Improve PoPo
