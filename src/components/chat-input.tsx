@@ -18,7 +18,6 @@ const suggestedPoses: string[] = [
   "standing with body and head tilted left",
   "gun left hand with serious expression",
   "I broke with my girlfriend",
-  "my exam failed",
 ] as const
 
 export default function ChatInput({
