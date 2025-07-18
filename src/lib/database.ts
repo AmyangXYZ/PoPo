@@ -22,29 +22,41 @@ export interface PoseAnalysis {
   topP?: number
 }
 
-export async function savePoseAnalysis(analysis: PoseAnalysis) {
-  if (!client) {
-    console.log("Turso not configured - skipping pose analysis save")
-    return { success: false, error: "Database not configured" }
-  }
-
+export async function savePoseAnalysis(analysis: PoseAnalysis): Promise<void> {
   try {
-    const result = await client.execute({
+    if (!analysis) {
+      console.log("Analysis object is missing - skipping save")
+      return
+    }
+
+    if (!client) {
+      console.log("Turso not configured - skipping pose analysis save")
+      return
+    }
+
+    // Safely serialize the result
+    let resultJson: string
+    try {
+      resultJson = JSON.stringify(analysis.result)
+    } catch (jsonError) {
+      console.log("Failed to serialize analysis result - skipping save:", jsonError)
+      return
+    }
+
+    await client.execute({
       sql: `INSERT INTO pose_analyses 
             (description, result, ai_model, temperature, top_p) 
             VALUES (?, ?, ?, ?, ?)`,
       args: [
-        analysis.description,
-        JSON.stringify(analysis.result),
+        analysis.description || "",
+        resultJson,
         analysis.aiModel || null,
         analysis.temperature || null,
         analysis.topP || null,
       ],
     })
-    return { success: true, id: result.lastInsertRowid }
   } catch (error) {
-    console.error("Failed to save pose analysis:", error)
-    return { success: false, error: error instanceof Error ? error.message : "Unknown error" }
+    console.log("Failed to save pose analysis - continuing silently:", error)
   }
 }
 
