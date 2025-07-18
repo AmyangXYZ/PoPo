@@ -204,7 +204,7 @@ export default function CustomizePanel({
           <AccordionTrigger>Movable Bones</AccordionTrigger>
           <AccordionContent>
             <ScrollArea className="max-h-[calc(100dvh-22rem)] overflow-auto">
-              {Object.keys(MovableBonesTranslations).filter((bone) => ["センター"].includes(bone)).map((bone) => (
+              {Object.keys(MovableBonesTranslations).filter((bone) => ["全ての親", "センター"].includes(bone)).map((bone) => (
                 <div key={bone} className="pb-3 pr-6">
                   <div className="text-xs mb-2">
                     <p className="font-medium">{bone}</p>

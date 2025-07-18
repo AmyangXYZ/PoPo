@@ -296,7 +296,6 @@ export default function MainScene() {
           movableBones: defaultMovableBones,
           rotatableBones: defaultRotatableBones,
         }
-        console.log(defaultPose)
 
         defaultPoseRef.current = defaultPose
         defaultPose.description = "default pose"
@@ -470,7 +469,7 @@ export default function MainScene() {
       hemisphericLight.specular = new Color3(0, 0, 0)
       hemisphericLight.groundColor = new Color3(1, 1, 1)
 
-      const directionalLight = new DirectionalLight("directionalLight", new Vector3(2, -19.15, 4), scene)
+      const directionalLight = new DirectionalLight("directionalLight", new Vector3(2, -29.15, 4), scene)
       directionalLight.intensity = 0.9
 
       const shadowGenerator = new ShadowGenerator(2048, directionalLight)
