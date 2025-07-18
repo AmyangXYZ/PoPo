@@ -1,6 +1,7 @@
 import OpenAI from "openai"
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions"
 import { savePoseAnalysis } from "@/lib/database"
+import { poseCache } from "@/lib/cache"
 
 const systemPrompt = `Generate MMD pose data from description.`
 
@@ -17,6 +18,17 @@ export async function POST(request: Request) {
   try {
     const { description } = await request.json()
 
+    // Check cache first
+    const cachedResult = await poseCache.get(description, process.env.AI_MODEL!, temperature, topP)
+
+    if (cachedResult) {
+      return Response.json({
+        result: cachedResult,
+        cached: true,
+      })
+    }
+
+    // Cache miss - proceed with AI generation
     const provider = new OpenAI({
       apiKey: process.env.AI_API_KEY,
       baseURL: process.env.AI_API_BASE_URL,
@@ -47,6 +59,9 @@ export async function POST(request: Request) {
       const resultAnalysis = JSON.parse(JSON.stringify(result))
       resultAnalysis.description = description
 
+      // Cache the result for future requests
+      await poseCache.set(description, resultAnalysis, process.env.AI_MODEL!, temperature, topP)
+
       // Save to database for analysis (non-blocking)
       savePoseAnalysis({
         description,
@@ -68,6 +83,7 @@ export async function POST(request: Request) {
 
     return Response.json({
       result,
+      cached: false,
     })
   } catch (error) {
     console.error("Error generating pose:", error)
