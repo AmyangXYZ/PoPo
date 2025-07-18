@@ -204,7 +204,7 @@ export default function CustomizePanel({
           <AccordionTrigger>Movable Bones</AccordionTrigger>
           <AccordionContent>
             <ScrollArea className="max-h-[calc(100dvh-22rem)] overflow-auto">
-              {Object.keys(MovableBonesTranslations).map((bone) => (
+              {Object.keys(MovableBonesTranslations).filter((bone) => ["センター"].includes(bone)).map((bone) => (
                 <div key={bone} className="pb-3 pr-6">
                   <div className="text-xs mb-2">
                     <p className="font-medium">{bone}</p>
@@ -308,7 +308,7 @@ export default function CustomizePanel({
                   <AccordionTrigger>Legs</AccordionTrigger>
                   <AccordionContent>
                     {Object.keys(RotatableBonesTranslations)
-                      .filter((bone) => ["左足", "右足", "左足首", "右足首"].includes(bone))
+                      .filter((bone) => ["左足", "右足", "左足首", "右足首", "左ひざ", "右ひざ", "左足先EX", "右足先EX"].includes(bone))
                       .map((bone) => (
                         <div key={bone} className="pb-3 pr-6">
                           <div className="text-xs mb-2">
@@ -341,7 +341,7 @@ export default function CustomizePanel({
                   <AccordionTrigger>Arms</AccordionTrigger>
                   <AccordionContent>
                     {Object.keys(RotatableBonesTranslations)
-                      .filter((bone) => ["左肩", "右肩", "左腕", "右腕", "左ひじ", "右ひじ", "左手首", "右手首"].includes(bone))
+                      .filter((bone) => ["左肩", "右肩", "左腕", "右腕", "左腕捩", "右腕捩", "左ひじ", "右ひじ", "左手首", "右手首", "左手捩", "右手捩"].includes(bone))
                       .map((bone) => (
                         <div key={bone} className="pb-3 pr-6">
                           <div className="text-xs mb-2">
@@ -376,6 +376,7 @@ export default function CustomizePanel({
                     {Object.keys(RotatableBonesTranslations)
                       .filter((bone) =>
                         [
+                          "左親指０",
                           "左親指１",
                           "左親指２",
                           "左人指１",
@@ -426,6 +427,7 @@ export default function CustomizePanel({
                     {Object.keys(RotatableBonesTranslations)
                       .filter((bone) =>
                         [
+                          "右親指０",
                           "右親指１",
                           "右親指２",
                           "右人指１",
