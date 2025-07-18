@@ -110,20 +110,29 @@ export default function MainScene() {
 
   const rotateBone = useCallback((boneName: string, targetQuaternion: Quaternion) => {
     const bone = getBone(boneName)
-    if (!bone) return
+    if (!bone) {
+      console.log("missing in rotating bone", boneName)
+      return
+    }
 
     bone.setRotationQuaternion(targetQuaternion, Space.LOCAL)
   }, [])
 
   const moveBone = useCallback((boneName: string, position: BonePosition) => {
     const bone = getBone(boneName)
-    if (!bone) return
+    if (!bone) {
+      console.log("missing in moving bone", boneName)
+      return
+    }
     bone.position = new Vector3(position[0], position[1], position[2])
   }, [])
 
   const rotateBoneSmooth = useCallback((boneName: string, targetQuaternion: Quaternion, duration: number = 1000) => {
     const bone = getBone(boneName)
-    if (!bone) return
+    if (!bone) {
+      console.log("missing in rotating bone", boneName)
+      return
+    }
 
     targetRotationsRef.current[boneName] = {
       quaternion: targetQuaternion,
@@ -135,7 +144,10 @@ export default function MainScene() {
 
   const moveBoneSmooth = useCallback((boneName: string, position: BonePosition, duration: number = 1000) => {
     const bone = getBone(boneName)
-    if (!bone) return
+    if (!bone) {
+      console.log("missing in moving bone", boneName)
+      return
+    }
     const targetVector = new Vector3(position[0], position[1], position[2])
 
     targetPositionsRef.current[boneName] = {
@@ -312,7 +324,7 @@ export default function MainScene() {
 
   const loadVpd = useCallback(
     async (vpdUrl: string) => {
-      if (!vpdLoaderRef.current || !modelRef.current) return
+      if (!vpdLoaderRef.current || !modelRef.current || !defaultPoseRef.current) return
 
       const vpd = await vpdLoaderRef.current.loadAsync("vpd_pose", vpdUrl)
       // modelRef.current.addAnimation(vpd)
@@ -324,11 +336,13 @@ export default function MainScene() {
         movableBones: {} as MovableBones,
         rotatableBones: {} as RotatableBones,
       }
-      console.log(vpd)
       for (const boneTrack of vpd.boneTracks) {
         const boneName = boneTrack.name
 
-        if (!Object.keys(RotatableBonesTranslations).includes(boneName)) continue
+        if (!Object.keys(RotatableBonesTranslations).includes(boneName)) {
+          console.log("missing rotatable bone", boneName)
+          continue
+        }
 
         const rotations = boneTrack.rotations
         if (rotations.length === 0) continue
@@ -341,29 +355,29 @@ export default function MainScene() {
 
       for (const boneTrack of vpd.movableBoneTracks) {
         const boneName = boneTrack.name
-        if (!Object.keys(MovableBonesTranslations).includes(boneName)) continue
+        if (!Object.keys(MovableBonesTranslations).includes(boneName)) {
+          console.log("missing movable bone", boneName)
+          continue
+        }
 
-        const runtimeBone = modelRef.current.runtimeBones.find((b) => b.name === boneName)
-        if (runtimeBone) {
-          const worldMatrix = Matrix.FromArray(runtimeBone.worldMatrix, 0)
+        if (boneTrack.positions && boneTrack.positions.length > 0) {
 
-          let parentWorldMatrix = Matrix.Identity()
-          if (runtimeBone.parentBone) {
-            parentWorldMatrix = Matrix.FromArray(runtimeBone.parentBone.worldMatrix, 0)
-          }
+          const defaultPosition = defaultPoseRef.current.movableBones[boneName as keyof MovableBones] || [0, 0, 0]
 
-          const invParentWorld = parentWorldMatrix.invert()
-          const localMatrix = invParentWorld.multiply(worldMatrix)
+          const position: BonePosition = [
+            defaultPosition[0] + boneTrack.positions[0],
+            defaultPosition[1] + boneTrack.positions[1],
+            defaultPosition[2] + boneTrack.positions[2]
+          ]
 
-          const localRotation = new Quaternion()
-          const localPosition = new Vector3()
-          const localScaling = new Vector3()
-          localMatrix.decompose(localScaling, localRotation, localPosition)
-
-          const position: BonePosition = [localPosition.x, localPosition.y, localPosition.z]
           if (!(position[0] === 0 && position[1] === 0 && position[2] === 0)) {
             poseVpd.movableBones[boneName as keyof MovableBones] = position
           }
+        }
+
+        if (boneTrack.rotations && boneTrack.rotations.length > 0) {
+          const rotation: BoneRotationQuaternion = [...boneTrack.rotations] as BoneRotationQuaternion
+          poseVpd.rotatableBones[boneName as keyof typeof poseVpd.rotatableBones] = rotation
         }
       }
 

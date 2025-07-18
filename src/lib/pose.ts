@@ -63,6 +63,12 @@ export interface MovableBones {
   腰: BonePosition
   上半身: BonePosition
   下半身: BonePosition
+  左肩: BonePosition
+  右肩: BonePosition
+  左足: BonePosition
+  右足: BonePosition
+  左ひざ: BonePosition
+  右ひざ: BonePosition
   左足首: BonePosition
   右足首: BonePosition
   左腕: BonePosition
@@ -92,6 +98,9 @@ export interface MovableBones {
   左人指１: BonePosition
   左人指２: BonePosition
   左人指３: BonePosition
+  左中指１: BonePosition
+  左中指２: BonePosition
+  左中指３: BonePosition
   左薬指１: BonePosition
   左薬指２: BonePosition
   左薬指３: BonePosition
@@ -204,18 +213,35 @@ export const MovableBonesTranslations = {
   全ての親: "All Parents",
   センター: "Center",
   上半身: "Upper Body",
+  上半身2: "Upper Body 2",
   下半身: "Lower Body",
+  左肩: "Left Shoulder",
+  右肩: "Right Shoulder",
   腰: "Waist",
   首: "Neck",
   頭: "Head",
+  左足: "Left Leg",
+  右足: "Right Leg",
+  左ひざ: "Left Knee",
+  右ひざ: "Right Knee",
   左足首: "Left Ankle",
   右足首: "Right Ankle",
+  左足先EX: "Left Ankle EX",
+  右足先EX: "Right Ankle EX",
+  左腕: "Left Arm",
+  右腕: "Right Arm",
+  左腕捩: "Left Arm Twist",
+  右腕捩: "Right Arm Twist",
   左ひじ: "Left Elbow",
   右ひじ: "Right Elbow",
   左目: "Left Eye",
   右目: "Right Eye",
   左手首: "Left Wrist",
   右手首: "Right Wrist",
+  左手捩: "Left Wrist Twist",
+  右手捩: "Right Wrist Twist",
+  左親指０: "Left Thumb 0",
+  右親指０: "Right Thumb 0",
   右親指１: "Right Thumb 1",
   右親指２: "Right Thumb 2",
   右人指１: "Right Index 1",
@@ -250,6 +276,7 @@ export const RotatableBonesTranslations = {
   全ての親: "All Parents",
   センター: "Center",
   上半身: "Upper Body",
+  上半身2: "Upper Body 2",
   下半身: "Lower Body",
   左肩: "Left Shoulder",
   右肩: "Right Shoulder",
@@ -262,14 +289,22 @@ export const RotatableBonesTranslations = {
   右ひざ: "Right Knee",
   左足首: "Left Ankle",
   右足首: "Right Ankle",
+  左足先EX: "Left Ankle EX",
+  右足先EX: "Right Ankle EX",
   左腕: "Left Arm",
   右腕: "Right Arm",
+  左腕捩: "Left Arm Twist",
+  右腕捩: "Right Arm Twist",
   左ひじ: "Left Elbow",
   右ひじ: "Right Elbow",
   左目: "Left Eye",
   右目: "Right Eye",
   左手首: "Left Wrist",
   右手首: "Right Wrist",
+  右手捩: "Right Wrist Twist",
+  左手捩: "Left Wrist Twist",
+  左親指０: "Left Thumb 0",
+  右親指０: "Right Thumb 0",
   右親指１: "Right Thumb 1",
   右親指２: "Right Thumb 2",
   右人指１: "Right Index 1",
