@@ -22,6 +22,14 @@ export async function POST(request: Request) {
     const cachedResult = await poseCache.get(description, process.env.AI_MODEL!, temperature, topP)
 
     if (cachedResult) {
+      // Save to database for analysis (non-blocking)
+      savePoseAnalysis({
+        description,
+        result: JSON.parse(JSON.stringify(cachedResult)),
+        aiModel: process.env.AI_MODEL,
+        temperature,
+        topP,
+      })
       return Response.json({
         result: cachedResult,
         cached: true,
