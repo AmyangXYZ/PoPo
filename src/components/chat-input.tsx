@@ -13,7 +13,7 @@ const suggestedPoses: string[] = [
   "squat with right hand fist",
   "lift left leg with shocked expression",
   "sit with fingers apart both hands",
-  "bend and look right with a shy smile",
+  "bend over and look right with a shy smile",
   "turn around with smile",
   "standing with body and head tilted left",
   "gun left hand with serious expression",
