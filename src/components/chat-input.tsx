@@ -10,13 +10,13 @@ import { Quaternion } from "@babylonjs/core/Maths/math.vector"
 
 const suggestedPoses: string[] = [
   "left hand thumb up",
-  "squat with right hand fist",
-  "lift left leg with shocked expression",
-  "sit with fingers apart both hands",
+  "lying with legs up",
+  "kneel down with shocked expression",
+  "running fast",
   "bend over and look right with a shy smile",
-  "turn around with smile",
-  "standing with body and head tilted left",
-  "gun left hand with serious expression",
+  "play soccer",
+  "tilting left",
+  "left hand gan with serious expression",
   "I broke with my girlfriend",
 ] as const
 

@@ -7,7 +7,7 @@ const systemPrompt = `Generate MMD pose data from description.`
 
 const userPrompt = `Description: {description}`
 
-const temperature = 0.1
+const temperature = 0.7
 const topP = 0.1
 
 export async function POST(request: Request) {
