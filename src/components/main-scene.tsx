@@ -58,6 +58,7 @@ import CustomizePanel from "./customize-panel"
 import { HandMetal, Shirt } from "lucide-react"
 import ClothesPanel from "./clothes-panel"
 import { MmdWasmPhysicsRuntimeImpl } from "babylon-mmd/esm/Runtime/Optimized/Physics/mmdWasmPhysicsRuntimeImpl"
+import MPLInput from "./mpl-input"
 
 interface TargetRotation {
   quaternion: Quaternion
@@ -360,13 +361,12 @@ export default function MainScene() {
         }
 
         if (boneTrack.positions && boneTrack.positions.length > 0) {
-
           const defaultPosition = defaultPoseRef.current.movableBones[boneName as keyof MovableBones] || [0, 0, 0]
 
           const position: BonePosition = [
             defaultPosition[0] + boneTrack.positions[0],
             defaultPosition[1] + boneTrack.positions[1],
-            defaultPosition[2] + boneTrack.positions[2]
+            defaultPosition[2] + boneTrack.positions[2],
           ]
 
           if (!(position[0] === 0 && position[1] === 0 && position[2] === 0)) {
@@ -641,10 +641,12 @@ export default function MainScene() {
         exportPose={exportPose}
       />
       <div
-        className={`fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${openCustomizePanel || openClothesPanel ? "hidden" : ""
-          }`}
+        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${
+          openCustomizePanel || openClothesPanel ? "hidden" : ""
+        }`}
       >
         <ChatInput setPose={setPose} setSmoothUpdate={setSmoothUpdate} />
+        <MPLInput setPose={setPose} setSmoothUpdate={setSmoothUpdate} />
       </div>
     </div>
   )

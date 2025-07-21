@@ -1,12 +1,12 @@
 import { ArrowUp } from "lucide-react"
 import { Button } from "./ui/button"
-import { Textarea } from "./ui/textarea"
 import { motion } from "framer-motion"
 import { Card, CardDescription, CardHeader } from "./ui/card"
 
-import { useState, useEffect, useRef, useCallback, Dispatch, SetStateAction } from "react"
+import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react"
 import { Pose, MovableBones } from "@/lib/pose"
 import { Quaternion } from "@babylonjs/core/Maths/math.vector"
+import { Input } from "./ui/input"
 
 const suggestedPoses: string[] = [
   "left hand thumb up",
@@ -27,7 +27,6 @@ export default function ChatInput({
   setPose: Dispatch<SetStateAction<Pose>>
   setSmoothUpdate: (smoothUpdate: boolean) => void
 }) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [showSuggestions, setShowSuggestions] = useState(true)
   const [waitingPoseResult, setWaitingPoseResult] = useState(false)
   const [displayedPoses, setDisplayedPoses] = useState<string[]>([])
@@ -47,7 +46,6 @@ export default function ChatInput({
 
   const generatePose = useCallback(
     async (description: string) => {
-      resetHeight()
       setWaitingPoseResult(true)
       setShowSuggestions(false)
 
@@ -80,24 +78,6 @@ export default function ChatInput({
     [setPose, setSmoothUpdate]
   )
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      adjustHeight()
-    }
-  }, [])
-
-  const adjustHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto"
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 2}px`
-    }
-  }
-
-  const resetHeight = () => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto"
-    }
-  }
   return (
     <>
       <div className="relative w-full flex flex-col gap-3">
@@ -131,13 +111,11 @@ export default function ChatInput({
         )}
 
         <div className="relative w-full">
-          <Textarea
-            ref={textareaRef}
-            className="max-h-[calc(75dvh)] overflow-hidden resize-none rounded-2xl !text-base bg-white/50 text-zinc-800 pb-4 backdrop-blur-[3px] shadow-lg px-4"
+          <Input
+            className="max-h-[calc(75dvh)] overflow-hidden resize-none rounded-lg  bg-white/50 text-zinc-800 backdrop-blur-[3px] shadow-lg px-4"
             value={description}
             onChange={(e) => {
               setDescription(e.target.value)
-              adjustHeight()
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && description.trim().length > 0) {
@@ -150,19 +128,19 @@ export default function ChatInput({
           />
           {waitingPoseResult && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-2xl z-10">
-              <div className="h-6 w-6 border-3 border-zinc-200 border-t-transparent rounded-full animate-spin"></div>
+              <div className="h-4 w-4 border-2 border-zinc-200 border-t-transparent rounded-full animate-spin"></div>
             </div>
           )}
         </div>
 
-        <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
+        <div className="absolute bottom-0.5 right-0.5 p-1 w-fit flex flex-row justify-end">
           <Button
             size="icon"
             className="rounded-full h-fit w-fit p-1"
             disabled={description.length === 0}
             onClick={() => generatePose(description)}
           >
-            <ArrowUp className="size-5" />
+            <ArrowUp className="size-4" />
           </Button>
         </div>
       </div>
