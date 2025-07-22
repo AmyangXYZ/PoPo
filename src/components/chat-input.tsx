@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import { Card, CardDescription, CardHeader } from "./ui/card"
 
 import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react"
-import { Pose, MovableBones } from "@/lib/pose"
+import { Pose } from "@/lib/mpl"
 import { Quaternion } from "@babylonjs/core/Maths/math.vector"
 import { Input } from "./ui/input"
 
@@ -20,13 +20,7 @@ const suggestedPoses: string[] = [
   "I broke with my girlfriend",
 ] as const
 
-export default function ChatInput({
-  setPose,
-  setSmoothUpdate,
-}: {
-  setPose: Dispatch<SetStateAction<Pose>>
-  setSmoothUpdate: (smoothUpdate: boolean) => void
-}) {
+export default function ChatInput({ setPose }: { setPose: Dispatch<SetStateAction<Pose>> }) {
   const [showSuggestions, setShowSuggestions] = useState(true)
   const [waitingPoseResult, setWaitingPoseResult] = useState(false)
   const [displayedPoses, setDisplayedPoses] = useState<string[]>([])
@@ -55,7 +49,6 @@ export default function ChatInput({
       })
       const poseData = await poseRes.json()
       setDescription("")
-      setSmoothUpdate(true)
       const quat = new Quaternion(0, 0, 0, 0)
       for (const bone in poseData.result.rotatableBones) {
         const rawQuat = poseData.result.rotatableBones[bone]
@@ -66,16 +59,15 @@ export default function ChatInput({
       setPose((prev) => ({
         ...prev,
         description: poseData.result.description || prev.description,
-        face: { ...prev.face, ...poseData.result.face },
-        movableBones: { ...prev.movableBones, ...poseData.result.movableBones } as MovableBones,
-        rotatableBones: { ...prev.rotatableBones, ...poseData.result.rotatableBones },
+        morphs: { ...prev.morphs, ...poseData.result.morphs },
+        bones: { ...prev.bones, ...poseData.result.bones },
       }))
       console.log(poseData)
       setWaitingPoseResult(false)
       // Get new random poses for next time
       setDisplayedPoses(getRandomPoses())
     },
-    [setPose, setSmoothUpdate]
+    [setPose]
   )
 
   return (
@@ -112,7 +104,7 @@ export default function ChatInput({
 
         <div className="relative w-full">
           <Input
-            className="max-h-[calc(75dvh)] overflow-hidden resize-none rounded-lg  bg-white/50 text-zinc-800 backdrop-blur-[3px] shadow-lg px-4"
+            className="max-h-[calc(75dvh)] h-12 md:text-base overflow-hidden resize-none rounded-lg bg-white/50 text-zinc-800 backdrop-blur-[3px] shadow-lg px-4"
             value={description}
             onChange={(e) => {
               setDescription(e.target.value)
@@ -133,14 +125,14 @@ export default function ChatInput({
           )}
         </div>
 
-        <div className="absolute bottom-0.5 right-0.5 p-1 w-fit flex flex-row justify-end">
+        <div className="absolute bottom-2.5 right-2.5 w-fit flex flex-row justify-end">
           <Button
             size="icon"
             className="rounded-full h-fit w-fit p-1"
             disabled={description.length === 0}
             onClick={() => generatePose(description)}
           >
-            <ArrowUp className="size-4" />
+            <ArrowUp className="size-5" />
           </Button>
         </div>
       </div>
