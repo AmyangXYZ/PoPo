@@ -81,6 +81,8 @@ export default function MainScene() {
     morphs: {},
     bones: {},
   })
+  const [mplStatement, setMplStatement] = useState("")
+
   const [meshes, setMeshes] = useState<Mesh[]>([])
 
   const [openMPLPanel, setOpenMPLPanel] = useState(false)
@@ -424,13 +426,12 @@ export default function MainScene() {
         </div>
       </div>
       <ClothesPanel open={openClothesPanel} setOpen={setOpenClothesPanel} meshes={meshes} setMeshes={setMeshes} />
-      <MPLPanel open={openMPLPanel} setOpen={setOpenMPLPanel} setPose={setPose} loadVpd={loadVpd} />
+      <MPLPanel open={openMPLPanel} setOpen={setOpenMPLPanel} setPose={setPose} loadVpd={loadVpd} mplStatement={mplStatement} setMplStatement={setMplStatement} />
       <div
-        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${
-          openMPLPanel || openClothesPanel ? "hidden" : ""
-        }`}
+        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${openMPLPanel || openClothesPanel ? "hidden" : ""
+          }`}
       >
-        <ChatInput setPose={setPose} />
+        <ChatInput setMplStatement={setMplStatement} />
       </div>
     </div>
   )

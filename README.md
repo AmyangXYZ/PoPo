@@ -2,7 +2,7 @@
 
 > AI-powered MMD pose generator - Transform natural language into expressive 3D character animations
 
-**PoPo** bridges natural language and 3D character animation. Describe any pose or expression in plain text—from simple gestures to complex emotional scenarios—and watch as AI translates your words into precise MMD character animations in real-time. No need to understand complex bone rotations quaternions!
+**PoPo** uses fine-tuned LLMs to generate MMD character poses from natural language descriptions. Instead of training on raw quaternions, we use **[MPL (MMD Pose Language)](https://github.com/AmyangXYZ/MPL)** - a semantic, MMD-specific pose description language that helps AI understand and generate anatomically correct poses.
 
 **🌐 Live demo: [popo.love](https://popo.love)**
 
@@ -11,35 +11,41 @@ Demo model: 深空之眼 三相·梵天「无间玩伴」
 ## ✨ Features
 
 - **Natural Language Input**: "wave right hand with big laugh, inviting me for dinner"
-- **Real-time Generation**: Instant pose creation with smooth bone animations
-- **Advanced Character Control**: 20+ facial morphs + full skeletal manipulation
-- **Professional Quality**: Quaternion-based rotations with MMD physics integration
+- **LLM-Generated Poses**: Fine-tuned models output semantic MPL code for precise pose control
+- **Real-time Rendering**: Instant pose creation with smooth bone animations
+- **MMD-Specific**: Built for anime characters with proper bone constraints and physics
 
-## 🎯 Why MMD-Specific?
+## 🎯 Fine-tune LLMs with MPL
 
-**Generic pose-to-3D tools** generate abstract joint rotations for universal 3D models.
+**PoPo fine-tunes LLMs with MPL**: [MPL](https://github.com/AmyangXYZ/MPL) is a semantic pose description language designed specifically for MMD. This approach provides:
 
-**PoPo focuses on MMD**: Direct bone/morph control using MMD's exact naming conventions and constraints. Perfect for anime fans who want to pose their favorite characters without learning complex bone rigging or technical animation skills.
+- **Better training convergence** - Structured, human-readable pose descriptions
+- **Consistent outputs** - Same prompt generates reliable pose code
+- **Anatomically correct** - Built-in constraints prevent impossible movements
+- **Debuggable results** - Generated MPL code can be read and modified
 
-## 💬 Example Prompts
+### Training Data Example:
 
+```json
+{
+  "messages": [
+    { "role": "system", "content": "Generate MMD Pose Language (MPL) script from description." },
+    { "role": "user", "content": "Description: arms down" },
+    { "role": "assistant", "content": "arm_l bend forward 40;arm_r bend forward 40;" }
+  ]
+}
 ```
-"sit and raise hands"
-"bend over and look right with a shy smile"
-"angry face while lifting left foot"
-"I broke with my girlfriend"
-```
 
-## 🤝 Help Improve PoPo
+## 🤝 Help Improve the AI
 
-**Want to make PoPo smarter?** Help us expand the training dataset!
+**Want better pose generation?** Help us expand the training dataset with more natural language → MPL scripts!
 
 ### How to contribute:
 
-1. **Create poses manually**
+1. **Create poses**
 
-   - Use the **Customization Panel** to adjust bones and facial expressions
-   - Or import poses from **VPD files** (MMD pose data)
+   - Use the **MPL Panel** to write [MPL script](https://mmd-mpl.vercel.app/) to create poses
+   - Or import poses from **VPD files** (MMD pose data) and convert to MPL script
    - Fine-tune until you get the perfect pose
 
 2. **Add descriptions**
@@ -49,28 +55,27 @@ Demo model: 深空之眼 三相·梵天「无间玩伴」
    - Include emotional context and scenarios
 
 3. **Export and share**
-   - Use the **Export** button to get the JSON data
+   - Use the **Export** button to get the JSON data with MPL script
    - Email your labeled pose data set to: **amyang.xyz@gmail.com**
 
-Here is an exported [sample pose.json](./pose_dataset/sample.json)
+Here is an exported [sample pose.json](./pose_dataset/sample.json).
 
-Your contributions directly improve the AI model for everyone! 🙏
+Your contributions directly improve the AI model's understanding of natural language → MPL mapping! 🙏
 
 ## 🛠️ Technology
 
 - **Frontend**: Next.js, shadcn/ui, TypeScript
 - **3D Engine**: Babylon.js with babylon-mmd
-- **AI Model**: Fine-tuned GPT-4o-mini specialized for MMD pose generation
+- **Pose Language**: [MPL (MMD Pose Language)](https://github.com/AmyangXYZ/MPL) for semantic pose description
+- **AI Model**: Fine-tuned GPT-4o-mini for natural language → MPL generation
 - **Deployment**: Vercel
 
-## 🎭 Evolution from MiKaPo
+## 🎭 Evolution
 
-PoPo builds on **[MiKaPo](https://mikapo.amyang.dev)** (MediaPipe real-time motion capture on Web):
+- **MiKaPo**: Camera → MediaPipe → MMD bones (real-time capture)
+- **PoPo**: Text → Fine-tuned LLM → **MPL code** → MMD bones (AI-generated poses)
 
-- **MiKaPo**: Camera → MediaPipe pose landmarks → MMD bones (real-time capture)
-- **PoPo**: Text → AI → MMD bones (generative control)
-
-Same proven 3D engine, new AI-driven input method.
+By using semantic MPL as the training target instead of raw quaternions, we achieve better consistency and allow the AI to learn the "grammar" of human movement.
 
 ## 📄 License
 

@@ -5,15 +5,8 @@ interface CacheConfig {
   ttl: number // Time to live in seconds
 }
 
-interface PoseResult {
-  description: string
-  face: Record<string, number>
-  movableBones: Record<string, [number, number, number]>
-  rotatableBones: Record<string, [number, number, number, number]>
-}
-
 interface CachedPoseData {
-  result: PoseResult
+  mpl: string
   aiModel: string
   temperature: number
   topP: number
@@ -60,7 +53,7 @@ class PoseCache {
     return Math.abs(hash).toString(36)
   }
 
-  async get(description: string, aiModel: string, temperature: number, topP: number): Promise<PoseResult | null> {
+  async get(description: string, aiModel: string, temperature: number, topP: number): Promise<string | null> {
     if (!this.config.enabled || !this.redis) {
       return null
     }
@@ -71,7 +64,7 @@ class PoseCache {
 
       if (cached) {
         console.log(`Cache HIT for description: "${description}"`)
-        return cached.result
+        return cached.mpl
       } else {
         console.log(`Cache MISS for description: "${description}"`)
         return null
@@ -82,13 +75,7 @@ class PoseCache {
     }
   }
 
-  async set(
-    description: string,
-    result: PoseResult,
-    aiModel: string,
-    temperature: number,
-    topP: number
-  ): Promise<void> {
+  async set(description: string, mpl: string, aiModel: string, temperature: number, topP: number): Promise<void> {
     if (!this.config.enabled || !this.redis) {
       return
     }
@@ -96,7 +83,7 @@ class PoseCache {
     try {
       const key = this.generateCacheKey(description, aiModel, temperature, topP)
       const cachedData: CachedPoseData = {
-        result,
+        mpl,
         aiModel,
         temperature,
         topP,
@@ -144,4 +131,4 @@ class PoseCache {
 
 // Export singleton instance
 export const poseCache = new PoseCache()
-export type { PoseResult, CachedPoseData }
+export type { CachedPoseData }

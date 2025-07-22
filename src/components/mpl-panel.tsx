@@ -11,13 +11,16 @@ export default function MPLPanel({
   setOpen,
   setPose,
   loadVpd,
+  mplStatement,
+  setMplStatement,
 }: {
   open: boolean
   setOpen: (open: boolean) => void
   setPose: Dispatch<SetStateAction<Pose>>
   loadVpd: (url: string) => Promise<Pose | null>
+  mplStatement: string
+  setMplStatement: Dispatch<SetStateAction<string>>
 }) {
-  const [statement, setStatement] = useState("")
   const [description, setDescription] = useState("")
 
   const handleFileUpload = useCallback(
@@ -29,7 +32,7 @@ export default function MPLPanel({
         const url = URL.createObjectURL(file)
         const pose = await loadVpd(url)
         if (pose) {
-          setStatement(PoseToMPL(pose).replaceAll(";", ";\n"))
+          setMplStatement(PoseToMPL(pose).replaceAll(";", ";\n"))
         }
       }
       if (file.name.endsWith(".json")) {
@@ -37,20 +40,20 @@ export default function MPLPanel({
         const json = JSON.parse(text)
         const pose: Pose = { description: json.description, bones: json.rotatableBones, morphs: {} }
         if (pose) {
-          setStatement(PoseToMPL(pose).replaceAll(";", ";\n"))
+          setMplStatement(PoseToMPL(pose).replaceAll(";", ";\n"))
           setDescription(pose.description)
         }
       }
       event.target.value = ""
     },
-    [setStatement, loadVpd]
+    [setMplStatement, loadVpd]
   )
 
   const exportMPLScript = useCallback(
     (description: string) => {
       const script: { description: string; mpl: string } = {
         description: description,
-        mpl: statement,
+        mpl: mplStatement,
       }
       const blob = new Blob([JSON.stringify(script, null, 2)], { type: "application/json" })
       const url = URL.createObjectURL(blob)
@@ -62,7 +65,7 @@ export default function MPLPanel({
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
     },
-    [statement]
+    [mplStatement]
   )
 
   const resetPose = useCallback(() => {
@@ -90,8 +93,8 @@ export default function MPLPanel({
   )
 
   useEffect(() => {
-    generatePose(statement)
-  }, [statement, generatePose])
+    generatePose(mplStatement)
+  }, [mplStatement, generatePose])
 
   return (
     <div
@@ -117,7 +120,7 @@ export default function MPLPanel({
               />
               <Button
                 onClick={() => {
-                  setStatement("")
+                  setMplStatement("")
                 }}
                 className="flex"
                 size="sm"
@@ -129,7 +132,7 @@ export default function MPLPanel({
 
             <Button
               onClick={() => {
-                setStatement("")
+                setMplStatement("")
                 resetPose()
               }}
               size="icon"
@@ -144,7 +147,7 @@ export default function MPLPanel({
         </div>
       </div>
       <div className="flex-1 pt-4 px-4">
-        <CodeEditor value={statement} onChange={setStatement} placeholder="head turn left 30;" />
+        <CodeEditor value={mplStatement} onChange={setMplStatement} placeholder="head turn left 30;" />
       </div>
       <div className="mt-auto flex flex-col gap-2 p-4">
         <Input

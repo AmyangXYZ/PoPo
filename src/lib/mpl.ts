@@ -90,7 +90,7 @@ export const BONES: Record<string, string> = {
   index_2_r: "右人指３",
   middle_0_l: "左中指１",
   middle_0_r: "右中指１",
-  middle_l_1: "左中指２",
+  middle_1_l: "左中指２",
   middle_1_r: "右中指２",
   middle_2_l: "左中指３",
   middle_2_r: "右中指３",

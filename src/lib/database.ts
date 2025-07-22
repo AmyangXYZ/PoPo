@@ -11,12 +11,7 @@ const client = isTursoConfigured
 
 export interface PoseAnalysis {
   description: string
-  result: {
-    description: string
-    face: unknown[]
-    movableBones: unknown[]
-    rotatableBones: unknown[]
-  }
+  mpl: string
   aiModel?: string
   temperature?: number
   topP?: number
@@ -37,7 +32,7 @@ export async function savePoseAnalysis(analysis: PoseAnalysis): Promise<void> {
     // Safely serialize the result
     let resultJson: string
     try {
-      resultJson = JSON.stringify(analysis.result)
+      resultJson = JSON.stringify(analysis.mpl)
     } catch (jsonError) {
       console.log("Failed to serialize analysis result - skipping save:", jsonError)
       return
