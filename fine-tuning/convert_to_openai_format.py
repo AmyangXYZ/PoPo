@@ -3,22 +3,10 @@ import glob
 import os
 
 # System prompt used for both training and inference (consistency is key)
-SYSTEM_PROMPT = """Generate MMD pose data from description."""
+SYSTEM_PROMPT = """Generate MMD Pose Language (MPL) script from description."""
 
 
-def round_values(obj, decimals=4):
-    """Recursively round decimal values in nested objects/arrays"""
-    if isinstance(obj, dict):
-        return {key: round_values(value, decimals) for key, value in obj.items()}
-    elif isinstance(obj, list):
-        return [round_values(item, decimals) for item in obj]
-    elif isinstance(obj, float):
-        return round(obj, decimals)
-    else:
-        return obj
-
-
-def convert_pose_to_openai_format(input_dir="C:/Users/amyan/Dropbox/pose_dataset", output_file="pose_training_data.jsonl"):
+def convert_pose_to_openai_format(input_dir="C:/Users/jiach/Dropbox/mpl_pose_dataset", output_file="mpl_fine_tuning_data.jsonl"):
     """Convert pose JSON files to OpenAI fine-tuning JSONL format"""
 
     training_examples = []
@@ -34,13 +22,7 @@ def convert_pose_to_openai_format(input_dir="C:/Users/amyan/Dropbox/pose_dataset
 
             # Extract description and create the pose data without description
             description = pose_data.get("description", "")
-
-            # Create a clean pose data with rounded values
-            clean_pose_data = {
-                "face": round_values(pose_data.get("face", {})),
-                "rotatableBones": round_values(pose_data.get("rotatableBones", {})),
-                "movableBones": round_values(pose_data.get("movableBones", {}))
-            }
+            mpl = pose_data.get("mpl", "")
 
             # Create training example with minimal prompts
             training_example = {
@@ -55,7 +37,7 @@ def convert_pose_to_openai_format(input_dir="C:/Users/amyan/Dropbox/pose_dataset
                     },
                     {
                         "role": "assistant",
-                        "content": json.dumps(clean_pose_data, ensure_ascii=False)
+                        "content": mpl
                     }
                 ]
             }

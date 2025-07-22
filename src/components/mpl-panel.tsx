@@ -32,7 +32,15 @@ export default function MPLPanel({
           setStatement(PoseToMPL(pose).replaceAll(";", ";\n"))
         }
       }
-
+      if (file.name.endsWith(".json")) {
+        const text = await file.text()
+        const json = JSON.parse(text)
+        const pose: Pose = { description: json.description, bones: json.rotatableBones, morphs: {} }
+        if (pose) {
+          setStatement(PoseToMPL(pose).replaceAll(";", ";\n"))
+          setDescription(pose.description)
+        }
+      }
       event.target.value = ""
     },
     [setStatement, loadVpd]
@@ -87,9 +95,8 @@ export default function MPLPanel({
 
   return (
     <div
-      className={`fixed right-0 top-0 h-full w-100 bg-background border-l shadow-lg z-50 flex flex-col transition-transform duration-300 ease-in-out ${
-        open ? "translate-x-0" : "translate-x-full"
-      }`}
+      className={`fixed right-0 top-0 h-full w-100 bg-background border-l shadow-lg z-50 flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"
+        }`}
     >
       <div className="flex flex-col gap-1.5 p-4 border-b">
         <div className="flex items-center justify-between">
@@ -103,7 +110,7 @@ export default function MPLPanel({
             <div className="relative mr-1">
               <input
                 type="file"
-                accept=".vpd"
+                accept=".vpd,.json"
                 onChange={handleFileUpload}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 id="pose-upload"

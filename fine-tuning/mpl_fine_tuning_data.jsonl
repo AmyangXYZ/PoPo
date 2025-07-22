@@ -1,0 +1,4 @@
+{"messages": [{"role": "system", "content": "Generate MMD Pose Language (MPL) script from description."}, {"role": "user", "content": "Description: look down"}, {"role": "assistant", "content": "head bend forward 30;\nneck bend forward 15;"}]}
+{"messages": [{"role": "system", "content": "Generate MMD Pose Language (MPL) script from description."}, {"role": "user", "content": "Description: look left"}, {"role": "assistant", "content": "head turn left 30;"}]}
+{"messages": [{"role": "system", "content": "Generate MMD Pose Language (MPL) script from description."}, {"role": "user", "content": "Description: look right"}, {"role": "assistant", "content": "head turn right 30;"}]}
+{"messages": [{"role": "system", "content": "Generate MMD Pose Language (MPL) script from description."}, {"role": "user", "content": "Description: look up"}, {"role": "assistant", "content": "head bend backward 45;\nneck bend backward 30;"}]}
