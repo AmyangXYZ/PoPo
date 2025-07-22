@@ -172,7 +172,7 @@ export const BONE_ACTION_RULES: Record<string, Record<string, Record<string, Act
     sway: { left: { axis: [0, -1, 0], limit: 90 }, right: { axis: [0, 1, 0], limit: 90 } },
   },
   arm_r: {
-    bend: { forward: { axis: [1, 0, 0], limit: 45 }, backward: { axis: [-1, 0, 0], limit: 180 } },
+    bend: { forward: { axis: [0, 0, 1], limit: 45 }, backward: { axis: [0, 0, -1], limit: 180 } },
     sway: { left: { axis: [0, -1, 0], limit: 90 }, right: { axis: [0, 1, 0], limit: 90 } },
   },
   arm_twist_l: {
