@@ -244,14 +244,14 @@ export const BONE_ACTION_RULES: Record<string, Record<string, Record<string, Act
   forefoot_r: { bend: { forward: { axis: [-1, 0, 0], limit: 30 }, backward: { axis: [1, 0, 0], limit: 30 } } },
 
   thumb_0_l: {
-    bend: { forward: { axis: [-1, 1, 0], limit: 90 }, backward: { axis: [1, 1, 0], limit: 15 } },
+    bend: { forward: { axis: [-1, -1, 0], limit: 90 }, backward: { axis: [1, 1, 0], limit: 15 } },
     sway: { left: { axis: [0, 0, 1], limit: 45 }, right: { axis: [0, 0, -1], limit: 45 } },
   },
   thumb_1_l: {
-    bend: { forward: { axis: [-1, 1, 0], limit: 90 }, backward: { axis: [1, 1, 0], limit: 15 } },
+    bend: { forward: { axis: [-1, -1, 0], limit: 90 }, backward: { axis: [1, 1, -0], limit: 15 } },
   },
   thumb_2_l: {
-    bend: { forward: { axis: [-1, 1, 0], limit: 90 }, backward: { axis: [1, 1, 0], limit: 15 } },
+    bend: { forward: { axis: [-1, -1, 0], limit: 90 }, backward: { axis: [1, 1, 0], limit: 15 } },
   },
   index_0_l: {
     bend: { forward: { axis: [0, 0, -1], limit: 90 }, backward: { axis: [0, 0, 1], limit: 15 } },
@@ -295,14 +295,14 @@ export const BONE_ACTION_RULES: Record<string, Record<string, Record<string, Act
   },
 
   thumb_0_r: {
-    bend: { forward: { axis: [-1, -1, 0], limit: 90 }, backward: { axis: [1, -1, 0], limit: 15 } },
+    bend: { forward: { axis: [-1, 1, 0], limit: 90 }, backward: { axis: [1, -1, 0], limit: 15 } },
     sway: { left: { axis: [0, 0, 1], limit: 45 }, right: { axis: [0, 0, -1], limit: 45 } },
   },
   thumb_1_r: {
-    bend: { forward: { axis: [-1, -1, 0], limit: 90 }, backward: { axis: [1, -1, 0], limit: 15 } },
+    bend: { forward: { axis: [-1, 1, 0], limit: 90 }, backward: { axis: [1, -1, 0], limit: 15 } },
   },
   thumb_2_r: {
-    bend: { forward: { axis: [-1, -1, 0], limit: 90 }, backward: { axis: [1, -1, 0], limit: 15 } },
+    bend: { forward: { axis: [-1, 1, 0], limit: 90 }, backward: { axis: [1, -1, -0], limit: 15 } },
   },
   index_0_r: {
     bend: { forward: { axis: [0, 0, 1], limit: 90 }, backward: { axis: [0, 0, -1], limit: 15 } },
