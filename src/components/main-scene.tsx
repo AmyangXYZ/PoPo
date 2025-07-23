@@ -250,6 +250,7 @@ export default function MainScene() {
       const scene = new Scene(engine)
 
       scene.clearColor = new Color4(0.99, 0.44, 0.66, 1.0)
+      scene.ambientColor = new Color3(0.5, 0.5, 0.5)
 
       engineRef.current = engine
       sceneRef.current = scene
@@ -267,8 +268,17 @@ export default function MainScene() {
       hemisphericLight.specular = new Color3(0, 0, 0)
       hemisphericLight.groundColor = new Color3(1, 1, 1)
 
-      const directionalLight = new DirectionalLight("directionalLight", new Vector3(2, -29.15, 4), scene)
-      directionalLight.intensity = 0.9
+      const directionalLight = new DirectionalLight("directionalLight", new Vector3(0.5, -1, 1), scene)
+      directionalLight.intensity = 0.5
+      directionalLight.autoCalcShadowZBounds = false
+      directionalLight.autoUpdateExtends = false
+      directionalLight.shadowMaxZ = 20 * 3
+      directionalLight.shadowMinZ = -30
+      directionalLight.orthoTop = 18 * 3
+      directionalLight.orthoBottom = -1 * 3
+      directionalLight.orthoLeft = -10 * 3
+      directionalLight.orthoRight = 10 * 3
+      directionalLight.shadowOrthoScale = 0
 
       const shadowGenerator = new ShadowGenerator(2048, directionalLight)
       shadowGeneratorRef.current = shadowGenerator
@@ -278,11 +288,11 @@ export default function MainScene() {
       mmdRuntime.register(scene)
       mmdRuntimeRef.current = mmdRuntime
 
-      const ground = CreateDisc("stageGround", { radius: 12, tessellation: 64 }, scene)
+      const ground = CreateDisc("stageGround", { radius: 16, tessellation: 64 }, scene)
       const groundMaterial = new StandardMaterial("groundMaterial", scene)
       groundMaterial.diffuseColor = new Color3(0.95, 0.98, 1.0)
-      groundMaterial.emissiveColor = new Color3(0.1, 0.15, 0.25)
-      groundMaterial.specularColor = new Color3(0.2, 0.3, 0.5)
+      groundMaterial.emissiveColor = new Color3(0.2, 0.25, 0.3)
+      groundMaterial.specularColor = new Color3(0.9, 0.9, 0.9)
       ground.material = groundMaterial
       ground.rotation.x = Math.PI / 2
       ground.receiveShadows = true
