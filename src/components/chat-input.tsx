@@ -7,12 +7,7 @@ import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "reac
 import { MPLToPose, PoseToMPL } from "@/lib/mpl"
 import { Textarea } from "./ui/textarea"
 
-const suggestedPoses: string[] = [
-  "look down",
-  "arms down",
-  "bend over and look right",
-  "tilting left",
-] as const
+const suggestedPoses: string[] = ["look down", "arms down", "bend over and look right", "tilting left"] as const
 
 export default function ChatInput({ setMplStatement }: { setMplStatement: Dispatch<SetStateAction<string>> }) {
   const [waitingPoseResult, setWaitingPoseResult] = useState(false)
@@ -41,6 +36,7 @@ export default function ChatInput({ setMplStatement }: { setMplStatement: Dispat
         body: JSON.stringify({ description }),
       })
       const resp = await poseRes.json()
+      console.log("result", resp)
       setDescription("")
       if (resp.mpl) {
         const pose = MPLToPose(resp.mpl)
@@ -68,8 +64,9 @@ export default function ChatInput({ setMplStatement }: { setMplStatement: Dispat
             >
               <Card
                 key={i}
-                className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${i >= 2 ? "hidden md:block" : ""
-                  }`}
+                className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${
+                  i >= 2 ? "hidden md:block" : ""
+                }`}
                 onClick={() => {
                   generatePose(pose)
                 }}
@@ -81,7 +78,6 @@ export default function ChatInput({ setMplStatement }: { setMplStatement: Dispat
             </motion.div>
           ))}
         </div>
-
 
         <div className="relative w-full">
           <Textarea

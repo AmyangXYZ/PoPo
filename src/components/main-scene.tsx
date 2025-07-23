@@ -8,7 +8,7 @@ import {
   DirectionalLight,
   Engine,
   HemisphericLight,
-  ImportMeshAsync,
+  LoadAssetContainerAsync,
   Material,
   Mesh,
   Quaternion,
@@ -23,7 +23,6 @@ import { useRef, useEffect, useCallback, useState } from "react"
 import Image from "next/image"
 import {
   MmdWasmModel,
-  PmxLoader,
   SdefInjector,
   MmdWasmInstanceTypeMPR,
   GetMmdWasmInstance,
@@ -37,6 +36,7 @@ import {
   RigidBodyConstructionInfo,
   RigidBody,
   PhysicsStaticPlaneShape,
+  BpmxLoader,
 } from "babylon-mmd"
 import ChatInput from "./chat-input"
 
@@ -144,7 +144,7 @@ export default function MainScene() {
       modelRef.current.mesh.dispose()
     }
 
-    ImportMeshAsync(`/models/深空之眼-梵天/深空之眼-梵天.pmx`, sceneRef.current!, {
+    LoadAssetContainerAsync(`/models/深空之眼-梵天.bpmx`, sceneRef.current!, {
       pluginOptions: {
         mmdmodel: {
           materialBuilder: mmdMaterialBuilderRef.current || undefined,
@@ -180,6 +180,8 @@ export default function MainScene() {
         }
         return newMeshes
       })
+
+      result.addAllToScene()
     })
   }, [])
 
@@ -240,7 +242,7 @@ export default function MainScene() {
       if (!canvasRef.current) return
 
       // Register the PMX loader plugin
-      RegisterSceneLoaderPlugin(new PmxLoader())
+      RegisterSceneLoaderPlugin(new BpmxLoader())
 
       const engine = new Engine(canvasRef.current, true, {}, true)
       SdefInjector.OverrideEngineCreateEffect(engine)
@@ -426,10 +428,18 @@ export default function MainScene() {
         </div>
       </div>
       <ClothesPanel open={openClothesPanel} setOpen={setOpenClothesPanel} meshes={meshes} setMeshes={setMeshes} />
-      <MPLPanel open={openMPLPanel} setOpen={setOpenMPLPanel} setPose={setPose} loadVpd={loadVpd} mplStatement={mplStatement} setMplStatement={setMplStatement} />
+      <MPLPanel
+        open={openMPLPanel}
+        setOpen={setOpenMPLPanel}
+        setPose={setPose}
+        loadVpd={loadVpd}
+        mplStatement={mplStatement}
+        setMplStatement={setMplStatement}
+      />
       <div
-        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${openMPLPanel || openClothesPanel ? "hidden" : ""
-          }`}
+        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${
+          openMPLPanel || openClothesPanel ? "hidden" : ""
+        }`}
       >
         <ChatInput setMplStatement={setMplStatement} />
       </div>

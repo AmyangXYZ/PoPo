@@ -23,7 +23,7 @@
     "@radix-ui/react-switch": "^1.2.5",
     "@upstash/redis": "^1.35.1",
     "@vercel/analytics": "^1.5.0",
-    "babylon-mmd": "^0.65.0",
+    "babylon-mmd": "^0.68.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",

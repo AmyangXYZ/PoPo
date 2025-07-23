@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { Analytics } from "@vercel/analytics/next"
@@ -29,8 +29,16 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "PoPo - AI MMD Pose Generator",
-    description: "Generate MMD poses and facial morphs directly from natural language. Fine-tuned LLM for MikuMikuDance bone control.",
+    description:
+      "Generate MMD poses and facial morphs directly from natural language. Fine-tuned LLM for MikuMikuDance bone control.",
   },
+}
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({

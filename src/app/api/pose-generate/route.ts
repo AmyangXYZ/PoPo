@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       parseFloat(process.env.TEMPERATURE),
       parseFloat(process.env.TOP_P)
     )
+    console.log("cachedResult", cachedResult)
 
     if (cachedResult) {
       // Save to database for analysis (non-blocking)
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
         topP: parseFloat(process.env.TOP_P),
       })
       return Response.json({
-        result: cachedResult,
+        mpl: cachedResult,
         cached: true,
       })
     }
