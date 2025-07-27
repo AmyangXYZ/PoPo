@@ -1,5 +1,3 @@
-import { poseCache } from "@/lib/cache"
-import { savePoseAnalysis } from "@/lib/database"
 import OpenAI from "openai"
 import { ChatCompletionMessageParam } from "openai/resources/chat/completions"
 
@@ -26,30 +24,6 @@ export async function POST(request: Request) {
       baseURL: process.env.AI_API_BASE_URL,
     })
 
-    // Check cache first
-    const cachedResult = await poseCache.get(
-      description,
-      process.env.AI_MODEL!,
-      parseFloat(process.env.TEMPERATURE),
-      parseFloat(process.env.TOP_P)
-    )
-    console.log("cachedResult", cachedResult)
-
-    if (cachedResult) {
-      // Save to database for analysis (non-blocking)
-      savePoseAnalysis({
-        description,
-        mpl: cachedResult,
-        aiModel: process.env.AI_MODEL,
-        temperature: parseFloat(process.env.TEMPERATURE),
-        topP: parseFloat(process.env.TOP_P),
-      })
-      return Response.json({
-        mpl: cachedResult,
-        cached: true,
-      })
-    }
-
     const messages: ChatCompletionMessageParam[] = [
       { role: "system", content: systemPrompt },
       {
@@ -67,26 +41,8 @@ export async function POST(request: Request) {
 
     const mpl = response.choices[0].message.content ?? ""
 
-    await poseCache.set(
-      description,
-      mpl,
-      process.env.AI_MODEL!,
-      parseFloat(process.env.TEMPERATURE),
-      parseFloat(process.env.TOP_P)
-    )
-
-    // Save to database for analysis (non-blocking)
-    savePoseAnalysis({
-      description,
-      mpl: mpl,
-      aiModel: process.env.AI_MODEL,
-      temperature: parseFloat(process.env.TEMPERATURE),
-      topP: parseFloat(process.env.TOP_P),
-    })
-
     return Response.json({
-      mpl: mpl,
-      cached: false,
+      mpl: `@pose popo {\n${mpl};\n}\n\nmain {\npopo;\n}`,
     })
   } catch (error) {
     console.log("Error generating pose:", error)

@@ -1,26 +1,28 @@
-import { MPLToPose, PoseToMPL, Pose } from "@/lib/mpl"
 import { SetStateAction, Dispatch, useCallback, useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import { Import, RefreshCw, X } from "lucide-react"
 import CodeEditor from "./code-editor"
 import Link from "next/link"
 import { Input } from "./ui/input"
+import { MPLBoneFrame } from "mmd-mpl"
+import { useMPLCompiler } from "@/hooks/useMPLCompiler"
 
 export default function MPLPanel({
   open,
   setOpen,
-  setPose,
-  loadVpd,
   mplStatement,
   setMplStatement,
+  loadVMD,
+  loadVPD,
 }: {
   open: boolean
   setOpen: (open: boolean) => void
-  setPose: Dispatch<SetStateAction<Pose>>
-  loadVpd: (url: string) => Promise<Pose | null>
   mplStatement: string
   setMplStatement: Dispatch<SetStateAction<string>>
+  loadVMD: (vmdUrl: string) => void
+  loadVPD: (url: string) => Promise<MPLBoneFrame[] | null>
 }) {
+  const mplCompiler = useMPLCompiler()
   const [description, setDescription] = useState("")
 
   const handleFileUpload = useCallback(
@@ -30,23 +32,16 @@ export default function MPLPanel({
 
       if (file.name.endsWith(".vpd")) {
         const url = URL.createObjectURL(file)
-        const pose = await loadVpd(url)
-        if (pose) {
-          setMplStatement(PoseToMPL(pose).replaceAll(";", ";\n"))
+        const boneStates = await loadVPD(url)
+        if (boneStates && mplCompiler) {
+          const statements = mplCompiler.reverse_compile("vpd_pose", boneStates)
+          setMplStatement(statements)
         }
       }
-      if (file.name.endsWith(".json")) {
-        const text = await file.text()
-        const json = JSON.parse(text)
-        const pose: Pose = { description: json.description, bones: json.rotatableBones, morphs: {} }
-        if (pose) {
-          setMplStatement(PoseToMPL(pose).replaceAll(";", ";\n"))
-          setDescription(pose.description)
-        }
-      }
+
       event.target.value = ""
     },
-    [setMplStatement, loadVpd]
+    [setMplStatement, loadVPD, mplCompiler]
   )
 
   const exportMPLScript = useCallback(
@@ -69,37 +64,41 @@ export default function MPLPanel({
   )
 
   const resetPose = useCallback(() => {
-    setPose({
-      description: "",
-      morphs: {},
-      bones: {},
-    })
-  }, [setPose])
-
-  const generatePose = useCallback(
-    async (statement: string) => {
-      if (statement === "") {
-        resetPose()
-        return
-      }
-
-      const poseData = MPLToPose(statement)
-
-      if (poseData) {
-        setPose(poseData)
-      }
-    },
-    [setPose, resetPose]
-  )
+    setMplStatement("")
+    loadVMD("")
+  }, [setMplStatement, loadVMD])
 
   useEffect(() => {
-    generatePose(mplStatement)
-  }, [mplStatement, generatePose])
+    if (mplStatement === "") {
+      resetPose()
+      return
+    }
+
+    if (mplCompiler) {
+      try {
+        const vmdBytes = mplCompiler.compile(mplStatement)
+        if (vmdBytes.length === 0) {
+          loadVMD("")
+          return
+        }
+        const vmdBlob = new Blob([vmdBytes], { type: "application/octet-stream" })
+        const vmdUrl = URL.createObjectURL(vmdBlob)
+        loadVMD(vmdUrl)
+
+        return () => {
+          URL.revokeObjectURL(vmdUrl)
+        }
+      } catch (error) {
+        console.error(error)
+      }
+    }
+  }, [mplStatement, mplCompiler, loadVMD, resetPose])
 
   return (
     <div
-      className={`fixed right-0 top-0 h-full w-100 bg-background border-l shadow-lg z-50 flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"
-        }`}
+      className={`fixed right-0 top-0 h-full w-100 bg-background border-l shadow-lg z-50 flex flex-col transition-transform duration-300 ease-in-out ${
+        open ? "translate-x-0" : "translate-x-full"
+      }`}
     >
       <div className="flex flex-col gap-1.5 p-4 border-b">
         <div className="flex items-center justify-between">
@@ -147,7 +146,7 @@ export default function MPLPanel({
         </div>
       </div>
       <div className="flex-1 pt-4 px-4">
-        <CodeEditor value={mplStatement} onChange={setMplStatement} placeholder="head turn left 30;" />
+        <CodeEditor value={mplStatement} onChange={setMplStatement} />
       </div>
       <div className="mt-auto flex flex-col gap-2 p-4">
         <Input

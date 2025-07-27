@@ -1,227 +1,137 @@
-import { BONES, ACTIONS, DIRECTIONS, BONE_ACTION_RULES } from "@/lib/mpl"
-import { useCallback, useRef } from "react"
+import { useCallback } from "react"
+import CodeMirror from "@uiw/react-codemirror"
+import { EditorView, Decoration, DecorationSet } from "@codemirror/view"
+import { Extension, StateField, Range, Text } from "@codemirror/state"
 
-export default function CodeEditor({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string
-  onChange: (value: string) => void
-  placeholder?: string
-}) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const lineNumbersRef = useRef<HTMLDivElement>(null)
-  const syntaxHighlightRef = useRef<HTMLDivElement>(null)
+// MPL syntax highlighting patterns
+const mplPatterns = [
+  {
+    regex:
+      /\b(waist|head|upper_body|upper_body2|lower_body|base|center|neck|shoulder_[rl]|arm_[rl]|arm_twist_[rl]|elbow_[rl]|wrist_[rl]|wrist_twist_[rl]|leg_[rl]|knee_[rl]|ankle_[rl]|toe_[rl]|thumb_\d+_[rl]|pinky_\d+_[rl]|ring_\d+_[rl]|middle_\d+_[rl]|index_\d+_[rl])\b/g,
+    className: "cm-mpl-bone",
+  },
+  { regex: /@(pose|animation|main)\b/g, className: "cm-mpl-directive" },
+  { regex: /\b(bend|turn|sway|move)\b/g, className: "cm-mpl-action" },
+  { regex: /\b(forward|backward|left|right|up|down)\b/g, className: "cm-mpl-direction" },
+  { regex: /\b\d+(\.\d+)?\b/g, className: "cm-mpl-degrees" },
+  { regex: /[{}]/g, className: "cm-mpl-brace" },
+  { regex: /;/g, className: "cm-mpl-semicolon" },
+]
 
-  const lines = value.split("\n")
-  const lineCount = Math.max(lines.length, 1)
+// Create decorations for syntax highlighting
+const createDecorations = (doc: Text): Range<Decoration>[] => {
+  const decorations: Range<Decoration>[] = []
+  const text = doc.toString()
 
-  // Sync scroll between all elements
-  const syncScroll = useCallback((source: "textarea" | "lineNumbers") => {
-    if (!textareaRef.current || !lineNumbersRef.current || !syntaxHighlightRef.current) return
+  for (const { regex, className } of mplPatterns) {
+    // Reset regex lastIndex to avoid issues with global regexes
+    regex.lastIndex = 0
+    let match
+    while ((match = regex.exec(text)) !== null) {
+      const from = match.index
+      const to = match.index + match[0].length
 
-    if (source === "textarea") {
-      const scrollTop = textareaRef.current.scrollTop
-      lineNumbersRef.current.scrollTop = scrollTop
-      syntaxHighlightRef.current.scrollTop = scrollTop
-    } else if (source === "lineNumbers") {
-      const scrollTop = lineNumbersRef.current.scrollTop
-      textareaRef.current.scrollTop = scrollTop
-      syntaxHighlightRef.current.scrollTop = scrollTop
+      decorations.push(Decoration.mark({ class: className }).range(from, to))
     }
-  }, [])
-
-  // Handle scroll events
-  const handleTextareaScroll = useCallback(() => {
-    syncScroll("textarea")
-  }, [syncScroll])
-
-  const handleLineNumbersScroll = useCallback(() => {
-    syncScroll("lineNumbers")
-  }, [syncScroll])
-
-  // Syntax highlighting function for MPL with real-time validation
-  const highlightSyntax = (text: string) => {
-    return text.split("\n").map((line, index) => {
-      if (!line.trim())
-        return (
-          <div key={index} className="h-6">
-            &nbsp;
-          </div>
-        )
-
-      // Split line into parts
-      const parts = line.split(" ")
-
-      const renderPart = (
-        part: string,
-        partIndex: number,
-        expectedType: "bone" | "action" | "direction" | "degrees"
-      ) => {
-        let isValid = false
-        let colorClass = "text-red-500 dark:text-red-400" // Default to error color
-
-        if (expectedType === "bone") {
-          isValid = BONES.hasOwnProperty(part.toLowerCase())
-          colorClass = isValid
-            ? "text-blue-700 dark:text-blue-200 font-bold"
-            : "text-red-600 dark:text-red-400 font-medium"
-        } else if (expectedType === "action") {
-          isValid = ACTIONS.includes(part.toLowerCase())
-          colorClass = isValid
-            ? "text-green-700 dark:text-green-200 font-bold"
-            : "text-red-600 dark:text-red-400 font-medium"
-        } else if (expectedType === "direction") {
-          isValid = DIRECTIONS.includes(part.toLowerCase())
-          // Additional validation: check if this bone-action-direction combo is valid
-          if (isValid && parts.length >= 3) {
-            const bone = parts[0].toLowerCase()
-            const action = parts[1].toLowerCase()
-            const direction = part.toLowerCase()
-            const boneRules = BONE_ACTION_RULES[bone]
-            const actionRules = boneRules?.[action]
-            const isComboValid = actionRules?.[direction] !== undefined
-            isValid = isComboValid
-          }
-          colorClass = isValid
-            ? "text-purple-700 dark:text-purple-200 font-bold"
-            : "text-red-600 dark:text-red-400 font-medium"
-        } else if (expectedType === "degrees") {
-          const degrees = parseFloat(part)
-          isValid = !isNaN(degrees) && degrees >= 0
-          // Additional validation: check if degrees are within the limit
-          if (isValid && parts.length >= 4) {
-            const bone = parts[0].toLowerCase()
-            const action = parts[1].toLowerCase()
-            const direction = parts[2].toLowerCase()
-            const boneRules = BONE_ACTION_RULES[bone]
-            const actionRules = boneRules?.[action]
-            const rule = actionRules?.[direction]
-            if (rule && degrees > rule.limit) {
-              isValid = false
-            }
-          }
-          colorClass = isValid
-            ? "text-orange-700 dark:text-orange-200 font-bold"
-            : "text-red-600 dark:text-red-400 font-medium"
-        }
-
-        return (
-          <span key={partIndex} className={colorClass}>
-            {part}
-          </span>
-        )
-      }
-
-      return (
-        <div key={index} className="h-6 leading-6">
-          {parts.map((part, partIndex) => {
-            let expectedType: "bone" | "action" | "direction" | "degrees" | null = null
-
-            if (partIndex === 0) expectedType = "bone"
-            else if (partIndex === 1) expectedType = "action"
-            else if (partIndex === 2) expectedType = "direction"
-            else if (partIndex === 3) expectedType = "degrees"
-
-            const element = expectedType ? (
-              renderPart(part, partIndex, expectedType)
-            ) : (
-              <span key={partIndex} className="text-red-500 dark:text-red-400">
-                {part}
-              </span>
-            )
-
-            return (
-              <span key={partIndex}>
-                {element}
-                {partIndex < parts.length - 1 && <span className="text-gray-600 dark:text-gray-400"> </span>}
-              </span>
-            )
-          })}
-        </div>
-      )
-    })
   }
 
+  return decorations.sort((a, b) => a.from - b.from)
+}
+
+// State field for MPL syntax highlighting
+const mplHighlightField = StateField.define<DecorationSet>({
+  create(state) {
+    return Decoration.set(createDecorations(state.doc))
+  },
+  update(decorations, transaction) {
+    if (transaction.docChanged) {
+      return Decoration.set(createDecorations(transaction.state.doc))
+    }
+    return decorations.map(transaction.changes)
+  },
+  provide: (f) => EditorView.decorations.from(f),
+})
+
+// Create MPL syntax highlighting extension
+const mplSyntaxHighlighting = (): Extension => {
+  return [
+    mplHighlightField,
+    EditorView.theme({
+      ".cm-mpl-directive": {
+        color: "#ff0080",
+        fontWeight: "bold",
+      },
+      ".cm-mpl-bone": {
+        color: "#0080ff",
+        fontWeight: "600",
+      },
+      ".cm-mpl-action": {
+        color: "#00bfff",
+        fontWeight: "bold",
+      },
+      ".cm-mpl-direction": {
+        color: "#ff6600",
+        fontWeight: "bold",
+      },
+      ".cm-mpl-degrees": {
+        color: "#00cc00",
+        fontWeight: "bold",
+      },
+      ".cm-mpl-brace": {
+        color: "#666666",
+        fontWeight: "bold",
+      },
+      ".cm-mpl-semicolon": {
+        color: "#666666",
+        fontWeight: "bold",
+      },
+    }),
+  ]
+}
+
+export default function CodeEditor({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  const handleChange = useCallback(
+    (val: string) => {
+      onChange(val)
+    },
+    [onChange]
+  )
+
+  const extensions = [
+    mplSyntaxHighlighting(),
+    EditorView.theme({
+      ".cm-editor": {
+        fontSize: "14px",
+        fontFamily: "Geist Mono, monospace",
+      },
+      ".cm-content": {
+        fontFamily: "Geist Mono, monospace",
+        fontSize: "14px",
+      },
+    }),
+  ]
+
   return (
-    <div className="flex flex-1 h-[calc(100dvh-12rem)] border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden bg-white dark:bg-gray-900">
-      {/* Line Numbers */}
-      <div
-        ref={lineNumbersRef}
-        className="bg-gray-50 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto overflow-x-hidden [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-        style={{
-          width: `${Math.max(2.5, lineCount.toString().length * 0.8 + 1)}rem`,
+    <div className="border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
+      <CodeMirror
+        value={value}
+        onChange={handleChange}
+        extensions={extensions}
+        height="calc(100dvh - 200px)"
+        basicSetup={{
+          lineNumbers: true,
+          foldGutter: true,
+          dropCursor: false,
+          allowMultipleSelections: false,
+          indentOnInput: true,
+          bracketMatching: true,
+          closeBrackets: true,
+          autocompletion: true,
+          highlightSelectionMatches: false,
+          searchKeymap: false,
+          tabSize: 4,
         }}
-        onScroll={handleLineNumbersScroll}
-      >
-        <div className="px-2 py-2 text-xs text-gray-500 dark:text-gray-400 font-mono leading-6 select-none">
-          {Array.from({ length: lineCount }, (_, i) => (
-            <div key={i + 1} className="text-right h-6 leading-6">
-              {i + 1}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Code Area */}
-      <div className="flex-1 relative">
-        {/* Syntax Highlighted Background */}
-        <div
-          ref={syntaxHighlightRef}
-          className="absolute inset-0 w-full h-full p-2 bg-transparent resize-none outline-none font-mono text-sm leading-6 overflow-y-auto overflow-x-hidden pointer-events-none scrollbar-none"
-          style={{
-            tabSize: 2,
-            WebkitTextFillColor: "inherit",
-            wordWrap: "break-word",
-            overflowWrap: "break-word",
-            margin: 0,
-            border: "none",
-            lineHeight: "1.5rem",
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          {value ? highlightSyntax(value) : null}
-        </div>
-
-        {/* Actual Textarea */}
-        <textarea
-          ref={textareaRef}
-          className="absolute inset-0 w-full h-full p-2 bg-transparent text-transparent caret-gray-900 dark:caret-white resize-none outline-none font-mono text-sm leading-6 overflow-y-auto overflow-x-hidden scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent selection:bg-blue-200/50 dark:selection:bg-blue-800/50 selection:bg-opacity-50 dark:selection:bg-opacity-50"
-          style={{
-            tabSize: 2,
-            WebkitTextFillColor: "transparent",
-            wordWrap: "break-word",
-            overflowWrap: "break-word",
-            margin: 0,
-            border: "none",
-            lineHeight: "1.5rem",
-            whiteSpace: "pre-wrap",
-          }}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          onScroll={handleTextareaScroll}
-          placeholder={placeholder}
-          autoFocus
-          spellCheck={false}
-        />
-
-        {/* Placeholder */}
-        {!value && (
-          <div
-            className="absolute top-2 left-2 text-gray-400 dark:text-gray-500 font-mono text-sm pointer-events-none leading-6 select-none"
-            style={{
-              tabSize: 2,
-              wordWrap: "break-word",
-              overflowWrap: "break-word",
-              lineHeight: "1.5rem",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            {placeholder}
-          </div>
-        )}
-      </div>
+      />
     </div>
   )
 }

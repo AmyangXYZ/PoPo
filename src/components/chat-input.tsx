@@ -3,13 +3,21 @@ import { Button } from "./ui/button"
 import { motion } from "framer-motion"
 import { Card, CardDescription, CardHeader } from "./ui/card"
 
-import { useState, useEffect, useCallback, Dispatch, SetStateAction } from "react"
-import { MPLToPose, PoseToMPL } from "@/lib/mpl"
+import { useState, useEffect, useCallback, SetStateAction, Dispatch } from "react"
 import { Textarea } from "./ui/textarea"
+import { useMPLCompiler } from "@/hooks/useMPLCompiler"
 
 const suggestedPoses: string[] = ["look down", "arms down", "bend over and look right", "tilting left"] as const
 
-export default function ChatInput({ setMplStatement }: { setMplStatement: Dispatch<SetStateAction<string>> }) {
+export default function ChatInput({
+  loadVMD,
+  setMplStatement,
+}: {
+  loadVMD: (vmdUrl: string) => void
+  setMplStatement: Dispatch<SetStateAction<string>>
+}) {
+  const mplCompiler = useMPLCompiler()
+
   const [waitingPoseResult, setWaitingPoseResult] = useState(false)
   const [displayedPoses, setDisplayedPoses] = useState<string[]>([])
 
@@ -36,17 +44,31 @@ export default function ChatInput({ setMplStatement }: { setMplStatement: Dispat
         body: JSON.stringify({ description }),
       })
       const resp = await poseRes.json()
-      console.log("result", resp)
       setDescription("")
-      if (resp.mpl) {
-        const pose = MPLToPose(resp.mpl)
-        if (pose) {
-          setMplStatement(PoseToMPL(pose).replaceAll(";", ";\n"))
+      if (resp.mpl && mplCompiler) {
+        try {
+          setMplStatement(resp.mpl)
+          const vmdBytes = mplCompiler.compile(resp.mpl)
+          if (vmdBytes.length === 0) {
+            loadVMD("")
+            return
+          }
+          // Create a blob from the raw VMD bytes
+          const vmdBlob = new Blob([vmdBytes], { type: "application/octet-stream" })
+          const vmdUrl = URL.createObjectURL(vmdBlob)
+          loadVMD(vmdUrl)
+          setWaitingPoseResult(false)
+
+          // Clean up the URL when component unmounts or statement changes
+          return () => {
+            URL.revokeObjectURL(vmdUrl)
+          }
+        } catch (error) {
+          console.error(error)
         }
       }
-      setWaitingPoseResult(false)
     },
-    [setMplStatement]
+    [mplCompiler, loadVMD, setMplStatement]
   )
 
   return (

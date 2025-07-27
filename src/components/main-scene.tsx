@@ -11,11 +11,9 @@ import {
   LoadAssetContainerAsync,
   Material,
   Mesh,
-  Quaternion,
   RegisterSceneLoaderPlugin,
   Scene,
   ShadowGenerator,
-  Space,
   StandardMaterial,
   Vector3,
 } from "@babylonjs/core"
@@ -37,31 +35,18 @@ import {
   RigidBody,
   PhysicsStaticPlaneShape,
   BpmxLoader,
+  VmdLoader,
 } from "babylon-mmd"
 import ChatInput from "./chat-input"
 
-import { IMmdRuntimeLinkedBone } from "babylon-mmd/esm/Runtime/IMmdRuntimeLinkedBone"
 import { Button } from "./ui/button"
 import Link from "next/link"
 import { CodeXml, Shirt } from "lucide-react"
 import ClothesPanel from "./clothes-panel"
 import { MmdWasmPhysicsRuntimeImpl } from "babylon-mmd/esm/Runtime/Optimized/Physics/mmdWasmPhysicsRuntimeImpl"
-import { BoneRotationQuaternion, BONES, Pose } from "@/lib/mpl"
 import MPLPanel from "./mpl-panel"
-
-interface TargetRotation {
-  quaternion: Quaternion
-  startTime: number
-  duration: number
-  startQuaternion: Quaternion
-}
-
-interface TargetPosition {
-  position: Vector3
-  startTime: number
-  duration: number
-  startPosition: Vector3
-}
+import { MPLBoneFrame, Quaternion as MPLQuaternion, Vector3 as MPLVector3 } from "mmd-mpl"
+import { useMPLCompiler } from "@/hooks/useMPLCompiler"
 
 export default function MainScene() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -72,70 +57,17 @@ export default function MainScene() {
   const mmdRuntimeRef = useRef<MmdWasmRuntime>(null)
   const mmdMaterialBuilderRef = useRef<MmdStandardMaterialBuilder>(null)
   const vpdLoaderRef = useRef<VpdLoader>(null)
+  const vmdLoaderRef = useRef<VmdLoader>(null)
   const modelRef = useRef<MmdWasmModel>(null)
-  const bonesRef = useRef<{ [key: string]: IMmdRuntimeLinkedBone }>({})
-  const targetRotationsRef = useRef<{ [key: string]: TargetRotation }>({})
-  const targetPositionsRef = useRef<{ [key: string]: TargetPosition }>({})
-  const [pose, setPose] = useState<Pose>({
-    description: "",
-    morphs: {},
-    bones: {},
-  })
-  const [mplStatement, setMplStatement] = useState("")
 
+  const mplCompiler = useMPLCompiler()
+
+  const [mplStatement, setMplStatement] = useState("")
   const [meshes, setMeshes] = useState<Mesh[]>([])
 
   const [openMPLPanel, setOpenMPLPanel] = useState(false)
 
   const [openClothesPanel, setOpenClothesPanel] = useState(false)
-
-  const getBone = (name: string): IMmdRuntimeLinkedBone | null => {
-    return bonesRef.current[name]
-  }
-
-  const rotateBone = useCallback((boneName: string, targetQuaternion: Quaternion, duration: number = 1000) => {
-    const bone = getBone(boneName)
-    if (!bone) {
-      console.log("missing in rotating bone", boneName)
-      return
-    }
-
-    targetRotationsRef.current[boneName] = {
-      quaternion: targetQuaternion,
-      startTime: performance.now(),
-      duration: duration,
-      startQuaternion: bone.rotationQuaternion || new Quaternion(),
-    }
-  }, [])
-
-  const applyPose = useCallback(
-    (pose?: Pose) => {
-      if (!modelRef.current || !pose) return
-
-      // if (pose.face) {
-      //   for (const [morphName, targetValue] of Object.entries(pose.face)) {
-      //     modelRef.current.morph.setMorphWeight(morphName, targetValue as number)
-      //   }
-      // }
-
-      for (const boneNameJp of Object.values(BONES)) {
-        const bone = getBone(boneNameJp)
-        if (!bone) continue
-
-        const boneRotationQuaternion = pose.bones[boneNameJp] || [0, 0, 0, 1]
-        rotateBone(
-          boneNameJp,
-          new Quaternion(
-            boneRotationQuaternion[0],
-            boneRotationQuaternion[1],
-            boneRotationQuaternion[2],
-            boneRotationQuaternion[3]
-          )
-        )
-      }
-    },
-    [rotateBone]
-  )
 
   const loadModel = useCallback(async (): Promise<void> => {
     if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current) return
@@ -159,12 +91,6 @@ export default function MainScene() {
         },
       })
 
-      for (const bone of modelRef.current!.skeleton.bones) {
-        if (Object.values(BONES).includes(bone.name)) {
-          bonesRef.current[bone.name] = bone
-        }
-      }
-
       const clothes = ["衣边", "衣服", "袖子", "头饰", "脖环", "脖带", "鞋子", "眼镜"]
 
       setMeshes((prev) => {
@@ -185,50 +111,78 @@ export default function MainScene() {
     })
   }, [])
 
-  const loadVpd = useCallback(
-    async (vpdUrl: string): Promise<Pose | null> => {
-      if (!vpdLoaderRef.current || !modelRef.current) return null
+  const loadVMD = useCallback(
+    async (vmdUrl: string) => {
+      if (!vmdLoaderRef.current || !modelRef.current || !mplCompiler) return null
+      if (vmdUrl === "") {
+        modelRef.current.removeAnimation(0)
+        return
+      }
+      const vmd = await vmdLoaderRef.current.loadAsync("vmd_animation", vmdUrl)
+      modelRef.current.addAnimation(vmd)
+      modelRef.current.setAnimation("vmd_animation")
+      mmdRuntimeRef.current!.seekAnimation(0, true)
+      mmdRuntimeRef.current!.playAnimation()
+    },
+    [vmdLoaderRef, modelRef, mplCompiler]
+  )
+
+  const loadVPD = useCallback(
+    async (vpdUrl: string): Promise<MPLBoneFrame[] | null> => {
+      if (!vpdLoaderRef.current || !modelRef.current || !mplCompiler) return null
 
       const vpd = await vpdLoaderRef.current.loadAsync("vpd_pose", vpdUrl)
       // modelRef.current.addAnimation(vpd)
       // modelRef.current.setAnimation("vpd_pose")
       // modelRef.current.currentAnimation?.animate(0)
-      const poseVpd = {
-        description: "",
-        morphs: {},
-        bones: {} as { [key: string]: BoneRotationQuaternion },
-      }
+      const boneFrames: MPLBoneFrame[] = []
       for (const boneTrack of vpd.boneTracks) {
-        const boneName = boneTrack.name
-
-        if (!Object.values(BONES).includes(boneName)) {
+        const boneNameJp = boneTrack.name
+        const boneNameEn = mplCompiler.get_bone_english_name(boneNameJp)
+        if (!boneNameEn) {
           continue
         }
 
-        const rotations = boneTrack.rotations
-        if (rotations.length === 0) continue
-        const rotation: BoneRotationQuaternion = [...rotations] as BoneRotationQuaternion
+        const rotation = boneTrack.rotations
+        if (rotation.length === 0) continue
 
         if (!(rotation[0] === 0 && rotation[1] === 0 && rotation[2] === 0 && rotation[3] === 1)) {
-          poseVpd.bones[boneName] = rotation
+          boneFrames.push(
+            new MPLBoneFrame(
+              boneNameEn,
+              boneNameJp,
+              new MPLVector3(0, 0, 0),
+              new MPLQuaternion(rotation[0], rotation[1], rotation[2], rotation[3])
+            )
+          )
         }
       }
 
       for (const boneTrack of vpd.movableBoneTracks) {
-        const boneName = boneTrack.name
-        if (!Object.values(BONES).includes(boneName)) {
+        const boneNameJp = boneTrack.name
+        const boneNameEn = mplCompiler.get_bone_english_name(boneNameJp)
+        if (!boneNameEn) {
           continue
+        }
+        let position = new MPLVector3(0, 0, 0)
+        let rotation = new MPLQuaternion(0, 0, 0, 1)
+        if (boneTrack.positions && boneTrack.positions.length > 0) {
+          position = new MPLVector3(boneTrack.positions[0], boneTrack.positions[1], boneTrack.positions[2])
         }
 
         if (boneTrack.rotations && boneTrack.rotations.length > 0) {
-          const rotation: BoneRotationQuaternion = [...boneTrack.rotations] as BoneRotationQuaternion
-          poseVpd.bones[boneName] = rotation
+          rotation = new MPLQuaternion(
+            boneTrack.rotations[0],
+            boneTrack.rotations[1],
+            boneTrack.rotations[2],
+            boneTrack.rotations[3]
+          )
         }
+        boneFrames.push(new MPLBoneFrame(boneNameEn, boneNameJp, position, rotation))
       }
-
-      return poseVpd
+      return boneFrames
     },
-    [vpdLoaderRef, modelRef]
+    [vpdLoaderRef, modelRef, mplCompiler]
   )
 
   useEffect(() => {
@@ -324,61 +278,9 @@ export default function MainScene() {
       mmdMaterialBuilderRef.current = materialBuilder
 
       vpdLoaderRef.current = new VpdLoader(scene)
+      vmdLoaderRef.current = new VmdLoader(scene)
 
       loadModel()
-
-      // Add bone rotation updates to the render loop
-      scene.onBeforeRenderObservable.add(() => {
-        if (!modelRef.current) return
-
-        const currentTime = performance.now()
-
-        // Update bone rotations
-        const rotationBoneNames = Object.keys(targetRotationsRef.current)
-        for (const boneName of rotationBoneNames) {
-          const targetRotation = targetRotationsRef.current[boneName]
-          const bone = getBone(boneName)
-          if (!bone) continue
-
-          const elapsed = currentTime - targetRotation.startTime
-          const progress = Math.min(elapsed / targetRotation.duration, 1.0)
-
-          if (progress >= 1.0) {
-            // Animation complete
-            bone.setRotationQuaternion(targetRotation.quaternion, Space.LOCAL)
-            delete targetRotationsRef.current[boneName]
-          } else {
-            // Still animating - use smooth interpolation
-            const interpolatedRotation = Quaternion.Slerp(
-              targetRotation.startQuaternion,
-              targetRotation.quaternion,
-              progress
-            )
-            bone.setRotationQuaternion(interpolatedRotation, Space.LOCAL)
-          }
-        }
-
-        // Update bone positions
-        const positionBoneNames = Object.keys(targetPositionsRef.current)
-        for (const boneName of positionBoneNames) {
-          const targetPosition = targetPositionsRef.current[boneName]
-          const bone = getBone(boneName)
-          if (!bone) continue
-
-          const elapsed = currentTime - targetPosition.startTime
-          const progress = Math.min(elapsed / targetPosition.duration, 1.0)
-
-          if (progress >= 1.0) {
-            // Animation complete
-            bone.position = targetPosition.position
-            delete targetPositionsRef.current[boneName]
-          } else {
-            // Still animating - use smooth interpolation
-            const interpolatedPosition = Vector3.Lerp(targetPosition.startPosition, targetPosition.position, progress)
-            bone.position = interpolatedPosition
-          }
-        }
-      })
 
       window.addEventListener("resize", resize)
 
@@ -395,12 +297,6 @@ export default function MainScene() {
       }
     }
   }, [loadModel])
-
-  useEffect(() => {
-    if (modelRef.current && pose) {
-      applyPose(pose)
-    }
-  }, [pose, applyPose])
 
   return (
     <div className="w-full h-full">
@@ -441,17 +337,17 @@ export default function MainScene() {
       <MPLPanel
         open={openMPLPanel}
         setOpen={setOpenMPLPanel}
-        setPose={setPose}
-        loadVpd={loadVpd}
         mplStatement={mplStatement}
         setMplStatement={setMplStatement}
+        loadVPD={loadVPD}
+        loadVMD={loadVMD}
       />
       <div
         className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${
           openMPLPanel || openClothesPanel ? "hidden" : ""
         }`}
       >
-        <ChatInput setMplStatement={setMplStatement} />
+        <ChatInput loadVMD={loadVMD} setMplStatement={setMplStatement} />
       </div>
     </div>
   )
