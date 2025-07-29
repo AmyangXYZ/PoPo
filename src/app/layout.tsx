@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
 import "./globals.css"
 import { Analytics } from "@vercel/analytics/next"
+import { ClerkProvider } from "@clerk/nextjs"
+import Header from "@/components/header"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,9 +49,13 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="select-none outline-none">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>{children}</body>
-      <Analytics />
-    </html>
+    <ClerkProvider>
+      <html lang="en" className="select-none outline-none">
+        <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#FC70A8]`}>
+          <Header />
+          {children}</body>
+        <Analytics />
+      </html>
+    </ClerkProvider>
   )
 }

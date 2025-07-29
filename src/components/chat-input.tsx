@@ -3,7 +3,7 @@ import { Button } from "./ui/button"
 import { motion } from "framer-motion"
 import { Card, CardDescription, CardHeader } from "./ui/card"
 
-import { useState, useEffect, useCallback, SetStateAction, Dispatch } from "react"
+import { useState, useEffect, useCallback, } from "react"
 import { Textarea } from "./ui/textarea"
 import { useMPLCompiler } from "@/hooks/useMPLCompiler"
 
@@ -11,10 +11,8 @@ const suggestedPoses: string[] = ["look down", "arms down", "bend over and look 
 
 export default function ChatInput({
   loadVMD,
-  setMplStatement,
 }: {
   loadVMD: (vmdUrl: string) => void
-  setMplStatement: Dispatch<SetStateAction<string>>
 }) {
   const mplCompiler = useMPLCompiler()
 
@@ -47,7 +45,7 @@ export default function ChatInput({
       setDescription("")
       if (resp.mpl && mplCompiler) {
         try {
-          setMplStatement(resp.mpl)
+          console.log(resp.mpl)
           const vmdBytes = mplCompiler.compile(resp.mpl)
           if (vmdBytes.length === 0) {
             loadVMD("")
@@ -68,7 +66,7 @@ export default function ChatInput({
         }
       }
     },
-    [mplCompiler, loadVMD, setMplStatement]
+    [mplCompiler, loadVMD]
   )
 
   return (
@@ -86,9 +84,8 @@ export default function ChatInput({
             >
               <Card
                 key={i}
-                className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${
-                  i >= 2 ? "hidden md:block" : ""
-                }`}
+                className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${i >= 2 ? "hidden md:block" : ""
+                  }`}
                 onClick={() => {
                   generatePose(pose)
                 }}

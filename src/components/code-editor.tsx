@@ -117,7 +117,7 @@ export default function CodeEditor({ value, onChange }: { value: string; onChang
         value={value}
         onChange={handleChange}
         extensions={extensions}
-        height="calc(100dvh - 200px)"
+        height="calc(100dvh - 120px)"
         basicSetup={{
           lineNumbers: true,
           foldGutter: true,

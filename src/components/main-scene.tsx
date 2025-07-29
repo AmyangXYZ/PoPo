@@ -18,7 +18,6 @@ import {
   Vector3,
 } from "@babylonjs/core"
 import { useRef, useEffect, useCallback, useState } from "react"
-import Image from "next/image"
 import {
   MmdWasmModel,
   SdefInjector,
@@ -40,12 +39,9 @@ import {
 import ChatInput from "./chat-input"
 
 import { Button } from "./ui/button"
-import Link from "next/link"
-import { CodeXml, Shirt } from "lucide-react"
+import { Shirt } from "lucide-react"
 import ClothesPanel from "./clothes-panel"
 import { MmdWasmPhysicsRuntimeImpl } from "babylon-mmd/esm/Runtime/Optimized/Physics/mmdWasmPhysicsRuntimeImpl"
-import MPLPanel from "./mpl-panel"
-import { MPLBoneFrame, Quaternion as MPLQuaternion, Vector3 as MPLVector3 } from "mmd-mpl"
 import { useMPLCompiler } from "@/hooks/useMPLCompiler"
 
 export default function MainScene() {
@@ -62,10 +58,8 @@ export default function MainScene() {
 
   const mplCompiler = useMPLCompiler()
 
-  const [mplStatement, setMplStatement] = useState("")
   const [meshes, setMeshes] = useState<Mesh[]>([])
 
-  const [openMPLPanel, setOpenMPLPanel] = useState(false)
 
   const [openClothesPanel, setOpenClothesPanel] = useState(false)
 
@@ -127,64 +121,6 @@ export default function MainScene() {
     [vmdLoaderRef, modelRef, mplCompiler]
   )
 
-  const loadVPD = useCallback(
-    async (vpdUrl: string): Promise<MPLBoneFrame[] | null> => {
-      if (!vpdLoaderRef.current || !modelRef.current || !mplCompiler) return null
-
-      const vpd = await vpdLoaderRef.current.loadAsync("vpd_pose", vpdUrl)
-      // modelRef.current.addAnimation(vpd)
-      // modelRef.current.setAnimation("vpd_pose")
-      // modelRef.current.currentAnimation?.animate(0)
-      const boneFrames: MPLBoneFrame[] = []
-      for (const boneTrack of vpd.boneTracks) {
-        const boneNameJp = boneTrack.name
-        const boneNameEn = mplCompiler.get_bone_english_name(boneNameJp)
-        if (!boneNameEn) {
-          continue
-        }
-
-        const rotation = boneTrack.rotations
-        if (rotation.length === 0) continue
-
-        if (!(rotation[0] === 0 && rotation[1] === 0 && rotation[2] === 0 && rotation[3] === 1)) {
-          boneFrames.push(
-            new MPLBoneFrame(
-              boneNameEn,
-              boneNameJp,
-              new MPLVector3(0, 0, 0),
-              new MPLQuaternion(rotation[0], rotation[1], rotation[2], rotation[3])
-            )
-          )
-        }
-      }
-
-      for (const boneTrack of vpd.movableBoneTracks) {
-        const boneNameJp = boneTrack.name
-        const boneNameEn = mplCompiler.get_bone_english_name(boneNameJp)
-        if (!boneNameEn) {
-          continue
-        }
-        let position = new MPLVector3(0, 0, 0)
-        let rotation = new MPLQuaternion(0, 0, 0, 1)
-        if (boneTrack.positions && boneTrack.positions.length > 0) {
-          position = new MPLVector3(boneTrack.positions[0], boneTrack.positions[1], boneTrack.positions[2])
-        }
-
-        if (boneTrack.rotations && boneTrack.rotations.length > 0) {
-          rotation = new MPLQuaternion(
-            boneTrack.rotations[0],
-            boneTrack.rotations[1],
-            boneTrack.rotations[2],
-            boneTrack.rotations[3]
-          )
-        }
-        boneFrames.push(new MPLBoneFrame(boneNameEn, boneNameJp, position, rotation))
-      }
-      return boneFrames
-    },
-    [vpdLoaderRef, modelRef, mplCompiler]
-  )
-
   useEffect(() => {
     const resize = () => {
       if (sceneRef.current) {
@@ -198,7 +134,18 @@ export default function MainScene() {
       // Register the PMX loader plugin
       RegisterSceneLoaderPlugin(new BpmxLoader())
 
-      const engine = new Engine(canvasRef.current, true, {}, true)
+      const engine = new Engine(canvasRef.current, true, {
+        preserveDrawingBuffer: false,
+        stencil: false,
+        antialias: true,
+        alpha: true,
+        premultipliedAlpha: false,
+        powerPreference: "high-performance",
+        doNotHandleTouchAction: true,
+        doNotHandleContextLost: true,
+        audioEngine: false,
+        disableWebGL2Support: false
+      }, true)
       SdefInjector.OverrideEngineCreateEffect(engine)
 
       const scene = new Scene(engine)
@@ -302,12 +249,8 @@ export default function MainScene() {
     <div className="w-full h-full">
       <canvas ref={canvasRef} className="w-full h-full z-1" />
 
-      <div className="absolute flex justify-between top-2 mx-auto flex px-4 w-full z-20">
-        <Button size="icon" asChild className="bg-white text-black size-7 rounded-full hover:bg-gray-200">
-          <Link href="https://github.com/AmyangXYZ/PoPo" target="_blank">
-            <Image src="/github-mark.svg" alt="GitHub" width={18} height={18} />
-          </Link>
-        </Button>
+      <div className="absolute flex justify-end top-2 mx-auto flex px-4 pt-11 w-full z-20">
+
         <div className="flex items-center gap-2">
           {!openClothesPanel && (
             <div className="">
@@ -320,34 +263,14 @@ export default function MainScene() {
               </Button>
             </div>
           )}
-          {!openMPLPanel && (
-            <div className="">
-              <Button
-                size="icon"
-                className="bg-white text-black size-7 rounded-full hover:bg-pink-100 cursor-pointer"
-                onClick={() => setOpenMPLPanel(true)}
-              >
-                <CodeXml />
-              </Button>
-            </div>
-          )}
         </div>
       </div>
       <ClothesPanel open={openClothesPanel} setOpen={setOpenClothesPanel} meshes={meshes} setMeshes={setMeshes} />
-      <MPLPanel
-        open={openMPLPanel}
-        setOpen={setOpenMPLPanel}
-        mplStatement={mplStatement}
-        setMplStatement={setMplStatement}
-        loadVPD={loadVPD}
-        loadVMD={loadVMD}
-      />
       <div
-        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${
-          openMPLPanel || openClothesPanel ? "hidden" : ""
-        }`}
+        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${openClothesPanel ? "hidden" : ""
+          }`}
       >
-        <ChatInput loadVMD={loadVMD} setMplStatement={setMplStatement} />
+        <ChatInput loadVMD={loadVMD} />
       </div>
     </div>
   )

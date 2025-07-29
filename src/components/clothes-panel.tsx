@@ -18,7 +18,7 @@ export default function ClothesPanel({
 }) {
   return (
     <div
-      className={`fixed right-0 top-0 h-full w-80 bg-background border-l shadow-lg z-50 flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"
+      className={`fixed right-0 top-0 h-full w-80 bg-background border-l shadow-lg z-250 flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"
         }`}
     >
       <div className="flex flex-col gap-1.5 p-4 border-b">
