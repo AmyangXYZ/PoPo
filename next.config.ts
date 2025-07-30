@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   devIndicators: false,
   images: {
-    domains: ["assets.popo.love"],
+    remotePatterns: [new URL("https://my-store-id.public.blob.vercel-storage.com/**")],
   },
   webpack: (config) => {
     // Handle babylon-mmd WASM files

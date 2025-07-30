@@ -1,10 +1,24 @@
 import { useCallback, useState, useEffect } from "react"
 import { Button } from "./ui/button"
-import { CloudCheck, Download, Upload } from "lucide-react"
+import { CloudCheck, Download, Upload, ImageIcon } from "lucide-react"
 import { useMPLCompiler } from "@/hooks/useMPLCompiler"
 import { MPLBoneFrame } from "mmd-mpl"
 import CodeEditor from "./code-editor"
 import Link from "next/link"
+import {
+  Dialog,
+  DialogDescription,
+  DialogTitle,
+  DialogHeader,
+  DialogContent,
+  DialogTrigger,
+  DialogClose,
+  DialogFooter,
+} from "./ui/dialog"
+import { Label } from "./ui/label"
+import { Input } from "./ui/input"
+import Image from "next/image"
+import { useUser } from "@clerk/nextjs"
 
 export default function MPLEditor({
   loadVPD,
@@ -17,6 +31,12 @@ export default function MPLEditor({
 }) {
   const mplCompiler = useMPLCompiler()
   const [vmdUrl, setVmdUrl] = useState<string | null>(null)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
+  const [poseName, setPoseName] = useState("")
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadingError, setUploadingError] = useState<string | null>(null)
+  const { isSignedIn } = useUser()
 
   const [statement, setStatement] = useState(`@pose welcome {
     upper_body bend forward 12;
@@ -146,21 +166,100 @@ main {
     }
   }, [statement, modelLoaded, mplCompiler, loadVMD])
 
-  const submitPose = useCallback(async () => {
-    // const response = await fetch("/api/submit-pose", {
-    //   method: "POST",
-    //   body: JSON.stringify({ mpl: statement, name: "test" }),
-    // })
-    // const data = await response.json()
-    // console.log(data.id)
-    console.log(statement)
-  }, [statement])
+  // Clean up preview image URL when component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage)
+      }
+    }
+  }, [previewImage])
+
+  const handlePreviewImageUpload = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (!isSignedIn) {
+        alert("Please login to upload a preview image")
+        return
+      }
+
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      setIsUploading(true)
+
+      // Create a preview URL for display
+      const previewUrl = URL.createObjectURL(file)
+      setPreviewImage(previewUrl)
+
+      // Upload to Vercel Blob
+      const formData = new FormData()
+      formData.append("file", file)
+
+      try {
+        const response = await fetch("/api/upload-image", {
+          method: "POST",
+          body: formData,
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setPreviewImageUrl(data.url)
+        } else {
+          console.error("Failed to upload image")
+          setPreviewImage(null)
+        }
+      } catch (error) {
+        console.error("Failed to upload image: " + error)
+        setUploadingError("Failed to upload image: " + error)
+        setPreviewImage(null)
+      } finally {
+        setIsUploading(false)
+      }
+
+      event.target.value = ""
+    },
+    [isSignedIn]
+  )
+
+  const publishPose = useCallback(async () => {
+    if (!isSignedIn) {
+      alert("Please login to publish your pose")
+      return
+    }
+
+    if (!previewImageUrl) {
+      alert("Please upload a preview image first")
+      return
+    }
+
+    if (!poseName.trim()) {
+      alert("Please enter a pose name")
+      return
+    }
+
+    const response = await fetch("/api/pose-publish", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        mpl: statement,
+        name: poseName.trim(),
+        preview_url: previewImageUrl,
+        author: "Anonymous",
+      }),
+    })
+    const data = await response.json()
+    console.log(data.id)
+  }, [statement, previewImageUrl, poseName, isSignedIn])
 
   return (
     <div className="flex flex-col gap-1 w-full h-full pt-10">
       <div className="flex flex-row gap-2 px-6 pt-2 z-100 items-center justify-between">
         <Link href="https://github.com/AmyangXYZ/MMD-MPL" target="_blank">
-          <h3 className="scroll-m-20 text-lg font-semibold tracking-tight hidden md:block">MMD Pose Language (MPL) Editor</h3>
+          <h3 className="scroll-m-20 text-lg font-semibold tracking-tight hidden md:block">
+            MMD Pose Language (MPL) Editor
+          </h3>
         </Link>
         <h3 className="scroll-m-20 text-lg font-semibold tracking-tight md:hidden">MPL Editor</h3>
         <div className="flex flex-row gap-2">
@@ -201,17 +300,71 @@ main {
             <span className="text-xs">Download VMD</span>
           </Button>
 
+          <Dialog>
+            <form onSubmit={(e) => e.preventDefault()}>
+              <DialogTrigger asChild>
+                <Button className="flex cursor-pointer" size="sm" disabled={!vmdUrl}>
+                  <CloudCheck className="size-4" />
+                  <span className="text-xs">Publish</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Publish Pose</DialogTitle>
+                  <DialogDescription>Publish your pose to the gallery.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4">
+                  <div className="grid gap-3">
+                    <Label htmlFor="name-1">Name</Label>
+                    <Input name="name" value={poseName} onChange={(e) => setPoseName(e.target.value)} />
+                  </div>
 
-          <Button
-            onClick={() => {
-              submitPose()
-            }}
-            className="flex cursor-pointer"
-            size="sm"
-          >
-            <CloudCheck className="size-4" />
-            <span className="text-xs">Submit</span>
-          </Button>
+                  <div className="grid gap-3">
+                    <Label htmlFor="preview-image">Preview Image</Label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePreviewImageUpload}
+                        className="hidden"
+                        id="preview-image"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => document.getElementById("preview-image")?.click()}
+                        className="flex items-center gap-2"
+                        disabled={isUploading}
+                      >
+                        <ImageIcon className="size-4" />
+                        {isUploading ? "Uploading..." : "Upload Image"}
+                      </Button>
+                      {uploadingError && <p className="text-red-500">{uploadingError}</p>}
+                    </div>
+                    {previewImage && (
+                      <div className="mt-2">
+                        <Image
+                          src={previewImage}
+                          alt="Preview"
+                          width={128}
+                          height={128}
+                          className="w-full h-32 object-cover rounded-md border"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button type="button" onClick={publishPose}>
+                    Submit
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </form>
+          </Dialog>
         </div>
       </div>
 
