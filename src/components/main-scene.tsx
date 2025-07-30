@@ -249,8 +249,7 @@ export default function MainScene() {
     <div className="w-full h-full">
       <canvas ref={canvasRef} className="w-full h-full z-1" />
 
-      <div className="absolute flex justify-end top-2 mx-auto flex px-4 pt-11 w-full z-20">
-
+      <div className="absolute flex justify-end top-0 mx-auto flex px-4 pt-24 w-full z-20">
         <div className="flex items-center gap-2">
           {!openClothesPanel && (
             <div className="">

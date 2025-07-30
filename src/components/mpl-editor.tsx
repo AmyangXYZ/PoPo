@@ -19,26 +19,51 @@ import { Label } from "./ui/label"
 import { Input } from "./ui/input"
 import Image from "next/image"
 import { useUser } from "@clerk/nextjs"
+import { generatePoseId } from "@/lib/utils"
+import { Copy } from "lucide-react"
+import { Pose } from "@/lib/database"
 
 export default function MPLEditor({
   loadVPD,
   modelLoaded,
   loadVMD,
+  pose,
 }: {
   loadVPD: (url: string) => Promise<MPLBoneFrame[] | null>
   loadVMD: (url: string) => void
   modelLoaded: boolean
+  pose: Pose | null
 }) {
   const mplCompiler = useMPLCompiler()
   const [vmdUrl, setVmdUrl] = useState<string | null>(null)
-  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null)
   const [poseName, setPoseName] = useState("")
   const [isUploading, setIsUploading] = useState(false)
-  const [uploadingError, setUploadingError] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [compileError, setCompileError] = useState<string | null>(null)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [isPublished, setIsPublished] = useState(false)
   const { isSignedIn } = useUser()
 
-  const [statement, setStatement] = useState(`@pose welcome {
+  const copyToClipboard = useCallback(async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setErrorMessage(null)
+      // You could add a success message here if needed
+    } catch {
+      setErrorMessage("Failed to copy to clipboard")
+    }
+  }, [])
+
+  const resetSuccessState = useCallback(() => {
+    setPoseName("")
+    setPreviewImageUrl(null)
+    setShareUrl(null)
+    setIsPublished(false)
+    setErrorMessage(null)
+  }, [])
+
+  const [statement, setStatement] = useState(pose?.mpl || `@pose welcome {
     upper_body bend forward 12;
     upper_body sway left 9;
     shoulder_r bend backward 13;
@@ -145,6 +170,7 @@ main {
     if (modelLoaded && mplCompiler) {
       try {
         const vmdBytes = mplCompiler.compile(statement)
+        setCompileError(null)
         if (vmdBytes.length === 0) {
           loadVMD("")
           setVmdUrl(null)
@@ -161,24 +187,17 @@ main {
           URL.revokeObjectURL(vmdUrl)
         }
       } catch (error) {
-        console.error(error)
+        setCompileError(error as string)
       }
     }
   }, [statement, modelLoaded, mplCompiler, loadVMD])
 
-  // Clean up preview image URL when component unmounts
-  useEffect(() => {
-    return () => {
-      if (previewImage) {
-        URL.revokeObjectURL(previewImage)
-      }
-    }
-  }, [previewImage])
+
 
   const handlePreviewImageUpload = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
       if (!isSignedIn) {
-        alert("Please login to upload a preview image")
+        setErrorMessage("Please login to upload a preview image")
         return
       }
 
@@ -186,16 +205,13 @@ main {
       if (!file) return
 
       setIsUploading(true)
-
-      // Create a preview URL for display
-      const previewUrl = URL.createObjectURL(file)
-      setPreviewImage(previewUrl)
-
-      // Upload to Vercel Blob
-      const formData = new FormData()
-      formData.append("file", file)
+      setErrorMessage(null)
 
       try {
+        // Upload to server API
+        const formData = new FormData()
+        formData.append("file", file)
+
         const response = await fetch("/api/upload-image", {
           method: "POST",
           body: formData,
@@ -205,13 +221,11 @@ main {
           const data = await response.json()
           setPreviewImageUrl(data.url)
         } else {
-          console.error("Failed to upload image")
-          setPreviewImage(null)
+          const errorText = await response.text()
+          throw new Error(errorText || "Failed to upload image")
         }
       } catch (error) {
-        console.error("Failed to upload image: " + error)
-        setUploadingError("Failed to upload image: " + error)
-        setPreviewImage(null)
+        setErrorMessage(error instanceof Error ? error.message : "Failed to upload image")
       } finally {
         setIsUploading(false)
       }
@@ -228,14 +242,17 @@ main {
     }
 
     if (!previewImageUrl) {
-      alert("Please upload a preview image first")
+      setErrorMessage("Please upload a preview image first")
       return
     }
 
     if (!poseName.trim()) {
-      alert("Please enter a pose name")
+      setErrorMessage("Please enter a pose name")
       return
     }
+
+    // Generate unique pose UID
+    const poseUid = generatePoseId(statement, poseName.trim(), previewImageUrl)
 
     const response = await fetch("/api/pose-publish", {
       method: "POST",
@@ -243,14 +260,22 @@ main {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        uid: poseUid,
         mpl: statement,
         name: poseName.trim(),
         preview_url: previewImageUrl,
-        author: "Anonymous",
       }),
     })
     const data = await response.json()
-    console.log(data.id)
+    if (data.success) {
+      // Create shareable URL
+      const shareUrl = `${window.location.origin}/playground/${poseUid}`
+      setShareUrl(shareUrl)
+      setIsPublished(true)
+      setErrorMessage(null)
+    } else {
+      setErrorMessage("Failed to publish pose")
+    }
   }, [statement, previewImageUrl, poseName, isSignedIn])
 
   return (
@@ -300,7 +325,11 @@ main {
             <span className="text-xs">Download VMD</span>
           </Button>
 
-          <Dialog>
+          <Dialog onOpenChange={(open) => {
+            if (!open && isPublished) {
+              resetSuccessState()
+            }
+          }}>
             <form onSubmit={(e) => e.preventDefault()}>
               <DialogTrigger asChild>
                 <Button className="flex cursor-pointer" size="sm" disabled={!vmdUrl}>
@@ -310,57 +339,104 @@ main {
               </DialogTrigger>
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                  <DialogTitle>Publish Pose</DialogTitle>
-                  <DialogDescription>Publish your pose to the gallery.</DialogDescription>
+                  <DialogTitle>{isPublished ? "Pose Published!" : "Publish Pose"}</DialogTitle>
+                  <DialogDescription>
+                    {isPublished ? "Your pose has been successfully published to the gallery." : "Publish your pose to the gallery."}
+                  </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4">
-                  <div className="grid gap-3">
-                    <Label htmlFor="name-1">Name</Label>
-                    <Input name="name" value={poseName} onChange={(e) => setPoseName(e.target.value)} />
-                  </div>
 
-                  <div className="grid gap-3">
-                    <Label htmlFor="preview-image">Preview Image</Label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePreviewImageUpload}
-                        className="hidden"
-                        id="preview-image"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => document.getElementById("preview-image")?.click()}
-                        className="flex items-center gap-2"
-                        disabled={isUploading}
-                      >
-                        <ImageIcon className="size-4" />
-                        {isUploading ? "Uploading..." : "Upload Image"}
-                      </Button>
-                      {uploadingError && <p className="text-red-500">{uploadingError}</p>}
+                {!isPublished ? (
+                  <div className="grid gap-4">
+                    <div className="grid gap-3">
+                      <Label htmlFor="name-1">Name</Label>
+                      <Input name="name" value={poseName} onChange={(e) => setPoseName(e.target.value)} />
                     </div>
-                    {previewImage && (
-                      <div className="mt-2">
-                        <Image
-                          src={previewImage}
-                          alt="Preview"
-                          width={128}
-                          height={128}
-                          className="w-full h-32 object-cover rounded-md border"
+
+                    <div className="grid gap-3">
+                      <Label htmlFor="preview-image">Preview Image</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePreviewImageUpload}
+                          className="hidden"
+                          id="preview-image"
                         />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById("preview-image")?.click()}
+                          className="flex items-center gap-2"
+                          disabled={isUploading}
+                        >
+                          <ImageIcon className="size-4" />
+                          {isUploading ? "Uploading..." : "Upload Image"}
+                        </Button>
+                      </div>
+                      {errorMessage && <p className="text-red-500">{errorMessage}</p>}
+                      {previewImageUrl && (
+                        <div className="mt-2">
+                          <Image
+                            src={previewImageUrl}
+                            alt="Preview"
+                            width={128}
+                            height={128}
+                            className="w-full h-32 object-cover rounded-md border"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="text-green-500 text-5xl mb-2">✓</div>
+                      <p className="text-lg font-semibold text-green-600">Published!</p>
+                    </div>
+
+                    {shareUrl && (
+                      <div className="">
+                        <p className="text-blue-500 text-sm mb-2">Link:</p>
+
+                        <div className="flex items-center gap-2">
+
+                          <a
+                            href={shareUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-mono bg-gray-100 px-2 py-2 rounded-md flex-1 break-all hover:bg-gray-200 transition-colors cursor-pointer text-blue-600 underline"
+                          >
+                            {shareUrl}
+                          </a>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyToClipboard(shareUrl)}
+                            className="flex-shrink-0"
+                          >
+                            <Copy className="size-3" />
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>
-                </div>
+                )}
                 <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <Button type="button" onClick={publishPose}>
-                    Submit
-                  </Button>
+                  {!isPublished ? (
+                    <>
+                      <DialogClose asChild>
+                        <Button variant="outline">Cancel</Button>
+                      </DialogClose>
+                      <Button type="button" onClick={publishPose}>
+                        Submit
+                      </Button>
+                    </>
+                  ) : (
+                    <DialogClose asChild>
+                      <Button>Close</Button>
+                    </DialogClose>
+                  )}
                 </DialogFooter>
               </DialogContent>
             </form>
@@ -370,6 +446,7 @@ main {
 
       <div className="flex-1 py-2 px-6">
         <CodeEditor value={statement} onChange={setStatement} />
+        {compileError && <div className="text-red-700 text-sm font-mono mt-2 font-medium">{compileError}</div>}
       </div>
     </div>
   )

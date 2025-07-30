@@ -22,13 +22,19 @@ export async function POST(req: Request) {
       return new NextResponse("File must be an image", { status: 400 })
     }
 
-    // Validate file size (max 10MB)
+    // Validate file size (max 4.5MB)
     if (file.size > 4.5 * 1024 * 1024) {
       return new NextResponse("File size must be less than 4.5MB", { status: 400 })
     }
 
+    // Generate unique filename with timestamp and random suffix
+    const timestamp = Date.now()
+    const randomSuffix = Math.random().toString(36).substring(2, 8)
+    const fileExtension = file.name.split(".").pop()
+    const uniqueFileName = `pose-preview-${timestamp}-${randomSuffix}.${fileExtension}`
+
     // Upload to Vercel Blob
-    const blob = await put(file.name, file, {
+    const blob = await put(uniqueFileName, file, {
       access: "public",
     })
 

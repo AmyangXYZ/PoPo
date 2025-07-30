@@ -16,7 +16,11 @@ export async function POST(req: Request) {
     }
 
     // Validate request body
-    const { name, preview_url, mpl, author } = await req.json()
+    const { uid, name, preview_url, mpl } = await req.json()
+
+    if (!uid || typeof uid !== "string") {
+      return new NextResponse("Invalid pose UID", { status: 400 })
+    }
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return new NextResponse("Invalid pose name", { status: 400 })
@@ -30,20 +34,16 @@ export async function POST(req: Request) {
       return new NextResponse("Invalid MPL statement", { status: 400 })
     }
 
-    if (!author || typeof author !== "string" || author.trim().length === 0) {
-      return new NextResponse("Invalid author", { status: 400 })
-    }
-
     // Create pose in database
     await createPose({
       name: name.trim(),
       preview_url,
-      uid: userId,
       mpl,
-      author: author.trim(),
+      uid,
+      author: user.username || "mikumiku",
     })
 
-    return new NextResponse("Pose created successfully", { status: 201 })
+    return new NextResponse(JSON.stringify({ success: true }), { status: 201 })
   } catch (error) {
     console.error("Error creating pose:", error)
     return new NextResponse("Internal server error", { status: 500 })

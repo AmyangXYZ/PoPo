@@ -28,10 +28,10 @@ export async function getPoses(limit = 50, offset = 0): Promise<Pose[]> {
   return result.rows as unknown as Pose[]
 }
 
-export async function getPose(id: string): Promise<Pose | null> {
+export async function getPose(uid: string): Promise<Pose | null> {
   const result = await turso.execute({
-    sql: "SELECT * FROM pose WHERE id = ?",
-    args: [id],
+    sql: "SELECT * FROM pose WHERE uid = ?",
+    args: [uid],
   })
 
   return (result.rows[0] as unknown as Pose) || null

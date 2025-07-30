@@ -9,7 +9,7 @@ const PlaygroundScene = dynamic(() => import("@/components/playground-scene"), {
 export default function Home() {
     return (
         <div className="w-full h-screen">
-            <PlaygroundScene />
+            <PlaygroundScene pose={null} />
         </div>
     )
 }

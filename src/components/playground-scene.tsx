@@ -42,8 +42,9 @@ import { MmdWasmPhysicsRuntimeImpl } from "babylon-mmd/esm/Runtime/Optimized/Phy
 import MPLEditor from "./mpl-editor"
 import { MPLBoneFrame, Quaternion as MPLQuaternion, Vector3 as MPLVector3 } from "mmd-mpl"
 import { useMPLCompiler } from "@/hooks/useMPLCompiler"
+import { Pose } from "@/lib/database"
 
-export default function PlaygroundScene() {
+export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
     const mplCompiler = useMPLCompiler()
 
     const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -254,8 +255,7 @@ export default function PlaygroundScene() {
 
             vpdLoaderRef.current = new VpdLoader(scene)
             vmdLoaderRef.current = new VmdLoader(scene)
-            const playerControl = new MmdPlayerControl(scene, mmdRuntime)
-            playerControl.showPlayerControl()
+            new MmdPlayerControl(scene, mmdRuntime)
 
             loadModel()
 
@@ -281,7 +281,7 @@ export default function PlaygroundScene() {
                 <canvas ref={canvasRef} className="w-full h-full z-1" />
             </div>
             <div className="w-full h-[30%] md:w-1/2 md:h-full order-2 md:order-1 border-t">
-                <MPLEditor loadVPD={loadVPD} modelLoaded={modelLoaded} loadVMD={loadVMD} />
+                <MPLEditor loadVPD={loadVPD} modelLoaded={modelLoaded} loadVMD={loadVMD} pose={pose} />
             </div>
         </div>
     )

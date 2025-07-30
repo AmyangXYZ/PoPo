@@ -5,7 +5,14 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   devIndicators: false,
   images: {
-    remotePatterns: [new URL("https://my-store-id.public.blob.vercel-storage.com/**")],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "lxbvoqdvdbhmufga.public.blob.vercel-storage.com",
+        port: "",
+        pathname: "/**",
+      },
+    ],
   },
   webpack: (config) => {
     // Handle babylon-mmd WASM files
