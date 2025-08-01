@@ -2,9 +2,11 @@
 
 import {
   ArcRotateCamera,
+  Camera,
   Color3,
   Color4,
   CreateDisc,
+  CreateScreenshotAsync,
   DirectionalLight,
   Engine,
   HemisphericLight,
@@ -39,15 +41,18 @@ import {
 import ChatInput from "./chat-input"
 
 import { Button } from "./ui/button"
-import { Shirt } from "lucide-react"
-import ClothesPanel from "./clothes-panel"
+import { Aperture, User } from "lucide-react"
+import ModelsPanel from "./models-panel"
 import { MmdWasmPhysicsRuntimeImpl } from "babylon-mmd/esm/Runtime/Optimized/Physics/mmdWasmPhysicsRuntimeImpl"
 import { useMPLCompiler } from "@/hooks/useMPLCompiler"
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
+
 
 export default function MainScene() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const engineRef = useRef<Engine>(null)
   const sceneRef = useRef<Scene>(null)
+  const cameraRef = useRef<Camera>(null)
   const shadowGeneratorRef = useRef<ShadowGenerator>(null)
   const mmdWasmInstanceRef = useRef<IMmdWasmInstance>(null)
   const mmdRuntimeRef = useRef<MmdWasmRuntime>(null)
@@ -56,21 +61,39 @@ export default function MainScene() {
   const vmdLoaderRef = useRef<VmdLoader>(null)
   const modelRef = useRef<MmdWasmModel>(null)
 
+  const modelNameRef = useRef("深空之眼-梵天")
+
   const mplCompiler = useMPLCompiler()
 
-  const [meshes, setMeshes] = useState<Mesh[]>([])
+  const [openModelsPanel, setOpenModelsPanel] = useState(false)
+  const lastVMDUrlRef = useRef("")
 
 
-  const [openClothesPanel, setOpenClothesPanel] = useState(false)
+  const loadVMD = useCallback(
+    async (vmdUrl: string) => {
+      if (!vmdLoaderRef.current || !modelRef.current || !mplCompiler) return null
+      lastVMDUrlRef.current = vmdUrl
+      if (vmdUrl === "") {
+        modelRef.current.removeAnimation(0)
+        return
+      }
+      const vmd = await vmdLoaderRef.current.loadAsync("vmd_animation", vmdUrl)
+      modelRef.current.addAnimation(vmd)
+      modelRef.current.setAnimation("vmd_animation")
+      mmdRuntimeRef.current!.seekAnimation(0, true)
+      mmdRuntimeRef.current!.playAnimation()
+    },
+    [vmdLoaderRef, modelRef, mplCompiler]
+  )
 
   const loadModel = useCallback(async (): Promise<void> => {
-    if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current) return
+    if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current || !modelNameRef.current) return
     if (modelRef.current) {
       mmdRuntimeRef.current.destroyMmdModel(modelRef.current)
       modelRef.current.mesh.dispose()
     }
 
-    LoadAssetContainerAsync(`/models/深空之眼-梵天.bpmx`, sceneRef.current!, {
+    LoadAssetContainerAsync(`/models/${modelNameRef.current}.bpmx`, sceneRef.current!, {
       pluginOptions: {
         mmdmodel: {
           materialBuilder: mmdMaterialBuilderRef.current || undefined,
@@ -84,42 +107,20 @@ export default function MainScene() {
           disableOffsetForConstraintFrame: true,
         },
       })
-
-      const clothes = ["衣边", "衣服", "袖子", "头饰", "脖环", "脖带", "鞋子", "眼镜"]
-
-      setMeshes((prev) => {
-        const newMeshes = mesh.metadata.meshes.filter((mesh: Mesh) => clothes.includes(mesh.name))
-        if (prev.length === 0) {
-          return newMeshes
-        }
-        for (const m of newMeshes) {
-          const prevMesh = prev.find((p) => p.name === m.name)
-          if (prevMesh) {
-            m.setEnabled(prevMesh.isEnabled())
-          }
-        }
-        return newMeshes
-      })
-
       result.addAllToScene()
-    })
-  }, [])
 
-  const loadVMD = useCallback(
-    async (vmdUrl: string) => {
-      if (!vmdLoaderRef.current || !modelRef.current || !mplCompiler) return null
-      if (vmdUrl === "") {
-        modelRef.current.removeAnimation(0)
-        return
+      if (lastVMDUrlRef.current !== "") {
+        loadVMD(lastVMDUrlRef.current)
       }
-      const vmd = await vmdLoaderRef.current.loadAsync("vmd_animation", vmdUrl)
-      modelRef.current.addAnimation(vmd)
-      modelRef.current.setAnimation("vmd_animation")
-      mmdRuntimeRef.current!.seekAnimation(0, true)
-      mmdRuntimeRef.current!.playAnimation()
-    },
-    [vmdLoaderRef, modelRef, mplCompiler]
-  )
+    })
+  }, [loadVMD])
+
+
+  const selectModel = useCallback((model: string) => {
+    modelNameRef.current = model
+    loadModel()
+
+  }, [loadModel])
 
   useEffect(() => {
     const resize = () => {
@@ -161,6 +162,7 @@ export default function MainScene() {
       camera.attachControl(canvasRef.current, false)
       camera.inertia = 0.8
       camera.speed = 10
+      cameraRef.current = camera
 
       scene.activeCameras = [camera]
 
@@ -245,28 +247,58 @@ export default function MainScene() {
     }
   }, [loadModel])
 
+  const takeScreenshot = useCallback(() => {
+    if (!canvasRef.current || !engineRef.current || !cameraRef.current) return
+    CreateScreenshotAsync(engineRef.current!, cameraRef.current!, { precision: 1 }).then((b64) => {
+      const link = document.createElement("a")
+      link.href = b64
+      link.download = "popo_screenshot.png"
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    })
+  }, [canvasRef])
+
   return (
     <div className="w-full h-full">
       <canvas ref={canvasRef} className="w-full h-full z-1" />
 
-      <div className="absolute flex justify-end top-0 mx-auto flex px-4 pt-24 w-full z-20">
-        <div className="flex items-center gap-2">
-          {!openClothesPanel && (
-            <div className="">
+      <div className="absolute flex justify-end top-0 right-0 mx-auto flex px-4 pt-24 z-20">
+        <div className="flex flex-col items-center gap-2">
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
                 size="icon"
                 className="bg-white text-black size-7 rounded-full hover:bg-pink-100 cursor-pointer"
-                onClick={() => setOpenClothesPanel(true)}
+                onClick={() => setOpenModelsPanel(true)}
               >
-                <Shirt />
+                <User />
               </Button>
-            </div>
-          )}
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              <p>Switch Models</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="icon"
+                className="bg-white text-black size-7 rounded-full hover:bg-pink-100 cursor-pointer"
+                onClick={() => takeScreenshot()}
+              >
+                <Aperture />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left">
+              <p>Take Screenshot</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       </div>
-      <ClothesPanel open={openClothesPanel} setOpen={setOpenClothesPanel} meshes={meshes} setMeshes={setMeshes} />
+      <ModelsPanel open={openModelsPanel} setOpen={setOpenModelsPanel} selectedModel={modelNameRef.current} selectModel={selectModel} />
       <div
-        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${openClothesPanel ? "hidden" : ""
+        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${openModelsPanel ? "hidden" : ""
           }`}
       >
         <ChatInput loadVMD={loadVMD} />

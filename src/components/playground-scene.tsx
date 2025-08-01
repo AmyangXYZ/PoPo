@@ -2,9 +2,11 @@
 
 import {
     ArcRotateCamera,
+    Camera,
     Color3,
     Color4,
     CreateDisc,
+    CreateScreenshotAsync,
     DirectionalLight,
     Engine,
     HemisphericLight,
@@ -43,6 +45,10 @@ import MPLEditor from "./mpl-editor"
 import { MPLBoneFrame, Quaternion as MPLQuaternion, Vector3 as MPLVector3 } from "mmd-mpl"
 import { useMPLCompiler } from "@/hooks/useMPLCompiler"
 import { Pose } from "@/lib/database"
+import { Aperture, User } from "lucide-react"
+import { Button } from "./ui/button"
+import ModelsPanel from "./models-panel"
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
 
 export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
     const mplCompiler = useMPLCompiler()
@@ -50,6 +56,7 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const engineRef = useRef<Engine>(null)
     const sceneRef = useRef<Scene>(null)
+    const cameraRef = useRef<Camera>(null)
     const shadowGeneratorRef = useRef<ShadowGenerator>(null)
     const mmdWasmInstanceRef = useRef<IMmdWasmInstance>(null)
     const mmdRuntimeRef = useRef<MmdWasmRuntime>(null)
@@ -58,16 +65,37 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
     const vmdLoaderRef = useRef<VmdLoader>(null)
     const modelRef = useRef<MmdWasmModel>(null)
 
+    const modelNameRef = useRef("深空之眼-梵天")
+    const [openModelsPanel, setOpenModelsPanel] = useState(false)
+    const lastVMDUrlRef = useRef("")
+
     const [modelLoaded, setModelLoaded] = useState(false)
 
+    const loadVMD = useCallback(
+        async (vmdUrl: string) => {
+            if (!vmdLoaderRef.current || !modelRef.current || !mplCompiler) return null
+            lastVMDUrlRef.current = vmdUrl
+            if (vmdUrl === "") {
+                modelRef.current.removeAnimation(0)
+                return
+            }
+            const vmd = await vmdLoaderRef.current.loadAsync("vmd_animation", vmdUrl)
+            modelRef.current.addAnimation(vmd)
+            modelRef.current.setAnimation("vmd_animation")
+            mmdRuntimeRef.current!.seekAnimation(0, true)
+            mmdRuntimeRef.current!.playAnimation()
+        },
+        [vmdLoaderRef, modelRef, mplCompiler]
+    )
+
     const loadModel = useCallback(async (): Promise<void> => {
-        if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current || !mplCompiler) return
+        if (!sceneRef.current || !mmdWasmInstanceRef.current || !mmdRuntimeRef.current || !mplCompiler || !modelNameRef.current) return
         if (modelRef.current) {
             mmdRuntimeRef.current.destroyMmdModel(modelRef.current)
             modelRef.current.mesh.dispose()
         }
 
-        LoadAssetContainerAsync(`/models/深空之眼-梵天.bpmx`, sceneRef.current!, {
+        LoadAssetContainerAsync(`/models/${modelNameRef.current}.bpmx`, sceneRef.current!, {
             pluginOptions: {
                 mmdmodel: {
                     materialBuilder: mmdMaterialBuilderRef.current || undefined,
@@ -84,24 +112,19 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
 
             result.addAllToScene()
             setModelLoaded(true)
-        })
-    }, [mplCompiler])
 
-    const loadVMD = useCallback(
-        async (vmdUrl: string) => {
-            if (!vmdLoaderRef.current || !modelRef.current || !mplCompiler) return null
-            if (vmdUrl === "") {
-                modelRef.current.removeAnimation(0)
-                return
+            if (lastVMDUrlRef.current !== "") {
+                loadVMD(lastVMDUrlRef.current)
             }
-            const vmd = await vmdLoaderRef.current.loadAsync("vmd_animation", vmdUrl)
-            modelRef.current.addAnimation(vmd)
-            modelRef.current.setAnimation("vmd_animation")
-            mmdRuntimeRef.current!.seekAnimation(0, true)
-            mmdRuntimeRef.current!.playAnimation()
-        },
-        [vmdLoaderRef, modelRef, mplCompiler]
-    )
+        })
+    }, [mplCompiler, loadVMD])
+
+
+
+    const selectModel = useCallback((model: string) => {
+        modelNameRef.current = model
+        loadModel()
+    }, [loadModel])
 
     const loadVPD = useCallback(
         async (vpdUrl: string): Promise<MPLBoneFrame[] | null> => {
@@ -189,6 +212,7 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
             camera.attachControl(canvasRef.current, false)
             camera.inertia = 0.8
             camera.speed = 10
+            cameraRef.current = camera
 
             scene.activeCameras = [camera]
 
@@ -275,10 +299,56 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
         }
     }, [loadModel, mplCompiler])
 
+    const takeScreenshot = useCallback(() => {
+        if (!canvasRef.current || !engineRef.current || !cameraRef.current) return
+        CreateScreenshotAsync(engineRef.current!, cameraRef.current!, { precision: 1 }).then((b64) => {
+            const link = document.createElement("a")
+            link.href = b64
+            link.download = "popo_screenshot.png"
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+        })
+    }, [canvasRef])
+
     return (
         <div className="w-full h-full flex flex-col md:flex-row">
             <div className="w-full h-[70%] md:w-1/2 md:h-full order-1 md:order-2">
                 <canvas ref={canvasRef} className="w-full h-full z-1" />
+                <div className="absolute flex justify-end top-[50%] -translate-y-1/2 right-0 mx-auto flex px-4 z-20">
+                    <div className="flex flex-col items-center gap-2">
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    size="icon"
+                                    className="bg-white text-black size-7 rounded-full hover:bg-pink-100 cursor-pointer"
+                                    onClick={() => setOpenModelsPanel(true)}
+                                >
+                                    <User />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left">
+                                <p>Switch Models</p>
+                            </TooltipContent>
+                        </Tooltip>
+
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    size="icon"
+                                    className="bg-white text-black size-7 rounded-full hover:bg-pink-100 cursor-pointer"
+                                    onClick={() => takeScreenshot()}
+                                >
+                                    <Aperture />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="left">
+                                <p>Take Screenshot</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </div>
+                </div>
+                <ModelsPanel open={openModelsPanel} setOpen={setOpenModelsPanel} selectedModel={modelNameRef.current} selectModel={selectModel} />
             </div>
             <div className="w-full h-[30%] md:w-1/2 md:h-full order-2 md:order-1 border-t">
                 <MPLEditor loadVPD={loadVPD} modelLoaded={modelLoaded} loadVMD={loadVMD} pose={pose} />
