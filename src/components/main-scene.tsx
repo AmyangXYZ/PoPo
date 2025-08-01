@@ -130,23 +130,12 @@ export default function MainScene() {
     }
 
     const init = async () => {
-      if (!canvasRef.current) return
+      if (!canvasRef.current || !mplCompiler) return
 
       // Register the PMX loader plugin
       RegisterSceneLoaderPlugin(new BpmxLoader())
 
-      const engine = new Engine(canvasRef.current, true, {
-        preserveDrawingBuffer: false,
-        stencil: false,
-        antialias: true,
-        alpha: true,
-        premultipliedAlpha: false,
-        powerPreference: "high-performance",
-        doNotHandleTouchAction: true,
-        doNotHandleContextLost: true,
-        audioEngine: false,
-        disableWebGL2Support: false
-      }, true)
+      const engine = new Engine(canvasRef.current, true, {}, true)
       SdefInjector.OverrideEngineCreateEffect(engine)
 
       const scene = new Scene(engine)
@@ -245,7 +234,7 @@ export default function MainScene() {
         window.removeEventListener("resize", resize)
       }
     }
-  }, [loadModel])
+  }, [loadModel, mplCompiler])
 
   const takeScreenshot = useCallback(() => {
     if (!canvasRef.current || !engineRef.current || !cameraRef.current) return
@@ -263,7 +252,7 @@ export default function MainScene() {
     <div className="w-full h-full">
       <canvas ref={canvasRef} className="w-full h-full z-1" />
 
-      <div className="absolute flex justify-end top-0 right-0 mx-auto flex px-4 pt-24 z-20">
+      <div className="absolute flex justify-end top-[50%] -translate-y-1/2 right-0 mx-auto flex px-4 z-20">
         <div className="flex flex-col items-center gap-2">
           <Tooltip>
             <TooltipTrigger asChild>
