@@ -122,6 +122,7 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
   const selectModel = useCallback(
     (model: string) => {
       modelNameRef.current = model
+      localStorage.setItem("selectedModel", model)
       loadModel()
     },
     [loadModel]
