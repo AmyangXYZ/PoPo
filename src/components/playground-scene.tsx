@@ -65,7 +65,7 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
   const vmdLoaderRef = useRef<VmdLoader>(null)
   const modelRef = useRef<MmdWasmModel>(null)
 
-  const modelNameRef = useRef("深空之眼-梵天")
+  const modelNameRef = useRef(localStorage.getItem("selectedModel") || "深空之眼-梵天")
   const [openModelsPanel, setOpenModelsPanel] = useState(false)
   const lastVMDUrlRef = useRef("")
 
@@ -119,10 +119,13 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
     })
   }, [loadVMD])
 
-  const selectModel = useCallback((model: string) => {
-    modelNameRef.current = model
-    loadModel()
-  }, [loadModel])
+  const selectModel = useCallback(
+    (model: string) => {
+      modelNameRef.current = model
+      loadModel()
+    },
+    [loadModel]
+  )
 
   const loadVPD = useCallback(
     async (vpdUrl: string): Promise<MPLBoneFrame[] | null> => {
@@ -248,7 +251,6 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
       ground.rotation.x = Math.PI / 2
       ground.receiveShadows = true
 
-
       const physicsRuntime = mmdRuntime.physics!.getImpl(MmdWasmPhysicsRuntimeImpl)
       {
         const info = new RigidBodyConstructionInfo(mmdRuntime.wasmInstance)
@@ -346,7 +348,12 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
             </Tooltip>
           </div>
         </div>
-        <ModelsPanel open={openModelsPanel} setOpen={setOpenModelsPanel} selectedModel={modelNameRef.current} selectModel={selectModel} />
+        <ModelsPanel
+          open={openModelsPanel}
+          setOpen={setOpenModelsPanel}
+          selectedModel={modelNameRef.current}
+          selectModel={selectModel}
+        />
       </div>
       <div className="w-full h-[30%] md:w-1/2 md:h-full order-2 md:order-1 border-t">
         <MPLEditor loadVPD={loadVPD} modelLoaded={modelLoaded} loadVMD={loadVMD} pose={pose} />

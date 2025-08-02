@@ -47,7 +47,6 @@ import { MmdWasmPhysicsRuntimeImpl } from "babylon-mmd/esm/Runtime/Optimized/Phy
 import { useMPLCompiler } from "@/hooks/useMPLCompiler"
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
 
-
 export default function MainScene() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const engineRef = useRef<Engine>(null)
@@ -61,13 +60,12 @@ export default function MainScene() {
   const vmdLoaderRef = useRef<VmdLoader>(null)
   const modelRef = useRef<MmdWasmModel>(null)
 
-  const modelNameRef = useRef("深空之眼-梵天")
+  const modelNameRef = useRef(localStorage.getItem("selectedModel") || "深空之眼-梵天")
 
   const mplCompiler = useMPLCompiler()
 
   const [openModelsPanel, setOpenModelsPanel] = useState(false)
   const lastVMDUrlRef = useRef("")
-
 
   const loadVMD = useCallback(
     async (vmdUrl: string) => {
@@ -115,12 +113,14 @@ export default function MainScene() {
     })
   }, [loadVMD])
 
-
-  const selectModel = useCallback((model: string) => {
-    modelNameRef.current = model
-    loadModel()
-
-  }, [loadModel])
+  const selectModel = useCallback(
+    (model: string) => {
+      modelNameRef.current = model
+      localStorage.setItem("selectedModel", model)
+      loadModel()
+    },
+    [loadModel]
+  )
 
   useEffect(() => {
     const resize = () => {
@@ -285,10 +285,16 @@ export default function MainScene() {
           </Tooltip>
         </div>
       </div>
-      <ModelsPanel open={openModelsPanel} setOpen={setOpenModelsPanel} selectedModel={modelNameRef.current} selectModel={selectModel} />
+      <ModelsPanel
+        open={openModelsPanel}
+        setOpen={setOpenModelsPanel}
+        selectedModel={modelNameRef.current}
+        selectModel={selectModel}
+      />
       <div
-        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${openModelsPanel ? "hidden" : ""
-          }`}
+        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${
+          openModelsPanel ? "hidden" : ""
+        }`}
       >
         <ChatInput loadVMD={loadVMD} />
       </div>

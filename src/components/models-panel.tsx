@@ -15,12 +15,13 @@ export default function ModelsPanel({
   selectedModel: string
   selectModel: (model: string) => void
 }) {
-  const models = ["深空之眼-梵天", "深空之眼-梵天2", "深空之眼-梵天3"]
+  const models = ["深空之眼-梵天", "深空之眼-梵天2", "深空之眼-梵天3", "鸣潮-无妄者"]
 
   return (
     <div
-      className={`fixed right-0 top-0 h-full w-60 bg-background border-l shadow-lg z-250 flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"
-        }`}
+      className={`fixed right-0 top-0 h-full w-60 bg-background border-l shadow-lg z-250 flex flex-col transition-transform duration-300 ease-in-out ${
+        open ? "translate-x-0" : "translate-x-full"
+      }`}
     >
       <div className="flex flex-col gap-1.5 p-4 border-b">
         <div className="flex items-center justify-between">
@@ -33,7 +34,6 @@ export default function ModelsPanel({
 
       <ScrollArea className="max-h-[calc(100dvh-22rem)] overflow-auto p-4 px-8">
         <RadioGroup defaultValue={selectedModel} onValueChange={selectModel} className="flex flex-col gap-4">
-
           {models.map((model) => (
             <div key={model} className="flex justify-between gap-3">
               <Label htmlFor={model}>{model}</Label>
