@@ -15,7 +15,7 @@ export default function ModelsPanel({
   selectedModel: string
   selectModel: (model: string) => void
 }) {
-  const models = ["深空之眼-梵天", "深空之眼-梵天2", "深空之眼-梵天3", "鸣潮-无妄者", "鸣潮-无冠者"]
+  const models = ["深空之眼-梵天", "深空之眼-梵天2", "深空之眼-梵天3", "绝区零-仪玄", "鸣潮-无冠者"]
 
   return (
     <div
