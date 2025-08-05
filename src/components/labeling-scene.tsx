@@ -34,6 +34,18 @@ import {
 
 import { MPLBoneFrame, Quaternion as MPLQuaternion, Vector3 as MPLVector3 } from "mmd-mpl"
 import { useMPLCompiler } from "@/hooks/useMPLCompiler"
+import { Button } from "./ui/button"
+import { Upload } from "lucide-react"
+import { Input } from "./ui/input"
+import Image from "next/image"
+import { ScrollArea } from "./ui/scroll-area"
+
+interface Data {
+  vpd: string
+  description: string
+  mpl: string
+  image: string
+}
 
 export default function LabelingScene() {
   const mplCompiler = useMPLCompiler()
@@ -49,16 +61,17 @@ export default function LabelingScene() {
   const vmdLoaderRef = useRef<VmdLoader>(null)
   const modelRef = useRef<MmdWasmModel>(null)
 
+  const [start, setStart] = useState<number>(1)
+  const [end, setEnd] = useState<number>(2000)
+
   const [currentVpd, setCurrentVpd] = useState<string>("")
 
   const modelNameRef = useRef(localStorage.getItem("selectedModel") || "深空之眼-梵天")
   const lastVMDUrlRef = useRef("")
 
-  const dataRef = useRef<{
-    vpd: string
-    mpl: string
-    image: string
-  }[]>([])
+  const [loadedData, setLoadedData] = useState<Data[]>([])
+
+  const dataRef = useRef<Data[]>([])
 
 
   const [modelLoaded, setModelLoaded] = useState(false)
@@ -277,7 +290,7 @@ export default function LabelingScene() {
     return b64
   }, [canvasRef])
 
-  const generateData = useCallback(async (url: string): Promise<{ vpd: string, description: string, mpl: string, image: string } | null> => {
+  const generateData = useCallback(async (url: string): Promise<Data | null> => {
     if (!mplCompiler || !modelLoaded) return null
     const boneStates = await loadVPD(url)
     if (!boneStates) {
@@ -303,36 +316,99 @@ export default function LabelingScene() {
     }
   }, [mplCompiler, modelLoaded, loadVPD, loadVMD, takeScreenshot])
 
-  useEffect(() => {
-    const load = async () => {
-      if (modelLoaded && mplCompiler) {
-        const start = 1
-        const end = 10
-        for (let i = start; i <= end; i++) {
-          setCurrentVpd(`${i}.vpd`)
-          const data = await generateData(`/vpd/${i}.vpd`)
-          if (data) {
-            dataRef.current.push(data)
-          }
+  const loadVpds = useCallback(async () => {
+    if (modelLoaded && mplCompiler) {
+      console.log("Loading VPDs")
+      for (let i = start; i <= end; i++) {
+        setCurrentVpd(`${i}.vpd`)
+        const data = await generateData(`/vpd/${i}.vpd`)
+        if (data) {
+          dataRef.current.push(data)
         }
-        const json = JSON.stringify(dataRef.current)
-        const blob = new Blob([json], { type: "application/json" })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement("a")
-        link.href = url
-        link.download = `pose_data_${start}_${end}.json`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
       }
+      const json = JSON.stringify(dataRef.current)
+      const blob = new Blob([json], { type: "application/json" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `pose_data_${start}_${end}.json`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     }
-    load()
-  }, [modelLoaded, mplCompiler, generateData])
+  }, [modelLoaded, mplCompiler, generateData, start, end])
+
+
+  const handleFileUpload = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0]
+      if (!file) return
+
+      if (file.name.endsWith(".json")) {
+        const text = await file.text()
+        const data = JSON.parse(text) as Data[]
+        setLoadedData(data)
+      }
+
+      event.target.value = ""
+    },
+    []
+  )
+
 
   return (
-    <div className="w-full h-full">
-      <div className="text-center">{currentVpd}</div>
-      <canvas ref={canvasRef} className="w-[400px] h-[600px] mx-auto z-1 outline-none" />
-    </div>
+    <div className="w-full h-full flex flex-row gap-4">
+      <div className="flex flex-col justify-center items-center w-[400px] mx-auto z-10 gap-2">
+        <div className="text-center">{currentVpd}</div>
+        <canvas ref={canvasRef} className="w-full h-[600px] mx-auto z-1 outline-none" />
+        <div className="flex flex-row items-center justify-between gap-2">
+          <Input type="number" value={start} onChange={(e) => setStart(Number(e.target.value))} />
+          <Input type="number" value={end} onChange={(e) => setEnd(Number(e.target.value))} />
+          <Button onClick={loadVpds} size="sm" className="flex cursor-pointer">Load VPDs</Button>
+        </div>
+      </div>
+      <div className="flex flex-col max-w-7xl w-full mx-auto py-16">
+        <div className="relative hidden md:block">
+          <input
+            type="file"
+            accept=".json"
+            onChange={handleFileUpload}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            id="pose-upload"
+          />
+          <Button
+            onClick={() => {
+            }}
+            className="flex cursor-pointer"
+            size="sm"
+          >
+            <Upload className="size-4" />
+            <span className="text-xs">Upload JSON</span>
+          </Button>
+        </div>
+
+        {loadedData.length > 0 && (
+          <ScrollArea className="h-[calc(100vh-10rem)]">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-4">
+              {loadedData.map((data, index) => (
+                <div key={index} className="flex flex-col items-center gap-2 p-2 border rounded-lg bg-white shadow-sm">
+                  <Image
+                    src={data.image}
+                    alt={data.vpd}
+                    width={160}
+                    height={160}
+                    className="rounded-md object-cover"
+                  />
+                  <div className="text-xs text-center text-gray-600 truncate w-full">
+                    {data.vpd}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
+      </div>
+
+    </div >
   )
 }
