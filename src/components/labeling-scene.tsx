@@ -266,28 +266,15 @@ export default function LabelingScene() {
   const takeScreenshot = useCallback(async (): Promise<string> => {
     if (!canvasRef.current || !engineRef.current || !cameraRef.current) return ""
 
-    // First get the screenshot from Babylon.js
-    const b64 = await CreateScreenshotAsync(engineRef.current!, cameraRef.current!, { precision: 1 })
+    const b64 = await CreateScreenshotAsync(
+      engineRef.current!,
+      cameraRef.current!,
+      { precision: 1 },
+      'image/webp',
+      0.8
+    )
 
-    // Convert to WebP for better compression
-    return new Promise<string>((resolve) => {
-      const img = new Image()
-      img.onload = () => {
-        const canvas = document.createElement('canvas')
-        canvas.width = img.width
-        canvas.height = img.height
-        const ctx = canvas.getContext('2d')
-        ctx?.drawImage(img, 0, 0)
-
-        // Convert to WebP with 0.8 quality for good compression
-        canvas.toBlob((blob) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(reader.result as string)
-          reader.readAsDataURL(blob!)
-        }, 'image/webp', 0.8)
-      }
-      img.src = b64
-    })
+    return b64
   }, [canvasRef])
 
   const generateData = useCallback(async (url: string): Promise<{ vpd: string, description: string, mpl: string, image: string } | null> => {
@@ -305,7 +292,7 @@ export default function LabelingScene() {
 
     const vmdBlob = new Blob([vmdBytes], { type: "application/octet-stream" })
     const vmdUrl = URL.createObjectURL(vmdBlob)
-    loadVMD(vmdUrl)
+    await loadVMD(vmdUrl)
     const b64 = await takeScreenshot()
     URL.revokeObjectURL(vmdUrl)
     return {
@@ -320,7 +307,7 @@ export default function LabelingScene() {
     const load = async () => {
       if (modelLoaded && mplCompiler) {
         const start = 1
-        const end = 5000
+        const end = 10
         for (let i = start; i <= end; i++) {
           setCurrentVpd(`${i}.vpd`)
           const data = await generateData(`/vpd/${i}.vpd`)
