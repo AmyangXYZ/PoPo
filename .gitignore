@@ -10,6 +10,8 @@
 !.yarn/releases
 !.yarn/versions
 
+/public/vpd
+
 # testing
 /coverage
 
