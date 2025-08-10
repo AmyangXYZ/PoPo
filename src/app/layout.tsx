@@ -53,7 +53,8 @@ export default function RootLayout({
       <html lang="en" className="select-none outline-none">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#FC70A8]`}>
           <Header />
-          {children}</body>
+          {children}
+        </body>
         <Analytics />
       </html>
     </ClerkProvider>
