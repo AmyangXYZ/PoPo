@@ -30,7 +30,6 @@ import {
   type IMmdWasmInstance,
   MmdStandardMaterialBuilder,
   MmdStandardMaterial,
-  VpdLoader,
   MotionType,
   RigidBodyConstructionInfo,
   RigidBody,
@@ -42,8 +41,6 @@ import {
 
 import { MmdWasmPhysicsRuntimeImpl } from "babylon-mmd/esm/Runtime/Optimized/Physics/mmdWasmPhysicsRuntimeImpl"
 import MPLEditor from "./mpl-editor"
-import { MPLBoneFrame, Quaternion as MPLQuaternion, Vector3 as MPLVector3 } from "mmd-mpl"
-import { useMPLCompiler } from "@/hooks/useMPLCompiler"
 import { Pose } from "@/lib/database"
 import { Aperture, User } from "lucide-react"
 import { Button } from "./ui/button"
@@ -51,8 +48,6 @@ import ModelsPanel from "./models-panel"
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip"
 
 export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
-  const mplCompiler = useMPLCompiler()
-
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const engineRef = useRef<Engine>(null)
   const sceneRef = useRef<Scene>(null)
@@ -61,7 +56,6 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
   const mmdWasmInstanceRef = useRef<IMmdWasmInstance>(null)
   const mmdRuntimeRef = useRef<MmdWasmRuntime>(null)
   const mmdMaterialBuilderRef = useRef<MmdStandardMaterialBuilder>(null)
-  const vpdLoaderRef = useRef<VpdLoader>(null)
   const vmdLoaderRef = useRef<VmdLoader>(null)
   const modelRef = useRef<MmdWasmModel>(null)
 
@@ -73,7 +67,7 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
 
   const loadVMD = useCallback(
     async (vmdUrl: string) => {
-      if (!vmdLoaderRef.current || !modelRef.current || !mplCompiler) return null
+      if (!vmdLoaderRef.current || !modelRef.current) return null
       lastVMDUrlRef.current = vmdUrl
       if (vmdUrl === "") {
         modelRef.current.removeAnimation(0)
@@ -85,7 +79,7 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
       mmdRuntimeRef.current!.seekAnimation(0, true)
       mmdRuntimeRef.current!.playAnimation()
     },
-    [vmdLoaderRef, modelRef, mplCompiler]
+    [vmdLoaderRef, modelRef]
   )
 
   const loadModel = useCallback(async (): Promise<void> => {
@@ -128,64 +122,6 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
     [loadModel]
   )
 
-  const loadVPD = useCallback(
-    async (vpdUrl: string): Promise<MPLBoneFrame[] | null> => {
-      if (!vpdLoaderRef.current || !modelRef.current || !mplCompiler) return null
-
-      const vpd = await vpdLoaderRef.current.loadAsync("vpd_pose", vpdUrl)
-      // modelRef.current.addAnimation(vpd)
-      // modelRef.current.setAnimation("vpd_pose")
-      // modelRef.current.currentAnimation?.animate(0)
-      const boneStates: MPLBoneFrame[] = []
-      for (const boneTrack of vpd.boneTracks) {
-        const boneNameJp = boneTrack.name
-        const boneNameEn = mplCompiler.get_bone_english_name(boneNameJp)
-        if (!boneNameEn) {
-          continue
-        }
-
-        const rotation = boneTrack.rotations
-        if (rotation.length === 0) continue
-
-        if (!(rotation[0] === 0 && rotation[1] === 0 && rotation[2] === 0 && rotation[3] === 1)) {
-          boneStates.push(
-            new MPLBoneFrame(
-              boneNameEn,
-              boneNameJp,
-              new MPLVector3(0, 0, 0),
-              new MPLQuaternion(rotation[0], rotation[1], rotation[2], rotation[3])
-            )
-          )
-        }
-      }
-
-      for (const boneTrack of vpd.movableBoneTracks) {
-        const boneNameJp = boneTrack.name
-        const boneNameEn = mplCompiler.get_bone_english_name(boneNameJp)
-        if (!boneNameEn) {
-          continue
-        }
-        let position = new MPLVector3(0, 0, 0)
-        let rotation = new MPLQuaternion(0, 0, 0, 1)
-        if (boneTrack.positions && boneTrack.positions.length > 0) {
-          position = new MPLVector3(boneTrack.positions[0], boneTrack.positions[1], boneTrack.positions[2])
-        }
-
-        if (boneTrack.rotations && boneTrack.rotations.length > 0) {
-          rotation = new MPLQuaternion(
-            boneTrack.rotations[0],
-            boneTrack.rotations[1],
-            boneTrack.rotations[2],
-            boneTrack.rotations[3]
-          )
-        }
-        boneStates.push(new MPLBoneFrame(boneNameEn, boneNameJp, position, rotation))
-      }
-      return boneStates
-    },
-    [vpdLoaderRef, modelRef, mplCompiler]
-  )
-
   useEffect(() => {
     const resize = () => {
       if (sceneRef.current) {
@@ -194,7 +130,7 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
     }
 
     const init = async () => {
-      if (!canvasRef.current || !mplCompiler) return
+      if (!canvasRef.current) return
 
       // Register the PMX loader plugin
       RegisterSceneLoaderPlugin(new BpmxLoader())
@@ -278,7 +214,6 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
       }
       mmdMaterialBuilderRef.current = materialBuilder
 
-      vpdLoaderRef.current = new VpdLoader(scene)
       vmdLoaderRef.current = new VmdLoader(scene)
       new MmdPlayerControl(scene, mmdRuntime)
 
@@ -298,7 +233,7 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
         window.removeEventListener("resize", resize)
       }
     }
-  }, [loadModel, mplCompiler])
+  }, [loadModel])
 
   const takeScreenshot = useCallback(() => {
     if (!canvasRef.current || !engineRef.current || !cameraRef.current) return
@@ -357,7 +292,7 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
         />
       </div>
       <div className="w-full h-[30%] md:w-1/2 md:h-full order-2 md:order-1 border-t">
-        <MPLEditor loadVPD={loadVPD} modelLoaded={modelLoaded} loadVMD={loadVMD} pose={pose} />
+        <MPLEditor modelLoaded={modelLoaded} loadVMD={loadVMD} pose={pose} />
       </div>
     </div>
   )

@@ -2,7 +2,6 @@ import { useCallback, useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import { CloudCheck, Download, Upload, ImageIcon } from "lucide-react"
 import { useMPLCompiler } from "@/hooks/useMPLCompiler"
-import { MPLBoneFrame } from "mmd-mpl"
 import CodeEditor from "./code-editor"
 import Link from "next/link"
 import {
@@ -24,12 +23,10 @@ import { Copy } from "lucide-react"
 import { Pose } from "@/lib/database"
 
 export default function MPLEditor({
-  loadVPD,
   modelLoaded,
   loadVMD,
   pose,
 }: {
-  loadVPD: (url: string) => Promise<MPLBoneFrame[] | null>
   loadVMD: (url: string) => void
   modelLoaded: boolean
   pose: Pose | null
@@ -153,17 +150,28 @@ main {
       if (!file) return
 
       if (file.name.endsWith(".vpd")) {
-        const url = URL.createObjectURL(file)
-        const boneStates = await loadVPD(url)
-        if (boneStates && mplCompiler) {
-          const statements = mplCompiler.reverse_compile("vpd_pose", boneStates)
-          setStatement(statements)
+        if (mplCompiler) {
+          try {
+            const statements = mplCompiler.reverse_compile("vpd", new Uint8Array(await file.arrayBuffer()))
+            setStatement(statements)
+          } catch (error) {
+            console.error(error)
+          }
+        }
+      } else if (file.name.endsWith(".vmd")) {
+        if (mplCompiler) {
+          try {
+            const statements = mplCompiler.reverse_compile("vmd", new Uint8Array(await file.arrayBuffer()))
+            setStatement(statements)
+          } catch (error) {
+            console.error(error)
+          }
         }
       }
 
       event.target.value = ""
     },
-    [setStatement, loadVPD, mplCompiler]
+    [setStatement, mplCompiler]
   )
 
   useEffect(() => {
@@ -291,7 +299,7 @@ main {
           <div className="relative hidden md:block">
             <input
               type="file"
-              accept=".vpd"
+              accept=".vpd,.vmd"
               onChange={handleFileUpload}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               id="pose-upload"
@@ -304,7 +312,7 @@ main {
               size="sm"
             >
               <Upload className="size-4" />
-              <span className="text-xs">Upload VPD</span>
+              <span className="text-xs">Upload VPD/VMD</span>
             </Button>
           </div>
 
