@@ -62,8 +62,8 @@ class MPLDataset(Dataset):
 
 if __name__ == "__main__":
     tokenizer = MPLTokenizer()
-    # dataset = MPLDataset.from_mpl_files("../dataset/mpl/", tokenizer)
-    # dataset.save_npy("../dataset/mpl.npy")
+    dataset = MPLDataset.from_mpl_files("../dataset/mpl/", tokenizer)
+    dataset.save_npy("../dataset/mpl.npy")
 
     dataset = MPLDataset.from_npy("../dataset/mpl.npy", tokenizer)
     print(f"Shape: {dataset.data.shape}")

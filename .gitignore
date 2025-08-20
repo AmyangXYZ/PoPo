@@ -11,7 +11,8 @@
 !.yarn/versions
 
 *.pyc
-/dataset
+/dataset/mpl/
+/dataset/vpd/
 
 # testing
 /coverage

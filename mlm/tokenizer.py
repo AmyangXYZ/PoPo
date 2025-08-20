@@ -16,9 +16,12 @@ class MPLTokenizer:
         self.degrees = [str(i) for i in range(0, 185, 5)]
 
         self.valid_combinations = {
-            'bend': ['forward', 'backward'],
-            'turn': ['left', 'right'],
-            'sway': ['left', 'right']
+            'bend-forward': True,
+            'bend-backward': True,
+            'turn-left': True,
+            'turn-right': True,
+            'sway-left': True,
+            'sway-right': True
         }
 
         # Add all tokens to vocab
@@ -39,9 +42,7 @@ class MPLTokenizer:
 
     def is_valid_combination(self, action: str, direction: str) -> bool:
         """Check if action-direction pair is valid"""
-        if action not in self.valid_combinations:
-            return False
-        return direction in self.valid_combinations[action]
+        return self.valid_combinations[f'{action}-{direction}']
 
     def tokenize(self, text: str) -> List[int]:
         """Tokenize with validation"""
@@ -66,7 +67,6 @@ class MPLTokenizer:
                         for part in parts:
                             tokens.append(self.vocab[part])
                         tokens.append(self.vocab[';'])
-                    # Skip invalid statements
 
         tokens.append(self.vocab['[SEP]'])
         return tokens
@@ -83,7 +83,14 @@ class MPLTokenizer:
                 continue
             elif token == ';':
                 if len(current_statement) == 4:
-                    mpl_statements.append(' '.join(current_statement) + ';')
+                    bone, action, direction, degree = current_statement
+                    # Validate combination (same as in tokenize)
+                    if (bone in self.bones and
+                        action in self.actions and
+                        direction in self.directions and
+                        degree in self.degrees and
+                            self.is_valid_combination(action, direction)):
+                        mpl_statements.append(' '.join(current_statement) + ';')
                 current_statement = []
             else:
                 current_statement.append(token)

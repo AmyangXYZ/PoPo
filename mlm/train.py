@@ -45,6 +45,7 @@ def create_mlm_batch(batch, tokenizer, mask_prob=0.15):
                             labels[i, j+pos] = -100
                 else:
                     labels[i, j:j+5] = -100
+
                 j += 5
             else:
                 labels[i, j] = -100
