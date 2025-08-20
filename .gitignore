@@ -10,7 +10,8 @@
 !.yarn/releases
 !.yarn/versions
 
-/public/vpd
+*.pyc
+/dataset
 
 # testing
 /coverage

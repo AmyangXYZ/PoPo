@@ -1,0 +1,92 @@
+# test.py
+import torch
+from tokenizer import MPLTokenizer
+from model import MPL_MLM
+
+
+def test_completion():
+    """Test pose completion with masked tokens"""
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    # Load model
+    tokenizer = MPLTokenizer()
+    model = MPL_MLM(vocab_size=tokenizer.vocab_size,
+                    hidden_dim=64, num_layers=2, num_heads=2).to(device)
+    model.load_state_dict(torch.load('mpl_mlm_final.pt', map_location=device))
+    model.eval()
+
+    # Test cases
+    test_poses = [
+        "head turn left 30; [MASK] turn [MASK] [MASK];",
+        "arm_l bend forward 45; [MASK] [MASK] forward [MASK];",
+        "[MASK] bend backward 90; ankle_l bend forward 15;",
+        "shoulder_l [MASK] [MASK] 20; shoulder_r [MASK] [MASK] 20;"
+    ]
+
+    print("Pose Completion Tests:\n" + "="*50)
+
+    for test in test_poses:
+        # Tokenize with [CLS] and [SEP]
+        tokens = [tokenizer.vocab['[CLS]']]
+        for word in test.replace(';', ' ;').split():
+            tokens.append(tokenizer.vocab.get(word, tokenizer.vocab['[MASK]']))
+        tokens.append(tokenizer.vocab['[SEP]'])
+
+        # Pad to length
+        tokens += [tokenizer.vocab['[PAD]']] * (512 - len(tokens))
+        input_ids = torch.tensor([tokens]).to(device)
+
+        # Predict
+        with torch.no_grad():
+            logits = model(input_ids)
+            predictions = torch.argmax(logits, dim=-1)
+
+        # Decode
+        original = test
+        completed = tokenizer.decode(predictions[0].cpu().tolist())
+
+        print(f"Input:     {original}")
+        print(f"Completed: {completed}")
+        print("-" * 50)
+
+
+def test_accuracy():
+    """Test masking accuracy on validation data"""
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    tokenizer = MPLTokenizer()
+    model = MPL_MLM(vocab_size=tokenizer.vocab_size,
+                    hidden_dim=64, num_layers=2, num_heads=2).to(device)
+    model.load_state_dict(torch.load('mpl_mlm_final.pt', map_location=device))
+    model.eval()
+
+    # Load a few samples
+    from dataset import MPLDataset
+    dataset = MPLDataset.from_npy("../dataset/mpl.npy", tokenizer)
+
+    correct = 0
+    total = 0
+
+    for i in range(min(100, len(dataset))):  # Test on 100 samples
+        batch = dataset[i].unsqueeze(0).to(device)
+
+        # Create masked version
+        from train import create_mlm_batch
+        masked, labels, mask = create_mlm_batch(batch, tokenizer, mask_prob=0.3)
+
+        with torch.no_grad():
+            logits = model(masked.to(device), mask.to(device))
+            predictions = torch.argmax(logits, dim=-1)
+
+        # Count correct predictions
+        mask_positions = (labels != -100)
+        correct += (predictions[mask_positions] == batch[mask_positions]).sum().item()
+        total += mask_positions.sum().item()
+
+    accuracy = correct / total if total > 0 else 0
+    print(f"\nMasked Token Accuracy: {accuracy:.2%} ({correct}/{total})")
+
+
+if __name__ == "__main__":
+    test_completion()
+    test_accuracy()
