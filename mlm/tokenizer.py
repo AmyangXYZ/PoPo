@@ -1,7 +1,5 @@
 from typing import List
 import re
-from glob import glob
-import numpy as np
 
 
 class MPLTokenizer:
@@ -16,6 +14,12 @@ class MPLTokenizer:
         self.actions = ['bend', 'turn', 'sway']
         self.directions = ['forward', 'backward', 'left', 'right']
         self.degrees = [str(i) for i in range(0, 185, 5)]
+
+        self.valid_combinations = {
+            'bend': ['forward', 'backward'],
+            'turn': ['left', 'right'],
+            'sway': ['left', 'right']
+        }
 
         # Add all tokens to vocab
         self.vocab = {}
@@ -33,12 +37,17 @@ class MPLTokenizer:
         self.direction_ids = set(self.vocab[d] for d in self.directions)
         self.degree_ids = set(self.vocab[d] for d in self.degrees)
 
+    def is_valid_combination(self, action: str, direction: str) -> bool:
+        """Check if action-direction pair is valid"""
+        if action not in self.valid_combinations:
+            return False
+        return direction in self.valid_combinations[action]
+
     def tokenize(self, text: str) -> List[int]:
-        """Convert single-pose MPL file to tokens"""
+        """Tokenize with validation"""
         tokens = [self.vocab['[CLS]']]
 
         match = re.search(r'@pose\s+\w+\s*\{([^}]*)\}', text)
-
         if match:
             block = match.group(1)
             clean_block = ' '.join(block.split())
@@ -46,12 +55,18 @@ class MPLTokenizer:
             for statement in clean_block.split(';'):
                 parts = statement.strip().split()
                 if len(parts) == 4:
-                    if (parts[0] in self.bones or parts[0] in self.actions or
-                            parts[0] in self.directions or parts[0] in self.degrees):
+                    bone, action, direction, degree = parts
+                    # Validate combination
+                    if (bone in self.bones and
+                        action in self.actions and
+                        direction in self.directions and
+                        degree in self.degrees and
+                            self.is_valid_combination(action, direction)):  # NEW CHECK
 
                         for part in parts:
                             tokens.append(self.vocab[part])
                         tokens.append(self.vocab[';'])
+                    # Skip invalid statements
 
         tokens.append(self.vocab['[SEP]'])
         return tokens

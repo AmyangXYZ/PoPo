@@ -2,6 +2,8 @@
 import torch
 from tokenizer import MPLTokenizer
 from model import MPL_MLM
+from dataset import MPLDataset
+from train import create_mlm_batch
 
 
 def test_completion():
@@ -15,7 +17,6 @@ def test_completion():
     model.load_state_dict(torch.load('mpl_mlm_final.pt', map_location=device))
     model.eval()
 
-    # Test cases
     test_poses = [
         "head turn left 30; [MASK] turn [MASK] [MASK];",
         "arm_l bend forward 45; [MASK] [MASK] forward [MASK];",
@@ -26,13 +27,21 @@ def test_completion():
     print("Pose Completion Tests:\n" + "="*50)
 
     for test in test_poses:
-        # Tokenize with [CLS] and [SEP]
+        # Build tokens manually
         tokens = [tokenizer.vocab['[CLS]']]
-        for word in test.replace(';', ' ;').split():
-            tokens.append(tokenizer.vocab.get(word, tokenizer.vocab['[MASK]']))
+        mask_positions = []
+
+        for i, word in enumerate(test.replace(';', ' ;').split()):
+            if word == '[MASK]':
+                mask_positions.append(len(tokens))
+                tokens.append(tokenizer.vocab['[MASK]'])
+            else:
+                tokens.append(tokenizer.vocab.get(word, tokenizer.vocab['[UNK]']))
+
         tokens.append(tokenizer.vocab['[SEP]'])
 
-        # Pad to length
+        # Only pad what we need
+        original_length = len(tokens)
         tokens += [tokenizer.vocab['[PAD]']] * (512 - len(tokens))
         input_ids = torch.tensor([tokens]).to(device)
 
@@ -41,11 +50,15 @@ def test_completion():
             logits = model(input_ids)
             predictions = torch.argmax(logits, dim=-1)
 
-        # Decode
-        original = test
-        completed = tokenizer.decode(predictions[0].cpu().tolist())
+        # Replace ONLY masked positions
+        completed_tokens = tokens.copy()
+        for pos in mask_positions:
+            completed_tokens[pos] = predictions[0, pos].item()
 
-        print(f"Input:     {original}")
+        # Decode only up to original length
+        completed = tokenizer.decode(completed_tokens[:original_length])
+
+        print(f"Input:     {test}")
         print(f"Completed: {completed}")
         print("-" * 50)
 
@@ -61,8 +74,7 @@ def test_accuracy():
     model.eval()
 
     # Load a few samples
-    from dataset import MPLDataset
-    dataset = MPLDataset.from_npy("../dataset/mpl.npy", tokenizer)
+    dataset = MPLDataset.from_npy("/content/drive/MyDrive/mpl.npy", tokenizer)
 
     correct = 0
     total = 0
@@ -71,7 +83,6 @@ def test_accuracy():
         batch = dataset[i].unsqueeze(0).to(device)
 
         # Create masked version
-        from train import create_mlm_batch
         masked, labels, mask = create_mlm_batch(batch, tokenizer, mask_prob=0.3)
 
         with torch.no_grad():
