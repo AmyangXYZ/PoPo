@@ -13,7 +13,7 @@ def test_completion():
     # Load model
     tokenizer = MPLTokenizer()
     model = MPL_MLM(vocab_size=tokenizer.vocab_size,
-                    hidden_dim=64, num_layers=2, num_heads=2).to(device)
+                    hidden_dim=128, num_layers=2, num_heads=2).to(device)
     model.load_state_dict(torch.load('mpl_mlm_final.pt', map_location=device))
     model.eval()
 
@@ -21,7 +21,8 @@ def test_completion():
         "head turn left 30; [MASK] turn [MASK] [MASK];",
         "arm_l bend forward 45; [MASK] [MASK] forward [MASK];",
         "[MASK] bend backward 90; ankle_l bend forward 15;",
-        "shoulder_l [MASK] [MASK] 20; shoulder_r [MASK] [MASK] 20;"
+        # "shoulder_l [MASK] [MASK] 20; shoulder_r [MASK] [MASK] 20;"
+        "index_0_r bend forward 30; [MASK] [MASK] [MASK] 40; index_2_r bend forward 60;"
     ]
 
     print("Pose Completion Tests:\n" + "="*50)
@@ -69,12 +70,12 @@ def test_accuracy():
 
     tokenizer = MPLTokenizer()
     model = MPL_MLM(vocab_size=tokenizer.vocab_size,
-                    hidden_dim=64, num_layers=2, num_heads=2).to(device)
+                    hidden_dim=128, num_layers=2, num_heads=2).to(device)
     model.load_state_dict(torch.load('mpl_mlm_final.pt', map_location=device))
     model.eval()
 
     # Load a few samples
-    dataset = MPLDataset.from_npy("/content/drive/MyDrive/mpl.npy", tokenizer)
+    dataset = MPLDataset.from_npy("../dataset/mpl.npy", tokenizer)
 
     correct = 0
     total = 0

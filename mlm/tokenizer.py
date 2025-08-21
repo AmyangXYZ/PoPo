@@ -42,7 +42,7 @@ class MPLTokenizer:
 
     def is_valid_combination(self, action: str, direction: str) -> bool:
         """Check if action-direction pair is valid"""
-        return self.valid_combinations[f'{action}-{direction}']
+        return f'{action}-{direction}' in self.valid_combinations
 
     def tokenize(self, text: str) -> List[int]:
         """Tokenize with validation"""
