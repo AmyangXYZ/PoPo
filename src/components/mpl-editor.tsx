@@ -60,88 +60,76 @@ export default function MPLEditor({
     setErrorMessage(null)
   }, [])
 
-  const [statement, setStatement] = useState(pose?.mpl || `@pose welcome {
-    upper_body bend forward 12;
-    upper_body sway left 9;
-    shoulder_r bend backward 13;
-    shoulder_r sway left 4;
-    ankle_r bend forward 60;
-    ankle_r turn left 4;
-    ankle_r sway left 5;
-    knee_l bend backward 34;
-    ankle_l bend forward 43;
-    ankle_l turn right 2;
-    ankle_l sway right 1;
-    upper_body2 bend backward 9;
-    upper_body2 turn left 1;
-    upper_body2 sway right 14;
-    neck bend forward 9;
-    neck turn right 7;
-    neck sway right 13;
-    arm_twist_r turn right 5;
-    elbow_r bend forward 135;
-    wrist_twist_r turn right 27;
-    wrist_r bend backward 30;
-    thumb_0_r bend backward 3;
-    thumb_0_r sway left 6;
-    pinky_0_r bend backward 15;
-    pinky_0_r sway right 3;
-    pinky_1_r bend forward 18;
-    ring_0_r bend backward 13;
-    ring_0_r sway right 1;
-    ring_1_r bend forward 18;
-    middle_1_r bend forward 23;
-    index_0_r bend forward 17;
-    index_0_r sway right 3;
-    index_1_r bend forward 21;
-    shoulder_l bend backward 14;
-    shoulder_l sway left 2;
-    arm_l bend forward 6;
-    arm_twist_l turn left 18;
-    elbow_l bend forward 135;
-    wrist_twist_l turn left 16;
-    wrist_l sway left 12;
-    thumb_2_l bend forward 20;
-    pinky_1_l bend forward 32;
-    ring_1_l bend forward 32;
-    middle_1_l bend forward 42;
-    index_1_l bend forward 54;
-    leg_r bend forward 19;
-    leg_r turn right 8;
-    leg_r sway left 1;
-    leg_l bend forward 32;
-    leg_l turn left 3;
-    leg_l sway left 1;
+  const [statement, setStatement] = useState(pose?.mpl || `@pose stand {
+    center bend forward 5, turn right 5, sway left 5;
+    upper_body2 sway right 5, bend backward 5;
+    lower_body turn left 5;
+    neck bend forward 10, turn left 10, sway right 5;
+    head bend forward 20, turn left 20;
+    shoulder_l sway left 10, turn right 5, bend backward 20;
+    shoulder_r bend backward 10, sway left 10, turn right 5;
+    arm_l bend forward 60;
+    arm_r bend forward 45;
+    elbow_l bend forward 15;
+    elbow_r bend forward 15;
+    wrist_l sway left 15;
+    wrist_r sway right 15, bend backward 10, turn left 5;
+    leg_l turn left 20;
+    leg_r sway left 10, turn right 10, bend forward 20;
+    knee_l bend backward 5;
+    knee_r bend backward 5;
+    ankle_l bend backward 15, sway left 5;
+    ankle_r turn left 10, sway right 5, bend forward 5;
 }
 
-@pose kick_left {
-    leg_l bend forward 30;
-    knee_l bend backward 0;
-    leg_r bend backward 20;
-    knee_r bend backward 15;
+@pose hand_relax {
+    thumb_0_l bend forward 20;
+    thumb_1_l bend forward 10;
+    index_0_l bend forward 45;
+    index_1_l bend forward 30;
+    index_2_l bend forward 30;
+    middle_0_l bend forward 55, sway right 5;
+    middle_1_l bend forward 55;
+    middle_2_l bend forward 35;
+    ring_0_l bend forward 55, sway left 5;
+    ring_1_l bend forward 60;
+    ring_2_l bend forward 35;
+    pinky_0_l bend forward 60, sway left 10;
+    pinky_1_l bend forward 35;
+    pinky_2_l bend forward 35;
+    thumb_0_r bend forward 15, sway right 25;
+    thumb_1_r bend forward 10;
+    index_0_r bend forward 35, sway right 5;
+    index_1_r bend forward 35;
+    index_2_r bend forward 20;
+    middle_0_r sway right 5, bend forward 50;
+    middle_1_r bend forward 50;
+    ring_0_r bend forward 60, sway left 5;
+    ring_1_r bend forward 35;
+    ring_2_r bend forward 35;
+    pinky_0_r sway left 10, bend forward 55;
+    pinky_1_r bend forward 65;
+    pinky_2_r bend forward 10;
 }
 
-@pose kick_right {
-    leg_r bend forward 30;
-    knee_r bend backward 0;
-    leg_l bend backward 20;
-    knee_l bend backward 15;
+@pose kick {
+    leg_l bend forward 60;
+    knee_l bend backward 10;
 }
 
-@animation walk {
-    0: kick_left;
-    0.3: kick_right;
-    0.6: kick_left;
-    0.9: kick_right;
+@pose look {
+    head reset;
+    neck reset;
 }
-    
-@animation love {
-    1.2: welcome;
+
+@animation hello {
+    0: stand & hand_relax;
+    1: kick;
+    1.2: look;
 }
-    
+
 main {
-    walk;
-    love;
+    hello;
 }`)
 
   const handleFileUpload = useCallback(

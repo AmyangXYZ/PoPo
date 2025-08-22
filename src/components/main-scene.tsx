@@ -60,7 +60,7 @@ export default function MainScene() {
   const vmdLoaderRef = useRef<VmdLoader>(null)
   const modelRef = useRef<MmdWasmModel>(null)
 
-  const modelNameRef = useRef(localStorage.getItem("selectedModel") || "深空之眼-梵天")
+  const modelNameRef = useRef(localStorage.getItem("selectedModel") || "深空之眼-梵天3")
 
   const mplCompiler = useMPLCompiler()
 
@@ -292,9 +292,8 @@ export default function MainScene() {
         selectModel={selectModel}
       />
       <div
-        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${
-          openModelsPanel ? "hidden" : ""
-        }`}
+        className={`flex flex-col gap-2 fixed left-1/2 -translate-x-1/2 bottom-0 max-w-2xl mx-auto flex p-4 w-full z-10 ${openModelsPanel ? "hidden" : ""
+          }`}
       >
         <ChatInput loadVMD={loadVMD} />
       </div>
