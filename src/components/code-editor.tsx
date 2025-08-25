@@ -7,11 +7,11 @@ import { Extension, StateField, Range, Text } from "@codemirror/state"
 const mplPatterns = [
   {
     regex:
-      /\b(waist|head|upper_body|upper_body2|lower_body|base|center|neck|shoulder_[rl]|arm_[rl]|arm_twist_[rl]|elbow_[rl]|wrist_[rl]|wrist_twist_[rl]|leg_[rl]|knee_[rl]|ankle_[rl]|toe_[rl]|thumb_\d+_[rl]|pinky_\d+_[rl]|ring_\d+_[rl]|middle_\d+_[rl]|index_\d+_[rl])\b/g,
+      /\b(waist|head|upper_body|upper_body2|lower_body|base|center|neck|shoulder_[rl]|arm_[rl]|arm_twist_[rl]|elbow_[rl]|wrist_[rl]|wrist_twist_[rl]|leg_[rl]|knee_[rl]|ankle_[rl]|toe_[rl]|thumb_[rl]|index_[rl]|middle_[rl]|ring_[rl]|pinky_[rl]|index_\d+_[rl]|thumb_\d+_[rl]|index_\d+_[rl]|middle_\d+_[rl]|ring_\d+_[rl]|pinky_\d+_[rl])\b/g,
     className: "cm-mpl-bone",
   },
   { regex: /@(pose|animation|main)\b/g, className: "cm-mpl-directive" },
-  { regex: /\b(bend|turn|sway|move)\b/g, className: "cm-mpl-action" },
+  { regex: /\b(bend|turn|sway|move|reset)\b/g, className: "cm-mpl-action" },
   { regex: /\b(forward|backward|left|right|up|down)\b/g, className: "cm-mpl-direction" },
   { regex: /\b\d+(\.\d+)?\b/g, className: "cm-mpl-degrees" },
   { regex: /[{}]/g, className: "cm-mpl-brace" },
