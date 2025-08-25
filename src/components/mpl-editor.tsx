@@ -61,59 +61,44 @@ export default function MPLEditor({
   }, [])
 
   const [statement, setStatement] = useState(pose?.mpl || `@pose stand {
-    center bend forward 5, turn right 5, sway left 5;
+    center move up 0, sway left 5, turn right 5, bend forward 5;
     upper_body2 sway right 5, bend backward 5;
     lower_body turn left 5;
-    neck bend forward 10, turn left 10, sway right 5;
-    head bend forward 20, turn left 20;
-    shoulder_l sway left 10, turn right 5, bend backward 20;
-    shoulder_r bend backward 10, sway left 10, turn right 5;
+    neck turn left 10, bend forward 10, sway right 5;
+    head turn left 20, bend forward 20;
+    shoulder_l turn right 5, sway left 10, bend backward 20;
+    shoulder_r turn right 5, bend backward 10, sway left 10;
     arm_l bend forward 60;
     arm_r bend forward 45;
     elbow_l bend forward 15;
     elbow_r bend forward 15;
     wrist_l sway left 15;
-    wrist_r sway right 15, bend backward 10, turn left 5;
-    leg_l turn left 20;
-    leg_r sway left 10, turn right 10, bend forward 20;
+    wrist_r turn left 5, bend backward 10, sway right 15;
+    leg_l turn left 10;
+    leg_r turn right 5, bend forward 20, sway left 10;
     knee_l bend backward 5;
     knee_r bend backward 5;
     ankle_l bend backward 15, sway left 5;
-    ankle_r turn left 10, sway right 5, bend forward 5;
+    ankle_r bend forward 5, turn left 10, sway right 5;
+    toe_l bend forward 5;
+    toe_r bend forward 5;
 }
 
 @pose hand_relax {
-    thumb_0_l bend forward 20;
-    thumb_1_l bend forward 10;
-    index_0_l bend forward 45;
-    index_1_l bend forward 30;
-    index_2_l bend forward 30;
-    middle_0_l bend forward 55, sway right 5;
-    middle_1_l bend forward 55;
-    middle_2_l bend forward 35;
-    ring_0_l bend forward 55, sway left 5;
-    ring_1_l bend forward 60;
-    ring_2_l bend forward 35;
-    pinky_0_l bend forward 60, sway left 10;
-    pinky_1_l bend forward 35;
-    pinky_2_l bend forward 35;
-    thumb_0_r bend forward 15, sway right 25;
-    thumb_1_r bend forward 10;
-    index_0_r bend forward 35, sway right 5;
-    index_1_r bend forward 35;
-    index_2_r bend forward 20;
-    middle_0_r sway right 5, bend forward 50;
-    middle_1_r bend forward 50;
-    ring_0_r bend forward 60, sway left 5;
-    ring_1_r bend forward 35;
-    ring_2_r bend forward 35;
-    pinky_0_r sway left 10, bend forward 55;
-    pinky_1_r bend forward 65;
-    pinky_2_r bend forward 10;
+    thumb_l bend forward 10;
+    index_l bend forward 45;
+    middle_l sway right 5, bend forward 55;
+    ring_l sway right 5, bend forward 55;
+    pinky_l bend forward 60, sway right 5;
+    thumb_r bend forward 10, sway left 5;
+    index_r sway right 5, bend forward 35;
+    middle_r sway right 5, bend forward 50;
+    ring_r sway left 5, bend forward 60;
+    pinky_r sway left 10, bend forward 55;
 }
 
 @pose kick {
-    leg_l bend forward 60;
+    leg_l bend forward 120;
     knee_l bend backward 10;
 }
 
@@ -130,7 +115,8 @@ export default function MPLEditor({
 
 main {
     hello;
-}`)
+}
+`)
 
   const handleFileUpload = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
