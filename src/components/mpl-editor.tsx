@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react"
+import { useCallback, useState, useEffect, useRef } from "react"
 import { Button } from "./ui/button"
 import { CloudCheck, Download, Upload, ImageIcon } from "lucide-react"
 import { useMPLCompiler } from "@/hooks/useMPLCompiler"
@@ -21,6 +21,8 @@ import { useUser } from "@clerk/nextjs"
 import { generatePoseId } from "@/lib/utils"
 import { Copy } from "lucide-react"
 import { Pose } from "@/lib/database"
+import { FilesetResolver, HolisticLandmarker } from "@mediapipe/tasks-vision"
+import { Solver } from "@/lib/mediapipe_solver"
 
 export default function MPLEditor({
   modelLoaded,
@@ -117,6 +119,42 @@ main {
     hello;
 }
 `)
+  const holisticLandmarkerRef = useRef<HolisticLandmarker | null>(null)
+  const imageRef = useRef<HTMLImageElement | null>(null)
+
+  const detectLandmarks = useCallback(async (): Promise<Blob | null> => {
+    if (!holisticLandmarkerRef.current) {
+      const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm")
+      holisticLandmarkerRef.current = await HolisticLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath:
+            "https://storage.googleapis.com/mediapipe-models/holistic_landmarker/holistic_landmarker/float16/latest/holistic_landmarker.task",
+          delegate: "GPU",
+        },
+        runningMode: "IMAGE",
+      })
+    }
+
+    await holisticLandmarkerRef.current?.setOptions({ runningMode: "IMAGE" })
+
+    if (
+      imageRef.current &&
+      imageRef.current.src.length > 0 &&
+      imageRef.current.complete &&
+      imageRef.current.naturalWidth > 0
+    ) {
+      let vpdBlob: Blob | null = null
+      holisticLandmarkerRef.current!.detect(imageRef.current, (result) => {
+        if (result.poseWorldLandmarks.length > 0) {
+          const solver = new Solver()
+          solver.solve(result)
+          vpdBlob = solver.exportToVpdBlob("pose_from_image")
+        }
+      })
+      return vpdBlob
+    }
+    return null
+  }, [])
 
   const handleFileUpload = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,12 +179,32 @@ main {
             console.error(error)
           }
         }
+      } else if (
+        file.name.endsWith(".png") ||
+        file.name.endsWith(".jpg") ||
+        file.name.endsWith(".jpeg") ||
+        file.name.endsWith(".webp")
+      ) {
+        const image = new window.Image()
+        image.src = URL.createObjectURL(file)
+        image.onload = async () => {
+          imageRef.current = image
+          const vpdBlob = await detectLandmarks()
+          if (vpdBlob && mplCompiler) {
+            try {
+              const statements = mplCompiler.reverse_compile("vpd", new Uint8Array(await vpdBlob.arrayBuffer()))
+              setStatement(statements)
+            } catch (error) {
+              console.error(error)
+            }
+          }
+        }
+        event.target.value = ""
       }
-
-      event.target.value = ""
     },
-    [setStatement, mplCompiler]
+    [setStatement, mplCompiler, detectLandmarks]
   )
+
 
   useEffect(() => {
     if (modelLoaded && mplCompiler) {
@@ -265,7 +323,7 @@ main {
       <div className="flex flex-row gap-2 px-6 pt-2 z-100 items-center justify-between">
         <Link href="https://github.com/AmyangXYZ/MMD-MPL" target="_blank">
           <h3 className="scroll-m-20 text-lg font-semibold tracking-tight hidden md:block">
-            MMD Pose Language (MPL) Editor
+            MPL Editor
           </h3>
         </Link>
         <h3 className="scroll-m-20 text-lg font-semibold tracking-tight md:hidden">MPL Editor</h3>
@@ -273,7 +331,7 @@ main {
           <div className="relative hidden md:block">
             <input
               type="file"
-              accept=".vpd,.vmd"
+              accept=".vpd,.vmd,.png,.jpg,.jpeg,.webp"
               onChange={handleFileUpload}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               id="pose-upload"
@@ -286,7 +344,7 @@ main {
               size="sm"
             >
               <Upload className="size-4" />
-              <span className="text-xs">Upload VPD/VMD</span>
+              <span className="text-xs">Upload Image/VPD/VMD</span>
             </Button>
           </div>
 
