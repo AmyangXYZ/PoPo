@@ -15,13 +15,12 @@ export default function ModelsPanel({
   selectedModel: string
   selectModel: (model: string) => void
 }) {
-  const models = ["深空之眼-梵天", "深空之眼-梵天2", "深空之眼-梵天3", "绝区零-仪玄", "鸣潮-无冠者"]
+  const models = ["深空之眼-梵天", "深空之眼-梵天2", "深空之眼-梵天3"]
 
   return (
     <div
-      className={`fixed right-0 top-0 h-full w-60 bg-background border-l shadow-lg z-250 flex flex-col transition-transform duration-300 ease-in-out ${
-        open ? "translate-x-0" : "translate-x-full"
-      }`}
+      className={`fixed right-0 top-0 h-full w-60 bg-background border-l shadow-lg z-250 flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"
+        }`}
     >
       <div className="flex flex-col gap-1.5 p-4 border-b">
         <div className="flex items-center justify-between">

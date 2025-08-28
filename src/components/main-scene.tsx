@@ -60,7 +60,7 @@ export default function MainScene() {
   const vmdLoaderRef = useRef<VmdLoader>(null)
   const modelRef = useRef<MmdWasmModel>(null)
 
-  const modelNameRef = useRef(localStorage.getItem("selectedModel") || "深空之眼-梵天3")
+  const modelNameRef = useRef(localStorage.getItem("selectedModel") || "深空之眼-梵天")
 
   const mplCompiler = useMPLCompiler()
 
