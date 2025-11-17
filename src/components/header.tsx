@@ -32,6 +32,12 @@ export default function Header() {
           </Button>
         </Link>
 
+        <Link href="https://reze.one" target="_blank">
+          <Button className="cursor-pointer text-white" variant="link" size="sm">
+            Render Engine
+          </Button>
+        </Link>
+
         <Link href="https://github.com/AmyangXYZ/PoPo" target="_blank">
           <Button className="cursor-pointer text-white" variant="link" size="sm">
             GitHub

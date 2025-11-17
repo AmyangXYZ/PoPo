@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, } from "react"
 import { Textarea } from "./ui/textarea"
 import { useMPLCompiler } from "@/hooks/useMPLCompiler"
 
-const suggestedPoses: string[] = ["look down", "arms down", "bend over and look right", "tilting left"] as const
+const suggestedPoses: string[] = ["look down", "arms down", "look right", "tilting left"] as const
 
 export default function ChatInput({
   loadVMD,
@@ -52,7 +52,7 @@ export default function ChatInput({
             return
           }
           // Create a blob from the raw VMD bytes
-          const vmdBlob = new Blob([vmdBytes], { type: "application/octet-stream" })
+          const vmdBlob = new Blob([new Uint8Array(vmdBytes)], { type: "application/octet-stream" })
           const vmdUrl = URL.createObjectURL(vmdBlob)
           loadVMD(vmdUrl)
           setWaitingPoseResult(false)

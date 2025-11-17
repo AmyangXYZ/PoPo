@@ -6,7 +6,7 @@
 
 **🌐 Live demo: [popo.love](https://popo.love)**
 
-Demo model: 深空之眼 三相·梵天「无间玩伴」
+> Powered by [Reze Engine](https://github.com/AmyangXYZ/reze-engine)
 
 ## ✨ Features
 
@@ -39,7 +39,7 @@ Demo model: 深空之眼 三相·梵天「无间玩伴」
 ## 🛠️ Technology
 
 - **Frontend**: Next.js, shadcn/ui, TypeScript
-- **3D Engine**: Babylon.js with babylon-mmd
+- **3D Engine**: [Reze Engine](https://github.com/AmyangXYZ/reze-engine)
 - **Pose Language**: [MPL (MMD Pose Language)](https://github.com/AmyangXYZ/MPL) for semantic pose description
 - **AI Model**: Fine-tuned GPT-4o-mini for natural language → MPL generation
 - **Deployment**: Vercel
