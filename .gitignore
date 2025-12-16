@@ -45,3 +45,5 @@ yarn-error.log*
 next-env.d.ts
 
 /fine-tuning/ft_env/*
+# clerk configuration (can include secrets)
+/.clerk/
