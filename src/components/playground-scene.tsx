@@ -1,6 +1,5 @@
 "use client"
 
-
 import { useRef, useEffect, useCallback, useState } from "react"
 
 import MPLEditor from "./mpl-editor"
@@ -23,18 +22,15 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
       // Initialize engine
       try {
         const engine = new Engine(canvasRef.current, {
-          rimLightIntensity: 0.0,
-          bloomIntensity: 0.0,
+          rimLightIntensity: 0.3,
+          bloomIntensity: 0.12,
         })
         engineRef.current = engine
         await engine.init()
         await engine.loadModel("/models/深空之眼-梵天/深空之眼-梵天-short-hair.pmx")
 
-        engine.runRenderLoop(() => {
-        })
+        engine.runRenderLoop(() => {})
         setTimeout(() => setModelLoaded(true), 200)
-
-
       } catch (error) {
         setEngineError(error instanceof Error ? error.message : "Unknown error")
       }
@@ -57,7 +53,11 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
   return (
     <div className="w-full h-full flex flex-col md:flex-row">
       <div className="w-full h-[70%] md:w-1/2 md:h-full order-1 md:order-2 bg-[#fc70a8] relative">
-        {engineError && <div className="text-red-500 z-10 absolute top-0 left-0 w-full h-full flex items-center justify-center text-lg font-medium">{engineError}</div>}
+        {engineError && (
+          <div className="text-red-500 z-10 absolute top-0 left-0 w-full h-full flex items-center justify-center text-lg font-medium">
+            {engineError}
+          </div>
+        )}
         <canvas ref={canvasRef} className="w-full h-full z-1" />
       </div>
       <div className="w-full h-[30%] md:w-1/2 md:h-full order-2 md:order-1 border-t">

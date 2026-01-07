@@ -44,7 +44,7 @@
     "openai": "^5.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "reze-engine": "^0.2.19",
+    "reze-engine": "^0.3.16",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
