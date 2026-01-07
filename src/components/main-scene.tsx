@@ -20,10 +20,7 @@ export default function MainScene() {
     if (canvasRef.current) {
       // Initialize engine
       try {
-        const engine = new Engine(canvasRef.current, {
-          rimLightIntensity: 0.3,
-          bloomIntensity: 0.12,
-        })
+        const engine = new Engine(canvasRef.current, {})
         engineRef.current = engine
         await engine.init()
         await engine.loadModel("/models/深空之眼-梵天/深空之眼-梵天.pmx")
