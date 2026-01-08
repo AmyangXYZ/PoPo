@@ -24,9 +24,9 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
         const engine = new Engine(canvasRef.current, {})
         engineRef.current = engine
         await engine.init()
-        await engine.loadModel("/models/深空之眼-梵天/深空之眼-梵天-short-hair.pmx")
+        await engine.loadModel("/models/深空之眼-梵天/深空之眼-梵天-short-hair-noik.pmx")
 
-        engine.runRenderLoop(() => {})
+        engine.runRenderLoop(() => { })
         setTimeout(() => setModelLoaded(true), 200)
       } catch (error) {
         setEngineError(error instanceof Error ? error.message : "Unknown error")
