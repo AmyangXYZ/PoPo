@@ -14,6 +14,7 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
 
   const loadVMD = useCallback(async (url: string) => {
     await engineRef.current?.loadAnimation(url)
+    await new Promise((resolve) => requestAnimationFrame(resolve))
     engineRef.current?.playAnimation()
   }, [])
 
@@ -26,7 +27,7 @@ export default function PlaygroundScene({ pose }: { pose: Pose | null }) {
         await engine.init()
         await engine.loadModel("/models/深空之眼-梵天/深空之眼-梵天-short-hair-noik.pmx")
 
-        engine.runRenderLoop(() => { })
+        engine.runRenderLoop(() => {})
         setTimeout(() => setModelLoaded(true), 200)
       } catch (error) {
         setEngineError(error instanceof Error ? error.message : "Unknown error")
