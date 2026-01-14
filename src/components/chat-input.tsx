@@ -3,21 +3,18 @@ import { Button } from "./ui/button"
 import { motion } from "framer-motion"
 import { Card, CardDescription, CardHeader } from "./ui/card"
 
-import { useState, useEffect, useCallback, } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Textarea } from "./ui/textarea"
 import { useMPLCompiler } from "@/hooks/useMPLCompiler"
 
 const suggestedPoses: string[] = ["look down", "arms down", "look right", "tilting left"] as const
 
-export default function ChatInput({
-  loadVMD,
-}: {
-  loadVMD: (vmdUrl: string) => void
-}) {
+export default function ChatInput({ loadVMD }: { loadVMD: (vmdUrl: string) => void }) {
   const mplCompiler = useMPLCompiler()
 
   const [waitingPoseResult, setWaitingPoseResult] = useState(false)
   const [displayedPoses, setDisplayedPoses] = useState<string[]>([])
+  const [resultMpl, setResultMpl] = useState<string | null>(null)
 
   // Function to get 4 random poses
   const getRandomPoses = () => {
@@ -55,6 +52,7 @@ export default function ChatInput({
           const vmdBlob = new Blob([new Uint8Array(vmdBytes)], { type: "application/octet-stream" })
           const vmdUrl = URL.createObjectURL(vmdBlob)
           loadVMD(vmdUrl)
+          setResultMpl(resp.mpl)
           setWaitingPoseResult(false)
 
           // Clean up the URL when component unmounts or statement changes
@@ -63,6 +61,8 @@ export default function ChatInput({
           }
         } catch (error) {
           console.error(error)
+          setResultMpl(error instanceof Error ? error.message : "Unknown error")
+          setWaitingPoseResult(false)
         }
       }
     },
@@ -72,31 +72,40 @@ export default function ChatInput({
   return (
     <>
       <div className="relative w-full flex flex-col gap-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {displayedPoses.map((pose, i) => (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ delay: 0.05 * i }}
-              key={`suggested-pose-${pose}-${i}`}
-              className={i > 1 ? "hidden sm:block" : "block"}
-            >
-              <Card
-                key={i}
-                className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${i >= 2 ? "hidden md:block" : ""
-                  }`}
-                onClick={() => {
-                  generatePose(pose)
-                }}
+        {resultMpl && (
+          <div className="text-sm text-white bg-black/30 p-2 rounded-md mb-2 overflow-x-auto overflow-y-scroll max-h-24">
+            <span className="font-medium">Generated MPL script:</span>
+            <pre className="p-2 select-all">{resultMpl}</pre>
+          </div>
+        )}
+        {!resultMpl && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {displayedPoses.map((pose, i) => (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ delay: 0.05 * i }}
+                key={`suggested-pose-${pose}-${i}`}
+                className={i > 1 ? "hidden sm:block" : "block"}
               >
-                <CardHeader className="py-2 gap-0">
-                  <CardDescription className="py-1 text-zinc-800 ">{pose}</CardDescription>
-                </CardHeader>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
+                <Card
+                  key={i}
+                  className={`bg-white/50 hover:bg-pink-100/70 py-0 gap-0 h-full w-full cursor-pointer backdrop-blur-[3px] shadow-lg ${
+                    i >= 2 ? "hidden md:block" : ""
+                  }`}
+                  onClick={() => {
+                    generatePose(pose)
+                  }}
+                >
+                  <CardHeader className="py-2 gap-0">
+                    <CardDescription className="py-1 text-zinc-800 ">{pose}</CardDescription>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        )}
 
         <div className="relative w-full">
           <Textarea

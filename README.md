@@ -11,11 +11,11 @@
 ## ✨ Features
 
 - **Natural Language Input**: "wave right hand with big laugh, inviting me for dinner"
-- **LLM-Generated Poses**: Fine-tuned models output semantic MPL code for precise pose control
+- **LLM-Generated Poses**: Output semantic MPL code for precise pose control
 - **Real-time Rendering**: Instant pose creation with smooth bone animations
 - **MMD-Specific**: Built for anime characters with proper bone constraints and physics
 
-## 🎯 Fine-tune LLMs with MPL
+## 🎯 LLMs with MPL
 
 **PoPo fine-tunes LLMs with MPL**: [MPL](https://github.com/AmyangXYZ/MPL) is a semantic pose description language designed specifically for MMD. This approach provides:
 
@@ -24,24 +24,12 @@
 - **Anatomically correct** - Built-in constraints prevent impossible movements
 - **Debuggable results** - Generated MPL code can be read and modified
 
-### Training Data Example:
-
-```json
-{
-  "messages": [
-    { "role": "system", "content": "Generate MMD Pose Language (MPL) script from description." },
-    { "role": "user", "content": "Description: arms down" },
-    { "role": "assistant", "content": "arm_l bend forward 40;arm_r bend forward 40;" }
-  ]
-}
-```
-
 ## 🛠️ Technology
 
 - **Frontend**: Next.js, shadcn/ui, TypeScript
 - **3D Engine**: [Reze Engine](https://github.com/AmyangXYZ/reze-engine)
 - **Pose Language**: [MPL (MMD Pose Language)](https://github.com/AmyangXYZ/MPL) for semantic pose description
-- **AI Model**: Fine-tuned GPT-4o-mini for natural language → MPL generation
+- **AI Model**: GPT-4o-mini for natural language → MPL generation
 - **Deployment**: Vercel
 
 ## 🎭 Evolution

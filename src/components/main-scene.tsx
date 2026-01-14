@@ -13,6 +13,7 @@ export default function MainScene() {
 
   const loadVMD = useCallback(async (url: string) => {
     await engineRef.current?.loadAnimation(url)
+    await new Promise((resolve) => requestAnimationFrame(resolve))
     engineRef.current?.playAnimation()
   }, [])
 
@@ -25,7 +26,7 @@ export default function MainScene() {
         await engine.init()
         await engine.loadModel("/models/深空之眼-梵天/深空之眼-梵天-noik.pmx")
 
-        engine.runRenderLoop(() => { })
+        engine.runRenderLoop(() => {})
       } catch (error) {
         setEngineError(error instanceof Error ? error.message : "Unknown error")
       }
