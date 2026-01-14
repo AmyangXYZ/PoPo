@@ -8,6 +8,10 @@
 
 > Powered by [Reze Engine](https://github.com/AmyangXYZ/reze-engine)
 
+![1](./screenshots/1.png)
+
+![1](./screenshots/2.png)
+
 ## ✨ Features
 
 - **Natural Language Input**: "wave right hand with big laugh, inviting me for dinner"
