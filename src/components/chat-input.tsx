@@ -15,7 +15,7 @@ export default function ChatInput({ loadVMD }: { loadVMD: (vmdUrl: string) => vo
   const [waitingPoseResult, setWaitingPoseResult] = useState(false)
   const [displayedPoses, setDisplayedPoses] = useState<string[]>([])
   const [resultMpl, setResultMpl] = useState<string | null>(null)
-  const [resultError, setResultError] = useState<string | null>("aaa")
+  const [resultError, setResultError] = useState<string | null>(null)
 
   // Function to get 4 random poses
   const getRandomPoses = () => {
