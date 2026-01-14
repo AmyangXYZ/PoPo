@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     const mpl = response.choices[0].message.content ?? ""
 
     return Response.json({
-      mpl: `@pose a {\n${mpl}\n}\n\nmain {\na;\n}`,
+      mpl: `@pose a {\n${mpl};\n}\n\nmain {\na;\n}`,
     })
   } catch (error) {
     console.log("Error generating pose:", error)

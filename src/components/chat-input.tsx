@@ -15,6 +15,7 @@ export default function ChatInput({ loadVMD }: { loadVMD: (vmdUrl: string) => vo
   const [waitingPoseResult, setWaitingPoseResult] = useState(false)
   const [displayedPoses, setDisplayedPoses] = useState<string[]>([])
   const [resultMpl, setResultMpl] = useState<string | null>(null)
+  const [resultError, setResultError] = useState<string | null>("aaa")
 
   // Function to get 4 random poses
   const getRandomPoses = () => {
@@ -54,6 +55,7 @@ export default function ChatInput({ loadVMD }: { loadVMD: (vmdUrl: string) => vo
           loadVMD(vmdUrl)
           setResultMpl(resp.mpl)
           setWaitingPoseResult(false)
+          setResultError(null)
 
           // Clean up the URL when component unmounts or statement changes
           return () => {
@@ -61,7 +63,7 @@ export default function ChatInput({ loadVMD }: { loadVMD: (vmdUrl: string) => vo
           }
         } catch (error) {
           console.error(error)
-          setResultMpl(error instanceof Error ? error.message : "Unknown error")
+          setResultError(error as string)
           setWaitingPoseResult(false)
         }
       }
@@ -76,6 +78,11 @@ export default function ChatInput({ loadVMD }: { loadVMD: (vmdUrl: string) => vo
           <div className="text-sm text-white bg-black/30 p-2 rounded-md mb-2 overflow-x-auto overflow-y-scroll max-h-24">
             <span className="font-medium">Generated MPL script:</span>
             <pre className="p-2 select-all">{resultMpl}</pre>
+          </div>
+        )}
+        {resultError && (
+          <div className="text-sm text-red-500 bg-black/70 rounded-md mb-2 overflow-x-auto">
+            <pre className="p-2">Error: {resultError}</pre>
           </div>
         )}
         {!resultMpl && (
