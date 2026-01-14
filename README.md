@@ -2,7 +2,7 @@
 
 > AI-powered MMD pose generator - Transform natural language into expressive 3D character animations
 
-**PoPo** uses fine-tuned LLMs to generate MMD character poses from natural language descriptions. Instead of training on raw quaternions, we use **[MPL (MMD Pose Language)](https://github.com/AmyangXYZ/MMD-MPL)** - a semantic, MMD-specific pose description language that helps AI understand and generate anatomically correct poses.
+**PoPo** uses LLMs to generate MMD character poses from natural language descriptions. Instead of raw rotation quaternions, we use **[MPL (MMD Pose Language)](https://github.com/AmyangXYZ/MMD-MPL)** - a semantic, MMD-specific pose description language that helps AI understand and generate anatomically correct poses.
 
 **🌐 Live demo: [popo.love](https://popo.love)**
 
