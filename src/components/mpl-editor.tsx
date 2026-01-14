@@ -62,9 +62,11 @@ export default function MPLEditor({
     setErrorMessage(null)
   }, [])
 
-  const [statement, setStatement] = useState(pose?.mpl || `@pose stand {
+  const [statement, setStatement] = useState(
+    pose?.mpl ||
+      `@pose stand {
     center move up 0, sway left 5, turn right 5, bend forward 5;
-    upper_body2 sway right 5, bend backward 5;
+    upper_body sway right 5, bend backward 5;
     lower_body turn left 5;
     neck turn left 10, bend forward 10, sway right 5;
     head turn left 20, bend forward 20;
@@ -118,13 +120,16 @@ export default function MPLEditor({
 main {
     hello;
 }
-`)
+`
+  )
   const holisticLandmarkerRef = useRef<HolisticLandmarker | null>(null)
   const imageRef = useRef<HTMLImageElement | null>(null)
 
   const detectLandmarks = useCallback(async (): Promise<Blob | null> => {
     if (!holisticLandmarkerRef.current) {
-      const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm")
+      const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+      )
       holisticLandmarkerRef.current = await HolisticLandmarker.createFromOptions(vision, {
         baseOptions: {
           modelAssetPath:
@@ -205,7 +210,6 @@ main {
     [setStatement, mplCompiler, detectLandmarks]
   )
 
-
   useEffect(() => {
     if (modelLoaded && mplCompiler) {
       try {
@@ -217,7 +221,7 @@ main {
           return
         }
         // Create a blob from the raw VMD bytes
-        const vmdBlob = new Blob([vmdBytes], { type: "application/octet-stream" })
+        const vmdBlob = new Blob([new Uint8Array(vmdBytes)], { type: "application/octet-stream" })
         const vmdUrl = URL.createObjectURL(vmdBlob)
         loadVMD(vmdUrl)
         setVmdUrl(vmdUrl)
@@ -231,8 +235,6 @@ main {
       }
     }
   }, [statement, modelLoaded, mplCompiler, loadVMD])
-
-
 
   const handlePreviewImageUpload = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -322,9 +324,7 @@ main {
     <div className="flex flex-col gap-1 w-full h-full pt-10">
       <div className="flex flex-row gap-2 px-6 pt-2 z-100 items-center justify-between">
         <Link href="https://github.com/AmyangXYZ/MMD-MPL" target="_blank">
-          <h3 className="scroll-m-20 text-lg font-semibold tracking-tight hidden md:block">
-            MPL Editor
-          </h3>
+          <h3 className="scroll-m-20 text-lg font-semibold tracking-tight hidden md:block">MPL Editor</h3>
         </Link>
         <h3 className="scroll-m-20 text-lg font-semibold tracking-tight md:hidden">MPL Editor</h3>
         <div className="flex flex-row gap-2">
@@ -365,11 +365,13 @@ main {
             <span className="text-xs">Download VMD</span>
           </Button>
 
-          <Dialog onOpenChange={(open) => {
-            if (!open && isPublished) {
-              resetSuccessState()
-            }
-          }}>
+          <Dialog
+            onOpenChange={(open) => {
+              if (!open && isPublished) {
+                resetSuccessState()
+              }
+            }}
+          >
             <form onSubmit={(e) => e.preventDefault()}>
               <DialogTrigger asChild>
                 <Button className="flex cursor-pointer" size="sm" disabled={!vmdUrl}>
@@ -381,7 +383,9 @@ main {
                 <DialogHeader>
                   <DialogTitle>{isPublished ? "Pose Published!" : "Publish Pose"}</DialogTitle>
                   <DialogDescription>
-                    {isPublished ? "Your pose has been successfully published to the gallery." : "Publish your pose to the gallery."}
+                    {isPublished
+                      ? "Your pose has been successfully published to the gallery."
+                      : "Publish your pose to the gallery."}
                   </DialogDescription>
                 </DialogHeader>
 
@@ -439,7 +443,6 @@ main {
                         <p className="text-blue-500 text-sm mb-2">Link:</p>
 
                         <div className="flex items-center gap-2">
-
                           <a
                             href={shareUrl}
                             target="_blank"
