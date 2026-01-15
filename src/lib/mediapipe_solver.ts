@@ -828,8 +828,8 @@ export class Solver {
     const fullParentQuat = upperBodyQuat
       .multiply(leftArmQuat)
       .multiply(leftElbowQuat)
-      .multiply(leftWristQuat)
       .multiply(leftWristTwistQuat)
+      .multiply(leftWristQuat)
 
     const fullParentMatrix = new Matrix()
     Matrix.FromQuaternionToRef(fullParentQuat, fullParentMatrix)
@@ -1209,6 +1209,6 @@ class VpdWriter {
     const content = lines.join("\n")
     const sjisBytes = this.encodeShiftJIS(content)
 
-    return new Blob([sjisBytes], { type: "text/plain; charset=shift_jis" })
+    return new Blob([sjisBytes.buffer as ArrayBuffer], { type: "text/plain; charset=shift_jis" })
   }
 }
