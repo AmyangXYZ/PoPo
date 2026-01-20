@@ -24,7 +24,7 @@ export default function MainScene() {
         const engine = new Engine(canvasRef.current, {})
         engineRef.current = engine
         await engine.init()
-        await engine.loadModel("/models/深空之眼-梵天2/深空之眼-梵天2.pmx")
+        await engine.loadModel("/models/深空之眼-梵天/深空之眼-梵天-short-hair-noik.pmx")
 
         engine.runRenderLoop(() => {})
       } catch (error) {
