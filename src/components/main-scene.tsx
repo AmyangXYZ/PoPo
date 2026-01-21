@@ -21,7 +21,9 @@ export default function MainScene() {
     if (canvasRef.current) {
       // Initialize engine
       try {
-        const engine = new Engine(canvasRef.current, {})
+        const engine = new Engine(canvasRef.current, {
+          directionalLightIntensity: 0.18,
+        })
         engineRef.current = engine
         await engine.init()
         await engine.loadModel("/models/深空之眼-梵天/深空之眼-梵天-short-hair-noik.pmx")

@@ -31,7 +31,7 @@
     "@types/encoding-japanese": "^2.2.1",
     "@uiw/react-codemirror": "^4.24.1",
     "@vercel/analytics": "^1.5.0",
-    "@vercel/blob": "^1.1.1",
+    "@vercel/blob": "^0.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -44,7 +44,7 @@
     "openai": "^5.7.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "reze-engine": "^0.4.7",
+    "reze-engine": "^0.6.0",
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
